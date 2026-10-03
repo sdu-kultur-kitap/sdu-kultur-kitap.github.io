@@ -368,9 +368,9 @@ import { getMembers, deleteMember as fbDeleteMember, registerAdmin, loginAdmin, 
                         role: res.role,
                         title: res.title
                     };
-                    localStorage.setItem('sdu_admin_session', JSON.stringify(newUser));
+                    setLoggedInUser(newUser);
                     authScreen.style.display = 'none';
-                    adminApp.style.display = 'block';
+                    adminApp.style.display = 'flex';
                     initAdminDashboard(newUser);
                     showToast('Otomatik onay ile giriş yapıldı.', 'fas fa-check-circle');
                     registerForm.reset();
@@ -405,6 +405,19 @@ import { getMembers, deleteMember as fbDeleteMember, registerAdmin, loginAdmin, 
         setLoggedInUser(null);
         adminApp.style.display = 'none';
         authScreen.style.display = 'flex';
+        if (loginForm) {
+            loginForm.reset();
+            loginForm.style.display = 'flex';
+        }
+        if (registerForm) {
+            registerForm.reset();
+            registerForm.style.display = 'none';
+        }
+        const authSubtitle = document.getElementById('authSubtitle');
+        if (authSubtitle) authSubtitle.textContent = 'Yönetim Paneli Giriş Ekranı';
+        if (loginError) loginError.style.display = 'none';
+        if (regError) regError.style.display = 'none';
+        if (regSuccess) regSuccess.style.display = 'none';
         showToast('Oturum kapatıldı.', 'fas fa-sign-out-alt');
     }
 
@@ -416,17 +429,9 @@ import { getMembers, deleteMember as fbDeleteMember, registerAdmin, loginAdmin, 
     // ==========================================
     async function initAdminDashboard(user) {
         authScreen.style.display = 'none';
-        
-        // Yükleniyor...
-        adminApp.style.display = 'none';
-        authScreen.style.display = 'flex';
-        authScreen.innerHTML = '<div style="text-align:center; padding: 40px;"><i class="fas fa-spinner fa-spin fa-3x" style="color:var(--primary-color);"></i><p style="margin-top:16px;">Veriler senkronize ediliyor...</p></div>';
+        adminApp.style.display = 'flex';
         
         await initData();
-        
-        // Restore auth screen if we log out later (hacky but works)
-        authScreen.style.display = 'none';
-        adminApp.style.display = 'flex';
 
         // Profil Bilgilerini Bas
         if (sidebarUserName) sidebarUserName.textContent = user.name;
@@ -488,12 +493,26 @@ import { getMembers, deleteMember as fbDeleteMember, registerAdmin, loginAdmin, 
         book: { title: 'Ayın Kitabı', subtitle: 'Sitede vitrinde duran kitabı ve okuma ilerlemesini düzenle' },
         events: { title: 'Etkinlik Yönetimi', subtitle: 'Yeni etkinlik ekle, düzenle veya takvime işle' },
         applications: { title: 'Gelen Başvurular', subtitle: 'Öğrencilerden gelen katılım formlarını incele' },
+        members: { title: 'Üyeler (Hızlı Kayıt)', subtitle: 'Siteden hızlı kayıt olan aktif topluluk üyeleri' },
+        gallery: { title: 'Galeri Yönetimi', subtitle: 'Ana sayfada sergilenen etkinlik fotoğraflarını yönetin' },
         suggestions: { title: 'Etkinlik Önerileri', subtitle: 'Öğrencilerin gönderdiği etkinlik fikirleri havuzu' },
         broadcast: { title: 'WhatsApp Bülteni', subtitle: 'Gruba atılacak hazır şablonlu etkinlik duyurusu üret' },
         users: { title: 'Kullanıcılar & Roller', subtitle: 'Yönetim ekibi yetkilerini ve rollerini düzenle' },
         backup: { title: 'Yedekleme & Sıfırlama', subtitle: 'Verileri JSON dosyası olarak indir veya geri yükle' },
         guide: { title: 'Kullanım Rehberi', subtitle: 'Yönetim kurulu için adım adım pratik ipuçları' }
     };
+
+    const sidebarBackdrop = document.getElementById('sidebarBackdrop');
+
+    function openSidebar() {
+        if (sidebar) sidebar.classList.add('open');
+        if (sidebarBackdrop) sidebarBackdrop.classList.add('active');
+    }
+
+    function closeSidebar() {
+        if (sidebar) sidebar.classList.remove('open');
+        if (sidebarBackdrop) sidebarBackdrop.classList.remove('active');
+    }
 
     window.switchAdminTab = function (tabKey) {
         tabNavItems.forEach(btn => {
@@ -512,9 +531,7 @@ import { getMembers, deleteMember as fbDeleteMember, registerAdmin, loginAdmin, 
         }
 
         // Mobilde sidebar'ı otomatik kapat
-        if (sidebar.classList.contains('open')) {
-            sidebar.classList.remove('open');
-        }
+        closeSidebar();
     };
 
     tabNavItems.forEach(btn => {
@@ -523,8 +540,8 @@ import { getMembers, deleteMember as fbDeleteMember, registerAdmin, loginAdmin, 
             if (tabKey) switchAdminTab(tabKey);
             
             // Mobil uyumluluk: Telefondan sekmeye basınca menüyü kapat
-            if (window.innerWidth <= 992 && sidebar) {
-                sidebar.classList.remove('open');
+            if (window.innerWidth <= 992) {
+                closeSidebar();
             }
         });
     });
@@ -532,17 +549,15 @@ import { getMembers, deleteMember as fbDeleteMember, registerAdmin, loginAdmin, 
     const btnRefreshApps = document.getElementById('btnRefreshApps');
     if (btnRefreshApps) {
         btnRefreshApps.addEventListener('click', () => {
-            const updatedData = getData();
-            renderApplicationsSection(updatedData);
-            renderOverview(updatedData);
-            showToast('Yönetim başvuruları yenilendi.', 'fas fa-sync-alt');
+            renderApplicationsSection(true);
+            showToast('Başvuru listesi yenilendi.', 'fas fa-sync-alt');
         });
     }
     
     const btnRefreshMembers = document.getElementById('btnRefreshMembers');
     if (btnRefreshMembers) {
         btnRefreshMembers.addEventListener('click', () => {
-            renderMembersSection();
+            renderMembersSection(true);
             showToast('Üye listesi yenilendi.', 'fas fa-sync-alt');
         });
     }
@@ -555,13 +570,30 @@ import { getMembers, deleteMember as fbDeleteMember, registerAdmin, loginAdmin, 
         });
     }
 
-    // Mobil Menü Aç/Kapat
+    // Mobil Menü Aç/Kapat & Dışarı Tıklama / Backdrop
     if (sidebarToggleBtn) {
-        sidebarToggleBtn.addEventListener('click', () => sidebar.classList.toggle('open'));
+        sidebarToggleBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (sidebar && sidebar.classList.contains('open')) {
+                closeSidebar();
+            } else {
+                openSidebar();
+            }
+        });
     }
     if (sidebarCloseBtn) {
-        sidebarCloseBtn.addEventListener('click', () => sidebar.classList.remove('open'));
+        sidebarCloseBtn.addEventListener('click', closeSidebar);
     }
+    if (sidebarBackdrop) {
+        sidebarBackdrop.addEventListener('click', closeSidebar);
+    }
+    document.addEventListener('click', (e) => {
+        if (sidebar && sidebar.classList.contains('open')) {
+            if (!sidebar.contains(e.target) && !sidebarToggleBtn?.contains(e.target)) {
+                closeSidebar();
+            }
+        }
+    });
 
     // ==========================================
     // TÜM BÖLÜMLERİ RENDER ETME
@@ -678,6 +710,14 @@ import { getMembers, deleteMember as fbDeleteMember, registerAdmin, loginAdmin, 
         });
     }
 
+    const bookForm = document.getElementById('bookForm');
+    if (bookForm) {
+        bookForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            if (saveBookBtn) saveBookBtn.click();
+        });
+    }
+
     // 3. ETKİNLİKLER
     function renderEventsSection(data) {
         const tbody = document.getElementById('eventsTableBody');
@@ -751,27 +791,32 @@ import { getMembers, deleteMember as fbDeleteMember, registerAdmin, loginAdmin, 
     };
 
     // 4. GELEN BAŞVURULAR
-    async function renderApplicationsSection() {
+    let cachedApplications = null;
+
+    async function renderApplicationsSection(forceRefresh = false) {
         const tbody = document.getElementById('applicationsTableBody');
         const countEl = document.getElementById('appTotalCount');
         if (!tbody) return;
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">Yükleniyor...</td></tr>';
 
-        let apps = [];
-        try {
-            apps = await getApplications();
-        } catch (e) {
-            console.error('Error fetching applications:', e);
+        if (forceRefresh || cachedApplications === null) {
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">Yükleniyor...</td></tr>';
+            try {
+                cachedApplications = await getApplications();
+            } catch (e) {
+                console.error('Error fetching applications:', e);
+                cachedApplications = [];
+            }
         }
 
+        const apps = cachedApplications || [];
         if (countEl) countEl.textContent = apps.length;
 
-        const searchVal = (document.getElementById('searchAppInput')?.value || '').toLowerCase();
-        const filtered = apps.filter(a => 
+        const searchVal = (document.getElementById('searchAppInput')?.value || '').toLowerCase().trim();
+        const filtered = searchVal ? apps.filter(a => 
             (a.fullName || '').toLowerCase().includes(searchVal) ||
             (a.department || '').toLowerCase().includes(searchVal) ||
             (a.phone || '').includes(searchVal)
-        );
+        ) : apps;
 
         tbody.innerHTML = '';
         if (filtered.length === 0) {
@@ -826,8 +871,12 @@ import { getMembers, deleteMember as fbDeleteMember, registerAdmin, loginAdmin, 
 
     const searchAppInput = document.getElementById('searchAppInput');
     if (searchAppInput) {
+        let appSearchTimer = null;
         searchAppInput.addEventListener('input', () => {
-            renderApplicationsSection();
+            clearTimeout(appSearchTimer);
+            appSearchTimer = setTimeout(() => {
+                renderApplicationsSection(false);
+            }, 100);
         });
     }
 
@@ -835,7 +884,7 @@ import { getMembers, deleteMember as fbDeleteMember, registerAdmin, loginAdmin, 
         const newStatus = currentStatus === 'Onaylandı' ? 'Beklemede' : 'Onaylandı';
         try {
             await updateApplicationStatus(id, newStatus);
-            renderApplicationsSection();
+            await renderApplicationsSection(true);
             showToast(`Başvuru durumu: ${newStatus}`, 'fas fa-info-circle');
         } catch (e) {
             console.error(e);
@@ -847,7 +896,7 @@ import { getMembers, deleteMember as fbDeleteMember, registerAdmin, loginAdmin, 
         if (!confirm('Bu başvuruyu silmek istediğinize emin misiniz?')) return;
         try {
             await fbDeleteApplication(id);
-            renderApplicationsSection();
+            await renderApplicationsSection(true);
             showToast('Başvuru silindi.', 'fas fa-trash-alt');
         } catch (e) {
             console.error(e);
@@ -856,38 +905,51 @@ import { getMembers, deleteMember as fbDeleteMember, registerAdmin, loginAdmin, 
     };
 
     // 4.5 ÜYELER (HIZLI KAYIT)
-    async function renderMembersSection() {
+    let cachedMembers = null;
+
+    async function renderMembersSection(forceRefresh = false) {
         const tbody = document.getElementById('membersTableBody');
         const countEl = document.getElementById('memberTotalCount');
         const badgeEl = document.getElementById('badgeMembers');
         if (!tbody) return;
 
-        let members = [];
-        try {
-            members = await getMembers();
-            // Sort members by registered date descending
-            members.sort((a, b) => {
-                const dateA = a.registeredAt ? new Date(a.registeredAt) : new Date(0);
-                const dateB = b.registeredAt ? new Date(b.registeredAt) : new Date(0);
-                return dateB - dateA;
-            });
-        } catch(e) {
-            console.error('Error fetching members:', e);
+        if (forceRefresh || cachedMembers === null) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Yükleniyor...</td></tr>';
+            try {
+                cachedMembers = await getMembers();
+                // Sort members by registered date descending
+                cachedMembers.sort((a, b) => {
+                    const dateA = a.registeredAt ? new Date(a.registeredAt) : new Date(0);
+                    const dateB = b.registeredAt ? new Date(b.registeredAt) : new Date(0);
+                    return dateB - dateA;
+                });
+            } catch(e) {
+                console.error('Error fetching members:', e);
+                cachedMembers = [];
+            }
         }
 
+        const members = cachedMembers || [];
         if (countEl) countEl.textContent = members.length;
         if (badgeEl) {
             badgeEl.textContent = members.length;
             badgeEl.style.display = members.length > 0 ? 'inline-block' : 'none';
         }
 
+        const searchVal = (document.getElementById('searchMemberInput')?.value || '').toLowerCase().trim();
+        const filtered = searchVal ? members.filter(m => 
+            (m.name || '').toLowerCase().includes(searchVal) ||
+            (m.identifier || '').toLowerCase().includes(searchVal) ||
+            (m.department || '').toLowerCase().includes(searchVal)
+        ) : members;
+
         tbody.innerHTML = '';
-        if (members.length === 0) {
+        if (filtered.length === 0) {
             tbody.innerHTML = `<tr><td colspan="6" class="empty-state">Henüz hızlı kayıt ile katılan üye yok.</td></tr>`;
             return;
         }
 
-        members.forEach(m => {
+        filtered.forEach(m => {
             const tr = document.createElement('tr');
             
             // Handle date formatting
@@ -902,12 +964,23 @@ import { getMembers, deleteMember as fbDeleteMember, registerAdmin, loginAdmin, 
                 <td>${m.identifier || '-'}</td>
                 <td>${m.department || '-'} ${m.grade ? `<span style="color:var(--text-muted);">(${m.grade})</span>` : ''}</td>
                 <td>${dateStr}</td>
-                <td><span class="status-badge" style="background:#e0f2fe;color:#0284c7;">${['member', 'üye', 'Ã¼ye'].includes(m.role) ? 'Üye' : m.role}</span></td>
+                <td><span class="table-tag tag-kitap">${['member', 'üye', 'Ã¼ye'].includes(m.role) ? 'Üye' : m.role}</span></td>
                 <td>
-                    <button class="btn-action btn-delete" onclick="deleteMember('${m.id}')" title="Üyeyi Sil"><i class="fas fa-trash"></i></button>
+                    <button class="btn-icon-action delete" onclick="deleteMember('${m.id}')" title="Üyeyi Sil"><i class="fas fa-trash-alt"></i></button>
                 </td>
             `;
             tbody.appendChild(tr);
+        });
+    }
+
+    const searchMemberInput = document.getElementById('searchMemberInput');
+    if (searchMemberInput) {
+        let memberSearchTimer = null;
+        searchMemberInput.addEventListener('input', () => {
+            clearTimeout(memberSearchTimer);
+            memberSearchTimer = setTimeout(() => {
+                renderMembersSection(false);
+            }, 100);
         });
     }
 
@@ -916,9 +989,7 @@ import { getMembers, deleteMember as fbDeleteMember, registerAdmin, loginAdmin, 
         try {
             // Tell Firebase to delete it
             await fbDeleteMember(id);
-            // Optionally, we could still keep local session clearing sync via checking if user exists, 
-            // but the next time the frontend loads `getMembers` or `loginMember` it won't be there.
-            await renderMembersSection();
+            await renderMembersSection(true);
             showToast('Üye silindi.', 'fas fa-trash-alt');
         } catch(e) {
             console.error('Error deleting member:', e);
@@ -1046,8 +1117,14 @@ import { getMembers, deleteMember as fbDeleteMember, registerAdmin, loginAdmin, 
                           `Tüm üniversitemiz ve edebiyatseverler davetlidir. Çaylar bizden, derin sohbet sizden! ☕✨\n\n` +
                           `🔗 Sitemiz: https://ilker-eee.github.io/kultur-kitap-toplulugu/`;
             } else if (type === 'event') {
-                const selId = parseInt(document.getElementById('broadcastEventSelect').value);
-                const ev = data.events.find(e => e.id === selId) || data.events[0];
+                const eventSel = document.getElementById('broadcastEventSelect');
+                const selId = eventSel ? parseInt(eventSel.value) : NaN;
+                const events = data.events || [];
+                const ev = events.find(e => e.id === selId) || events[0];
+                if (!ev) {
+                    showToast('Duyuru oluşturmak için en az bir etkinlik bulunmalıdır.', 'fas fa-exclamation-triangle');
+                    return;
+                }
                 message = `✨ *SDÜ KÜLTÜR VE KİTAP TOPLULUĞU ETKİNLİK DUYURUSU* ✨\n\n` +
                           `🎯 *${ev.title}*\n` +
                           `🗓 *Tarih:* ${ev.date} | ⏰ *Saat:* ${ev.time || '14:00'}\n` +
@@ -1522,7 +1599,7 @@ import { getMembers, deleteMember as fbDeleteMember, registerAdmin, loginAdmin, 
         
         if (gallery.length === 0) {
             grid.innerHTML = `
-                <div style="text-align: center; padding: 40px; background: #f8fafc; border-radius: 8px; border: 2px dashed #cbd5e1; grid-column: 1 / -1; color: #64748b;">
+                <div style="text-align: center; padding: 40px; background: var(--bg-surface-alt); border-radius: 8px; border: 2px dashed var(--border-color); grid-column: 1 / -1; color: var(--text-muted);">
                     <i class="fas fa-image" style="font-size: 3rem; margin-bottom: 12px; opacity: 0.5;"></i>
                     <p>Henüz galeriye fotoğraf yüklenmedi.</p>
                 </div>
@@ -1536,7 +1613,8 @@ import { getMembers, deleteMember as fbDeleteMember, registerAdmin, loginAdmin, 
             div.style.borderRadius = '8px';
             div.style.overflow = 'hidden';
             div.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
-            div.style.backgroundColor = '#fff';
+            div.style.backgroundColor = 'var(--bg-surface)';
+            div.style.border = '1px solid var(--border-color)';
             
             div.innerHTML = `
                 <img src="${item.src}" alt="${item.title}" style="width: 100%; height: 160px; object-fit: cover; display: block;" />
@@ -1569,8 +1647,13 @@ import { getMembers, deleteMember as fbDeleteMember, registerAdmin, loginAdmin, 
         if (token) {
             authScreen.style.display = 'flex';
             const authModal = document.querySelector('.auth-modal');
-            const originalHTML = authModal ? authModal.innerHTML : '';
-            if (authModal) authModal.innerHTML = '<div style="text-align:center; padding: 40px;"><i class="fas fa-spinner fa-spin fa-3x" style="color:var(--primary-color);"></i><p style="margin-top:16px;">Özel giriş bağlantısı kontrol ediliyor...</p></div>';
+            const tokenSpinner = document.createElement('div');
+            tokenSpinner.id = 'tokenSpinner';
+            tokenSpinner.style.textAlign = 'center';
+            tokenSpinner.style.padding = '40px';
+            tokenSpinner.innerHTML = '<i class="fas fa-spinner fa-spin fa-3x" style="color:var(--primary);"></i><p style="margin-top:16px;">Özel giriş bağlantısı kontrol ediliyor...</p>';
+            if (authModal) authModal.style.display = 'none';
+            authScreen.appendChild(tokenSpinner);
             
             try {
                 const apps = await getApplications();
@@ -1587,16 +1670,21 @@ import { getMembers, deleteMember as fbDeleteMember, registerAdmin, loginAdmin, 
                     };
                     setLoggedInUser(magicUser);
                     window.history.replaceState({}, document.title, window.location.pathname);
-                    if (authModal) authModal.innerHTML = originalHTML; // restore UI just in case
+                    tokenSpinner.remove();
+                    if (authModal) authModal.style.display = '';
                     initAdminDashboard(magicUser);
                     showToast('Özel link ile başarıyla giriş yapıldı!', 'fas fa-check-circle');
                     return;
                 } else {
+                    tokenSpinner.remove();
+                    if (authModal) authModal.style.display = '';
                     alert('Bu giriş bağlantısı geçersiz veya henüz yönetici tarafından onaylanmamış.');
                     window.location.href = window.location.pathname;
                     return;
                 }
             } catch (e) {
+                tokenSpinner.remove();
+                if (authModal) authModal.style.display = '';
                 console.error('Magic link error:', e);
                 window.location.href = window.location.pathname;
                 return;
@@ -1614,7 +1702,7 @@ import { getMembers, deleteMember as fbDeleteMember, registerAdmin, loginAdmin, 
             if (isValid) {
                 initAdminDashboard(loggedUser);
             } else {
-                localStorage.removeItem('sdu_admin_session');
+                setLoggedInUser(null);
                 authScreen.style.display = 'flex';
                 adminApp.style.display = 'none';
                 showToast("Güvenlik: Hesabınız askıya alınmış veya silinmiş. Lütfen tekrar giriş yapın.", "fas fa-exclamation-triangle");

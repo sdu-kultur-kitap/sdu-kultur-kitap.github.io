@@ -1,0 +1,9 @@
+.agents/
+tests/
+.pytest_cache/
+__pycache__/
+PROJECT.md
+TEST_INFRA.md
+TEST_READY.md
+DEVAM_NOTLARI.md
+KALDIGIM_YER*.md

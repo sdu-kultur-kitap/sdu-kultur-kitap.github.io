@@ -6,7 +6,12 @@
 import { registerMember, loginMember, submitApplication, submitSuggestion, verifyMember, getPublicData, setPublicData } from './firebase-service.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
-    window.SduAppData = await getPublicData() || { events: [], book: {} };
+    try {
+        window.SduAppData = await getPublicData() || { events: [], book: {} };
+    } catch (err) {
+        console.warn('Firebase initial load error (offline/fallback mode):', err);
+        window.SduAppData = { events: [], book: {} };
+    }
 
     // === DARK THEME TOGGLE ===
     const themeToggle = document.getElementById('themeToggle');
@@ -314,7 +319,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // === EVENT FILTERS ===
     const filterBtns = document.querySelectorAll('.filter-btn');
-    const eventCards = document.querySelectorAll('.event-card[data-category]');
 
     filterBtns.forEach(btn => {
         btn.addEventListener('click', () => {
@@ -322,8 +326,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             btn.classList.add('active');
 
             const filterValue = btn.getAttribute('data-filter');
+            const activeCards = document.querySelectorAll('.event-card[data-category]');
 
-            eventCards.forEach(card => {
+            activeCards.forEach(card => {
                 const category = card.getAttribute('data-category');
                 if (filterValue === 'all' || category === filterValue) {
                     card.style.display = 'block';
@@ -397,7 +402,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
 
             // Generate WhatsApp message
-            const message = `Merhaba! Ben ${fullName}. SDÜ ${department} (${grade}) öğrencisiyim. Kültür ve Kitap Topluluğu'na katılmak istiyorum.%0A%0Aİlgi Alanım: ${interest}%0ATelefon: ${phone}`;
+            const message = `Merhaba! Ben ${fullName}. SDÜ ${department} (${grade}) öğrencisiyim. Kültür ve Kitap Topluluğu'na katılmak istiyorum.\n\nİlgi Alanım: ${interest}\nTelefon: ${phone}`;
             const waUrl = `https://wa.me/905XXXXXXXXX?text=${encodeURIComponent(message)}`;
 
             if (waRedirectBtn) {
@@ -545,19 +550,26 @@ document.addEventListener('DOMContentLoaded', async () => {
         const progressObserver = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
-                    const target = parseInt(readingBar.dataset.target || 75);
-                    readingBar.style.width = `${target}%`;
+                    const rawTarget = readingBar.dataset.target;
+                    const parsed = parseInt(rawTarget, 10);
+                    const target = isNaN(parsed) ? 75 : parsed;
+                    const safeTarget = Math.max(0, Math.min(100, target));
+                    readingBar.style.width = `${safeTarget}%`;
 
-                    // Counter animation for percentage
-                    let current = 0;
-                    const duration = 1200;
-                    const stepTime = Math.max(Math.floor(duration / target), 10);
+                    if (safeTarget <= 0) {
+                        if (readingPercent) readingPercent.textContent = '%0';
+                    } else {
+                        // Counter animation for percentage
+                        let current = 0;
+                        const duration = 1200;
+                        const stepTime = Math.max(Math.floor(duration / safeTarget), 10);
 
-                    const interval = setInterval(() => {
-                        current++;
-                        if (readingPercent) readingPercent.textContent = `%${current}`;
-                        if (current >= target) clearInterval(interval);
-                    }, stepTime);
+                        const interval = setInterval(() => {
+                            current++;
+                            if (readingPercent) readingPercent.textContent = `%${current}`;
+                            if (current >= safeTarget) clearInterval(interval);
+                        }, stepTime);
+                    }
 
                     progressObserver.unobserve(entry.target);
                 }
@@ -874,6 +886,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             console.warn('Dinamik senkronizasyon hatası:', e);
         }
     }
+    window.syncDynamicSiteContent = syncDynamicSiteContent;
 
     // ==========================================
     // TOPLULUK ÜYELİĞİ & OTURUM YÖNETİMİ (MİSAFİR / ÜYE)
@@ -1140,6 +1153,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (authModalCloseBtn) authModalCloseBtn.addEventListener('click', closeAuthModal);
     if (authModalBackdrop) authModalBackdrop.addEventListener('click', closeAuthModal);
+
+    window.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && siteAuthModal && siteAuthModal.classList.contains('open')) {
+            closeAuthModal();
+        }
+    });
 
     if (tabBtnLogin && tabBtnRegister) {
         tabBtnLogin.addEventListener('click', () => {

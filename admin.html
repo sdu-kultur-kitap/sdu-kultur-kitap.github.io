@@ -211,6 +211,9 @@
             </div>
         </aside>
 
+        <!-- Mobil Sidebar Backdrop -->
+        <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+
         <!-- MAIN CONTENT AREA -->
         <main class="admin-main">
             <!-- Topbar -->
@@ -590,8 +593,9 @@
                                 <h3><i class="fas fa-user-check"></i> Topluluk Katılım Başvuruları (<span id="appTotalCount">0</span>)</h3>
                                 <p class="card-desc">Ana sitedeki "Bize Katıl" formunu dolduran öğrencilerin kayıtları.</p>
                             </div>
-                            <div class="table-filters">
+                            <div class="table-filters" style="display: flex; gap: 10px; align-items: center;">
                                 <input type="text" id="searchAppInput" placeholder="İsim, bölüm veya telefon ara..." class="search-input">
+                                <button id="btnRefreshApps" class="btn-outline" style="white-space: nowrap;"><i class="fas fa-sync-alt"></i> Yenile</button>
                             </div>
                         </div>
                         <div class="card-body">
