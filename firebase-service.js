@@ -126,11 +126,40 @@ export async function joinEvent(eventId, memberId) {
 // ========================
 
 export async function submitApplication(appData) {
-    await addDoc(collection(db, "applications"), {
+    const timestamp = new Date().toISOString();
+    
+    // Anında aktif üye kaydı oluştur (Auto-approval)
+    let memberRef = null;
+    try {
+        memberRef = await addDoc(collection(db, "members"), {
+            name: appData.fullName || appData.name || '',
+            fullName: appData.fullName || appData.name || '',
+            identifier: appData.phone || appData.identifier || ((appData.fullName || 'uye').replace(/\s+/g, '').toLowerCase() + '@sdu.local'),
+            department: appData.department || '',
+            grade: appData.grade || '',
+            phone: appData.phone || '',
+            interests: appData.interests || (appData.interest ? [appData.interest] : []),
+            interest: appData.interest || (Array.isArray(appData.interests) ? appData.interests.join(', ') : ''),
+            role: "member",
+            status: "active",
+            autoApproved: true,
+            registeredAt: timestamp
+        });
+    } catch (memErr) {
+        console.warn("Direct member document creation warning:", memErr);
+    }
+
+    // Başvuru kaydını 'Onaylandı' statüsüyle kaydet
+    const appRef = await addDoc(collection(db, "applications"), {
         ...appData,
-        status: "Beklemede",
-        submittedAt: new Date().toISOString()
+        status: "Onaylandı",
+        approvalStatus: "active",
+        autoApproved: true,
+        memberId: memberRef ? memberRef.id : null,
+        submittedAt: timestamp
     });
+
+    return { id: appRef.id, memberId: memberRef ? memberRef.id : null };
 }
 
 export async function submitSuggestion(suggData) {

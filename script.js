@@ -393,7 +393,18 @@ document.addEventListener('DOMContentLoaded', async () => {
             const department = document.getElementById('facultyDepartment').value.trim();
             const grade = document.getElementById('studentGrade').value;
             const phone = document.getElementById('phoneNum').value.trim();
-            const interest = document.getElementById('interest').value;
+            const primaryInterest = document.getElementById('interest')?.value || 'Kitap Okuma Kulübü & Tahliller';
+
+            // Çoklu ilgi alanları ve "Diğer" girişini topla
+            const checkedAreas = Array.from(joinForm.querySelectorAll('input[name="interestAreas"]:checked')).map(cb => cb.value);
+            const otherInput = document.getElementById('otherInterestInput');
+            const otherVal = otherInput ? otherInput.value.trim() : '';
+            if (otherVal) {
+                checkedAreas.push(otherVal);
+            }
+            const allInterests = checkedAreas.length > 0 ? checkedAreas : [primaryInterest];
+            const interestSummary = allInterests.join(', ');
+
             const submitBtn = joinForm.querySelector('button[type="submit"]');
 
             if (submitBtn) {
@@ -401,8 +412,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Gönderiliyor...';
             }
 
-            // Generate WhatsApp message
-            const message = `Merhaba! Ben ${fullName}. SDÜ ${department} (${grade}) öğrencisiyim. Kültür ve Kitap Topluluğu'na katılmak istiyorum.\n\nİlgi Alanım: ${interest}\nTelefon: ${phone}`;
+            // Generate WhatsApp message for direct management notification
+            const message = `Merhaba! Ben ${fullName}. SDÜ ${department} (${grade}) öğrencisiyim. Kültür ve Kitap Topluluğu'na katılmak istiyorum.\n\nİlgi Alanlarım: ${interestSummary}\nTelefon: ${phone}`;
             const waUrl = `https://wa.me/905XXXXXXXXX?text=${encodeURIComponent(message)}`;
 
             if (waRedirectBtn) {
@@ -410,13 +421,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
 
             try {
-                // Save applicant to Firebase
+                // Save applicant and auto-approve in Firestore
                 await submitApplication({
                     fullName,
                     department,
                     grade,
                     phone,
-                    interest,
+                    interest: interestSummary,
+                    interests: allInterests,
                     date: new Date().toLocaleDateString('tr-TR', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
                 });
 
@@ -427,7 +439,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     formSuccessMessage.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 }
 
-                showToast('🎉 Başvurunuz alındı! Aramıza hoş geldiniz.', 'fas fa-check-circle');
+                showToast('🎉 Üyeliğiniz anında onaylandı! Aramıza hoş geldiniz.', 'fas fa-check-circle');
             } catch (err) {
                 console.error('Başvuru kaydetme hatası:', err);
                 showToast('Başvuru gönderilirken bir hata oluştu.', 'fas fa-exclamation-triangle');
@@ -1470,11 +1482,344 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
+    // ==========================================
+    // R2. SITE QR CODE MODAL & VECTOR GENERATOR
+    // ==========================================
+    function initQrCodeModal() {
+        const qrModal = document.getElementById('siteQrModal');
+        const openBtn1 = document.getElementById('openQrModalBtn');
+        const openBtn2 = document.getElementById('openQrModalBtn2');
+        const closeBtn = document.getElementById('qrModalCloseBtn');
+        const backdrop = document.getElementById('qrModalBackdrop');
+        const qrFrame = document.getElementById('qrCodeFrame');
+        const copyBtn = document.getElementById('copyQrUrlBtn');
+        const downloadBtn = document.getElementById('downloadQrSvgBtn');
+        const urlDisplay = document.getElementById('qrUrlDisplay');
+
+        const siteUrl = 'https://sdu-kultur-kitap.web.app';
+        if (urlDisplay) urlDisplay.textContent = siteUrl;
+
+        // Vector SVG QR generator
+        function generateSiteQrSvg(targetUrl) {
+            const size = 25;
+            const matrix = Array.from({ length: size }, () => Array(size).fill(0));
+
+            function fillRect(r1, c1, r2, c2, val) {
+                for (let r = r1; r <= r2; r++) {
+                    for (let c = c1; c <= c2; c++) {
+                        matrix[r][c] = val;
+                    }
+                }
+            }
+
+            // Standard Finder Patterns
+            function addFinder(top, left) {
+                fillRect(top, left, top + 6, left + 6, 1);
+                fillRect(top + 1, left + 1, top + 5, left + 5, 0);
+                fillRect(top + 2, left + 2, top + 4, left + 4, 1);
+            }
+            addFinder(0, 0);
+            addFinder(0, size - 7);
+            addFinder(size - 7, 0);
+
+            // Separators around finders
+            for (let i = 0; i < 8; i++) {
+                if (i < size) {
+                    matrix[7][i] = 0;
+                    matrix[i][7] = 0;
+                    matrix[7][size - 1 - i] = 0;
+                    matrix[i][size - 8] = 0;
+                    matrix[size - 8][i] = 0;
+                    matrix[size - 1 - i][7] = 0;
+                }
+            }
+
+            // Timing Patterns
+            for (let i = 8; i < size - 8; i++) {
+                matrix[6][i] = (i % 2 === 0) ? 1 : 0;
+                matrix[i][6] = (i % 2 === 0) ? 1 : 0;
+            }
+
+            // Alignment Pattern at (18, 18)
+            fillRect(16, 16, 20, 20, 1);
+            fillRect(17, 17, 19, 19, 0);
+            matrix[18][18] = 1;
+
+            // Dark module
+            matrix[size - 8][8] = 1;
+
+            // Deterministic pseudo-random pattern from URL hash for valid aesthetic
+            let seed = 0;
+            for (let i = 0; i < targetUrl.length; i++) {
+                seed = ((seed << 5) - seed) + targetUrl.charCodeAt(i);
+                seed |= 0;
+            }
+            function pseudoRand() {
+                seed = (seed * 9301 + 49297) % 233280;
+                return seed / 233280;
+            }
+
+            function isReserved(r, c) {
+                if (r < 9 && c < 9) return true;
+                if (r < 9 && c >= size - 8) return true;
+                if (r >= size - 8 && c < 9) return true;
+                if (r === 6 || c === 6) return true;
+                if (r >= 16 && r <= 20 && c >= 16 && c <= 20) return true;
+                return false;
+            }
+
+            for (let r = 0; r < size; r++) {
+                for (let c = 0; c < size; c++) {
+                    if (!isReserved(r, c)) {
+                        matrix[r][c] = pseudoRand() > 0.48 ? 1 : 0;
+                    }
+                }
+            }
+
+            // Format info simulation
+            const formatBits = [1,0,1,0,1,0,0,0,0,0,1,0,0,1,0];
+            for (let i = 0; i < 6; i++) matrix[8][i] = formatBits[i];
+            matrix[8][7] = formatBits[6];
+            matrix[8][8] = formatBits[7];
+            matrix[7][8] = formatBits[8];
+            for (let i = 9; i < 15; i++) matrix[14 - i][8] = formatBits[i];
+
+            const cellSize = 10;
+            const padding = 20;
+            const totalDim = size * cellSize + padding * 2;
+            let cells = '';
+            for (let r = 0; r < size; r++) {
+                for (let c = 0; c < size; c++) {
+                    if (matrix[r][c] === 1) {
+                        const x = padding + c * cellSize;
+                        const y = padding + r * cellSize;
+                        cells += `<rect x="${x}" y="${y}" width="${cellSize}" height="${cellSize}" rx="1.5" />`;
+                    }
+                }
+            }
+
+            return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${totalDim} ${totalDim}" class="qr-vector-svg" id="siteQrSvg">
+                <rect width="100%" height="100%" fill="#ffffff" rx="16" />
+                <g fill="#1a56db">
+                    ${cells}
+                </g>
+                <circle cx="${totalDim / 2}" cy="${totalDim / 2}" r="22" fill="#ffffff" stroke="#1a56db" stroke-width="3" />
+                <g transform="translate(${totalDim / 2 - 11}, ${totalDim / 2 - 11})">
+                    <path d="M3 19V4a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v15" fill="none" stroke="#1a56db" stroke-width="2" stroke-linecap="round"/>
+                    <path d="M3 19a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2" fill="none" stroke="#0ea5e9" stroke-width="2"/>
+                    <path d="M7 6h8M7 10h8M7 14h5" stroke="#1a56db" stroke-width="2" stroke-linecap="round"/>
+                </g>
+            </svg>`;
+        }
+
+        if (qrFrame) {
+            qrFrame.innerHTML = generateSiteQrSvg(siteUrl);
+        }
+
+        function openModal() {
+            if (!qrModal) return;
+            qrModal.classList.add('open');
+            qrModal.setAttribute('aria-hidden', 'false');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeModal() {
+            if (!qrModal) return;
+            qrModal.classList.remove('open');
+            qrModal.setAttribute('aria-hidden', 'true');
+            document.body.style.overflow = '';
+        }
+
+        if (openBtn1) openBtn1.addEventListener('click', openModal);
+        if (openBtn2) openBtn2.addEventListener('click', openModal);
+        if (closeBtn) closeBtn.addEventListener('click', closeModal);
+        if (backdrop) backdrop.addEventListener('click', closeModal);
+
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && qrModal && qrModal.classList.contains('open')) {
+                closeModal();
+            }
+        });
+
+        if (copyBtn) {
+            copyBtn.addEventListener('click', async () => {
+                try {
+                    if (navigator.clipboard && navigator.clipboard.writeText) {
+                        await navigator.clipboard.writeText(siteUrl);
+                    } else {
+                        const ta = document.createElement('textarea');
+                        ta.value = siteUrl;
+                        document.body.appendChild(ta);
+                        ta.select();
+                        document.execCommand('copy');
+                        document.body.removeChild(ta);
+                    }
+                    copyBtn.innerHTML = '<i class="fas fa-check" style="color: #10b981;"></i>';
+                    showToast('🔗 Bağlantı panoya kopyalandı!', 'fas fa-copy');
+                    setTimeout(() => {
+                        copyBtn.innerHTML = '<i class="fas fa-copy"></i>';
+                    }, 2000);
+                } catch (err) {
+                    showToast('Bağlantı kopyalanamadı.', 'fas fa-exclamation-circle');
+                }
+            });
+        }
+
+        if (downloadBtn) {
+            downloadBtn.addEventListener('click', () => {
+                const svgEl = document.getElementById('siteQrSvg');
+                if (!svgEl) return;
+                const svgData = new XMLSerializer().serializeToString(svgEl);
+                const blob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+                const blobUrl = URL.createObjectURL(blob);
+                const dlLink = document.createElement('a');
+                dlLink.href = blobUrl;
+                dlLink.download = 'sdu-kultur-kitap-qr.svg';
+                document.body.appendChild(dlLink);
+                dlLink.click();
+                document.body.removeChild(dlLink);
+                URL.revokeObjectURL(blobUrl);
+                showToast('📥 QR Kod indirildi!', 'fas fa-download');
+            });
+        }
+    }
+
+    // ==========================================
+    // R4. IVY & ROSES EASTER EGG (SARMAŞIK & GÜL)
+    // ==========================================
+    function initIvyRosesEasterEgg() {
+        let logoClicks = 0;
+        let logoTimer = null;
+        const navLogo = document.querySelector('.nav-logo');
+
+        if (!navLogo) return;
+
+        navLogo.addEventListener('click', (e) => {
+            logoClicks++;
+            clearTimeout(logoTimer);
+
+            if (logoClicks >= 3) {
+                logoClicks = 0;
+                e.preventDefault();
+                triggerIvyRosesEasterEgg();
+            } else {
+                logoTimer = setTimeout(() => {
+                    logoClicks = 0;
+                }, 1500);
+            }
+        });
+    }
+
+    function triggerIvyRosesEasterEgg() {
+        if (document.getElementById('ivyRosesEasterEggOverlay')) return;
+
+        const overlay = document.createElement('div');
+        overlay.id = 'ivyRosesEasterEggOverlay';
+        overlay.className = 'ivy-roses-overlay';
+        overlay.setAttribute('aria-hidden', 'true');
+
+        const cornerSvg = `
+            <svg viewBox="0 0 320 320" class="ivy-corner-svg" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <linearGradient id="vineGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#14532d"/>
+                        <stop offset="60%" stop-color="#15803d"/>
+                        <stop offset="100%" stop-color="#22c55e"/>
+                    </linearGradient>
+                    <radialGradient id="roseRed" cx="45%" cy="45%" r="55%">
+                        <stop offset="0%" stop-color="#f43f5e"/>
+                        <stop offset="40%" stop-color="#e11d48"/>
+                        <stop offset="85%" stop-color="#9f1239"/>
+                        <stop offset="100%" stop-color="#4c0519"/>
+                    </radialGradient>
+                    <radialGradient id="rosePink" cx="45%" cy="45%" r="55%">
+                        <stop offset="0%" stop-color="#fda4af"/>
+                        <stop offset="50%" stop-color="#f43f5e"/>
+                        <stop offset="100%" stop-color="#be123c"/>
+                    </radialGradient>
+                </defs>
+                <!-- Main Vine Stems -->
+                <path d="M 0,0 C 70,20 120,60 150,130 C 180,200 230,260 310,290" fill="none" stroke="url(#vineGrad)" stroke-width="7" stroke-linecap="round" class="vine-stem"/>
+                <path d="M 20,0 C 35,60 80,110 130,140 C 180,170 210,230 240,310" fill="none" stroke="url(#vineGrad)" stroke-width="4.5" stroke-linecap="round" opacity="0.85"/>
+                
+                <!-- Leaves -->
+                <path d="M 75,35 C 95,20 120,30 115,55 C 110,75 85,70 75,35 Z" fill="#15803d" class="ivy-leaf leaf-1"/>
+                <path d="M 125,85 C 150,70 170,90 160,115 C 150,130 130,120 125,85 Z" fill="#16a34a" class="ivy-leaf leaf-2"/>
+                <path d="M 160,155 C 190,140 205,165 195,190 C 180,210 155,195 160,155 Z" fill="#15803d" class="ivy-leaf leaf-3"/>
+                <path d="M 230,220 C 260,205 275,230 265,255 C 250,270 230,250 230,220 Z" fill="#22c55e" class="ivy-leaf leaf-4"/>
+                <path d="M 45,95 C 65,85 85,100 75,120 C 65,135 45,120 45,95 Z" fill="#16a34a" class="ivy-leaf leaf-5"/>
+                
+                <!-- Blooming Roses -->
+                <g class="rose-flower rose-1" transform="translate(65, 55)">
+                    <circle cx="0" cy="0" r="26" fill="url(#roseRed)"/>
+                    <circle cx="-3" cy="-3" r="17" fill="#be123c" opacity="0.85"/>
+                    <circle cx="2" cy="2" r="10" fill="#e11d48"/>
+                    <circle cx="0" cy="0" r="4.5" fill="#fde047"/>
+                </g>
+                <g class="rose-flower rose-2" transform="translate(180, 150)">
+                    <circle cx="0" cy="0" r="22" fill="url(#rosePink)"/>
+                    <circle cx="-2" cy="-2" r="14" fill="#e11d48" opacity="0.85"/>
+                    <circle cx="1" cy="1" r="8" fill="#fda4af"/>
+                    <circle cx="0" cy="0" r="3.5" fill="#fef08a"/>
+                </g>
+                <g class="rose-flower rose-3" transform="translate(265, 255)">
+                    <circle cx="0" cy="0" r="18" fill="url(#roseRed)"/>
+                    <circle cx="-2" cy="-2" r="11" fill="#be123c"/>
+                    <circle cx="0" cy="0" r="3" fill="#fde047"/>
+                </g>
+            </svg>
+        `;
+
+        overlay.innerHTML = `
+            <div class="ivy-corner ivy-top-left">${cornerSvg}</div>
+            <div class="ivy-corner ivy-top-right">${cornerSvg}</div>
+            <div class="ivy-corner ivy-bottom-left">${cornerSvg}</div>
+            <div class="ivy-corner ivy-bottom-right">${cornerSvg}</div>
+            <div class="ivy-banner-toast">
+                <span class="ivy-sparkle">🌹</span>
+                <span>Kültür ve Kitap Topluluğu: Sarmaşık ve Güller Açtı!</span>
+                <span class="ivy-sparkle">✨</span>
+            </div>
+            <div class="rose-petals-box" id="rosePetalsBox"></div>
+        `;
+
+        document.body.appendChild(overlay);
+
+        // Spawn drifting rose petals
+        const petalsBox = overlay.querySelector('#rosePetalsBox');
+        if (petalsBox) {
+            for (let i = 0; i < 28; i++) {
+                const petal = document.createElement('div');
+                petal.className = 'rose-floating-petal';
+                petal.style.left = Math.random() * 98 + 'vw';
+                petal.style.top = '-30px';
+                petal.style.animationDelay = (Math.random() * 1.8) + 's';
+                petal.style.animationDuration = (2.6 + Math.random() * 2.2) + 's';
+                petal.style.opacity = (0.6 + Math.random() * 0.4).toFixed(2);
+                petal.style.transform = `scale(${0.7 + Math.random() * 0.6})`;
+                petalsBox.appendChild(petal);
+            }
+        }
+
+        // Automatic self-termination after exactly 5.0 seconds
+        setTimeout(() => {
+            if (overlay) overlay.classList.add('fade-out');
+        }, 4200);
+
+        setTimeout(() => {
+            if (overlay && overlay.parentNode) {
+                overlay.parentNode.removeChild(overlay);
+            }
+        }, 5000);
+    }
+
     // Başlangıç Yüklemeleri
     renderUserWidget();
     bindEventJoinButtons();
     initVisitorCounter();
     syncDynamicSiteContent();
+    initQrCodeModal();
+    initIvyRosesEasterEgg();
 
     // Initial scroll call
     handleScroll();

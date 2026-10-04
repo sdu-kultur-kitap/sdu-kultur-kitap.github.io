@@ -68,9 +68,33 @@
                 <li><a href="#sss" class="nav-link">SSS</a></li>
                 <li><a href="#iletisim" class="nav-link">İletişim</a></li>
                 <li><a href="#bize-katil" class="nav-link nav-cta">Bize Katıl</a></li>
+                <li class="nav-social-mobile-item">
+                    <div class="nav-social-mobile-group">
+                        <a href="https://instagram.com/topluluk_hesabi" target="_blank" rel="noopener" class="glass-icon-btn nav-social-btn" aria-label="Instagram" title="Instagram">
+                            <i class="fab fa-instagram"></i>
+                        </a>
+                        <a href="https://wa.me/905XXXXXXXXX" target="_blank" rel="noopener" class="glass-icon-btn nav-social-btn" aria-label="WhatsApp" title="WhatsApp">
+                            <i class="fab fa-whatsapp"></i>
+                        </a>
+                        <a href="https://twitter.com/topluluk_hesabi" target="_blank" rel="noopener" class="glass-icon-btn nav-social-btn" aria-label="X (Twitter)" title="X (Twitter)">
+                            <i class="fab fa-x-twitter"></i>
+                        </a>
+                    </div>
+                </li>
             </ul>
 
             <div class="nav-actions">
+                <div class="nav-social-desktop-group">
+                    <a href="https://instagram.com/topluluk_hesabi" target="_blank" rel="noopener" class="glass-icon-btn nav-social-btn" aria-label="Instagram" title="Instagram">
+                        <i class="fab fa-instagram"></i>
+                    </a>
+                    <a href="https://wa.me/905XXXXXXXXX" target="_blank" rel="noopener" class="glass-icon-btn nav-social-btn" aria-label="WhatsApp" title="WhatsApp">
+                        <i class="fab fa-whatsapp"></i>
+                    </a>
+                    <a href="https://twitter.com/topluluk_hesabi" target="_blank" rel="noopener" class="glass-icon-btn nav-social-btn" aria-label="X (Twitter)" title="X (Twitter)">
+                        <i class="fab fa-x-twitter"></i>
+                    </a>
+                </div>
                 <button class="theme-toggle" id="themeToggle" aria-label="Tema değiştir" title="Karanlık / Aydınlık Tema">
                     <i class="fas fa-moon" id="themeIcon"></i>
                 </button>
@@ -121,6 +145,10 @@
                     <i class="fas fa-users"></i>
                     Bize Katıl
                 </a>
+                <button type="button" class="btn btn-glass-qr" id="openQrModalBtn" aria-label="Web Sitesi QR Kodu" title="Web Sitesi QR Kodu">
+                    <i class="fas fa-qrcode"></i>
+                    <span>Site QR Kodu</span>
+                </button>
             </div>
             <div class="hero-stats">
                 <div class="stat">
@@ -134,6 +162,85 @@
                 <div class="stat">
                     <span class="stat-number" data-target="5">0</span>
                     <span class="stat-label">Yıllık Deneyim</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ========== 1.0. ŞU AN OKUDUĞUMUZ KİTAP (CURRENTLY READING) ========== -->
+    <section class="section section-currently-reading" id="su-an-okunan">
+        <div class="container">
+            <div class="currently-reading-box glass-card">
+                <div class="cr-badge">
+                    <span class="live-pulse-dot"></span>
+                    <span class="cr-badge-text">Şu An Okuduğumuz Eser</span>
+                </div>
+
+                <div class="cr-layout">
+                    <div class="cr-book-column">
+                        <div class="cr-book-art">
+                            <div class="cr-spine-shadow"></div>
+                            <div class="cr-book-spine"></div>
+                            <div class="cr-book-face">
+                                <span class="cr-genre-badge">Klasik Roman</span>
+                                <h4 class="cr-face-title">Beyaz Geceler</h4>
+                                <p class="cr-face-author">F. M. Dostoyevski</p>
+                                <div class="cr-face-ornament"><i class="fas fa-feather-alt"></i></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="cr-info-column">
+                        <div class="cr-header">
+                            <div class="cr-tag-group">
+                                <span class="tag-pill"><i class="fas fa-book-reader"></i> Bu Haftanın Okuması</span>
+                                <span class="tag-pill tag-pill-accent"><i class="fas fa-clock"></i> 3. Hafta</span>
+                            </div>
+                            <h3 class="cr-book-heading">Beyaz Geceler</h3>
+                            <p class="cr-book-subheading">Fyodor Mihayloviç Dostoyevski</p>
+                        </div>
+
+                        <p class="cr-quote">
+                            <i class="fas fa-quote-left"></i>
+                            "Bütün bir an! Bir tam anlık saadet! Bir insanın ömrü için bu az bir şey midir?"
+                        </p>
+
+                        <div class="cr-progress-section">
+                            <div class="cr-progress-header">
+                                <span>Topluluk Okuma Durumu: <strong>3. Gece (Sayfa 64 / 96)</strong></span>
+                                <span class="cr-percent-val">%67</span>
+                            </div>
+                            <div class="cr-bar-track">
+                                <div class="cr-bar-progress" style="width: 67%;"></div>
+                            </div>
+                        </div>
+
+                        <div class="cr-meta-grid">
+                            <div class="cr-meta-item">
+                                <i class="fas fa-users"></i>
+                                <div>
+                                    <strong>120+ Okur</strong>
+                                    <span>Birlikte Takip Ediyor</span>
+                                </div>
+                            </div>
+                            <div class="cr-meta-item">
+                                <i class="fas fa-calendar-day"></i>
+                                <div>
+                                    <strong>Pazar 20:00</strong>
+                                    <span>Bölüm Müzakeresi</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="cr-actions">
+                            <a href="https://wa.me/905XXXXXXXXX" target="_blank" rel="noopener" class="btn btn-sm btn-primary cr-discuss-btn">
+                                <i class="fab fa-whatsapp"></i> Kitap Müzakeresine Katıl
+                            </a>
+                            <a href="#ayin-kitabi" class="btn btn-sm btn-outline">
+                                <i class="fas fa-book-open"></i> Ayın Kitabı Detayları
+                            </a>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -825,6 +932,11 @@
                         <a href="https://wa.me/905XXXXXXXXX" target="_blank" rel="noopener" class="direct-wa-link">
                             WhatsApp Duyuru Grubumuza Katıl <i class="fas fa-external-link-alt"></i>
                         </a>
+                        <div class="qr-direct-wrap" style="margin-top: 12px;">
+                            <button type="button" class="btn btn-outline btn-sm btn-qr-link-badge" id="openQrModalBtn2">
+                                <i class="fas fa-qrcode"></i> Site QR Kodunu Göster
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -873,6 +985,43 @@
                             </select>
                         </div>
 
+                        <!-- İlgilendikleri Alanlar Çoklu Seçim & Diğer Alanı -->
+                        <div class="form-group interest-areas-group">
+                            <label class="form-label-header">
+                                <i class="fas fa-shapes"></i> İlgilendiğiniz Alanlar <span class="label-hint">(Birden fazla seçebilirsiniz)</span>
+                            </label>
+                            <div class="interest-checkboxes-grid">
+                                <label class="checkbox-chip">
+                                    <input type="checkbox" name="interestAreas" value="Edebiyat" checked>
+                                    <span class="chip-label"><i class="fas fa-book"></i> Edebiyat</span>
+                                </label>
+                                <label class="checkbox-chip">
+                                    <input type="checkbox" name="interestAreas" value="Sinema">
+                                    <span class="chip-label"><i class="fas fa-film"></i> Sinema</span>
+                                </label>
+                                <label class="checkbox-chip">
+                                    <input type="checkbox" name="interestAreas" value="Gezi">
+                                    <span class="chip-label"><i class="fas fa-mountain"></i> Gezi</span>
+                                </label>
+                                <label class="checkbox-chip">
+                                    <input type="checkbox" name="interestAreas" value="Tiyatro">
+                                    <span class="chip-label"><i class="fas fa-masks-theater"></i> Tiyatro</span>
+                                </label>
+                                <label class="checkbox-chip">
+                                    <input type="checkbox" name="interestAreas" value="Felsefe">
+                                    <span class="chip-label"><i class="fas fa-brain"></i> Felsefe</span>
+                                </label>
+                                <label class="checkbox-chip">
+                                    <input type="checkbox" name="interestAreas" value="Müzik">
+                                    <span class="chip-label"><i class="fas fa-music"></i> Müzik</span>
+                                </label>
+                            </div>
+                            <div class="interest-other-input-wrap">
+                                <label for="otherInterestInput" class="other-label"><i class="fas fa-pen-nib"></i> Diğer İlgi Alanı:</label>
+                                <input type="text" id="otherInterestInput" name="otherInterest" placeholder="Varsa diğer ilgi alanlarınızı yazın..." class="form-control-other">
+                            </div>
+                        </div>
+
                         <button type="submit" class="btn btn-primary btn-submit">
                             <i class="fas fa-paper-plane"></i>
                             Aramıza Katıl
@@ -886,11 +1035,16 @@
                     <!-- Başarı Mesajı (Form Gönderildiğinde Gösterilir) -->
                     <div id="formSuccessMessage" class="form-success-box" style="display: none;">
                         <div class="success-icon"><i class="fas fa-check-circle"></i></div>
-                        <h4>Aramıza Hoş Geldin!</h4>
-                        <p id="successDesc">Başvurun başarıyla alındı. Aşağıdaki butona tıklayarak WhatsApp grubumuza doğrudan katılabilirsin.</p>
-                        <a href="https://wa.me/905XXXXXXXXX" target="_blank" rel="noopener" class="btn btn-primary btn-wa-group" id="waRedirectBtn">
-                            <i class="fab fa-whatsapp"></i> WhatsApp Grubuna Giriş Yap
-                        </a>
+                        <h4>Aramıza Hoş Geldin! 🎉</h4>
+                        <p id="successDesc">Üyeliğin <strong>anında onaylandı</strong> ve aktif topluluk üyesi olarak kaydedildin! Duyuruları anlık takip etmek ve topluluk etkinliklerimize katılmak için WhatsApp grubumuza katılabilirsin.</p>
+                        <div class="success-buttons-wrap">
+                            <a href="https://chat.whatsapp.com/GXYZ123456789CommunityInvite" target="_blank" rel="noopener" class="btn btn-primary btn-wa-group" id="waGroupInviteBtn">
+                                <i class="fab fa-whatsapp"></i> WhatsApp Grubumuza Katıl
+                            </a>
+                            <a href="https://wa.me/905XXXXXXXXX" target="_blank" rel="noopener" class="btn btn-outline btn-wa-direct" id="waRedirectBtn">
+                                <i class="fas fa-paper-plane"></i> Yöneticiye Bildir
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -957,14 +1111,17 @@
                     </div>
                     <div class="footer-social" style="margin-top: 32px;">
                         <h4>Sosyal Medya & İletişim</h4>
-                        <div class="social-icons">
-                            <a href="https://instagram.com/topluluk_hesabi" target="_blank" rel="noopener" aria-label="Instagram">
+                        <div class="social-icons glass-social-group">
+                            <a href="https://instagram.com/topluluk_hesabi" target="_blank" rel="noopener" class="glass-icon-btn footer-social-btn" aria-label="Instagram" title="Instagram">
                                 <i class="fab fa-instagram"></i>
                             </a>
-                            <a href="https://wa.me/905XXXXXXXXX" target="_blank" rel="noopener" aria-label="WhatsApp">
+                            <a href="https://wa.me/905XXXXXXXXX" target="_blank" rel="noopener" class="glass-icon-btn footer-social-btn" aria-label="WhatsApp" title="WhatsApp">
                                 <i class="fab fa-whatsapp"></i>
                             </a>
-                            <a href="mailto:kulturkitapt@sdu.edu.tr" aria-label="Resmi E-posta">
+                            <a href="https://twitter.com/topluluk_hesabi" target="_blank" rel="noopener" class="glass-icon-btn footer-social-btn" aria-label="X (Twitter)" title="X (Twitter)">
+                                <i class="fab fa-x-twitter"></i>
+                            </a>
+                            <a href="mailto:kulturkitapt@sdu.edu.tr" class="glass-icon-btn footer-social-btn" aria-label="Resmi E-posta" title="E-posta">
                                 <i class="fas fa-envelope"></i>
                             </a>
                         </div>
@@ -1100,6 +1257,40 @@
 
             <div class="auth-modal-footer">
                 <small><i class="fas fa-shield-alt"></i> Hesabınız açık kaldığı sürece tüm etkinliklere tek tıkla rezervasyon yapabilirsiniz.</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== SITE QR KOD POPUP / MODAL ========== -->
+    <div class="site-qr-modal" id="siteQrModal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="qrModalTitle">
+        <div class="qr-modal-backdrop" id="qrModalBackdrop"></div>
+        <div class="qr-modal-dialog glass-morphism-card">
+            <button class="qr-modal-close" id="qrModalCloseBtn" type="button" aria-label="Kapat" title="Kapat">
+                <i class="fas fa-times"></i>
+            </button>
+            <div class="qr-modal-header">
+                <div class="qr-icon-badge">
+                    <i class="fas fa-qrcode"></i>
+                </div>
+                <h3 id="qrModalTitle">Topluluk Web Sitemiz</h3>
+                <p>Kameranızla okutarak web sitemize telefonunuzdan anında erişebilir veya arkadaşlarınızla paylaşabilirsiniz.</p>
+            </div>
+            <div class="qr-modal-body">
+                <div class="qr-code-frame" id="qrCodeFrame">
+                    <!-- Pure client-side Vector SVG QR Code -->
+                </div>
+                <div class="qr-url-pill">
+                    <i class="fas fa-link"></i>
+                    <span id="qrUrlDisplay">https://sdu-kultur-kitap.web.app</span>
+                    <button type="button" class="btn-copy-url" id="copyQrUrlBtn" title="Bağlantıyı Kopyala" aria-label="Bağlantıyı Kopyala">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="qr-modal-actions">
+                <button type="button" class="btn btn-primary btn-sm" id="downloadQrSvgBtn">
+                    <i class="fas fa-download"></i> QR Kodu İndir
+                </button>
             </div>
         </div>
     </div>
