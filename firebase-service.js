@@ -220,12 +220,22 @@ export async function verifyAdmin(adminId) {
     return data.status === "active";
 }
 
+
+async function getHash(message) {
+    const msgBuffer = new TextEncoder().encode(message);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
 export async function loginAdmin(email, password) {
-    if (email === "ilkerm946@gmail.com" && password === "ilker123") {
+    
+    const hash = await getHash(email.toLowerCase() + ":" + password);
+    if (hash === "ca965821bd5384b0a0523810d6874e76870125f3e111306f5afadc7e76c14629") {
         return {
             id: "master_admin",
             name: "İlker",
-            email: "ilkerm946@gmail.com",
+            email: email,
             role: "superadmin",
             status: "active",
             title: "Topluluk Yöneticisi"
@@ -280,7 +290,7 @@ export async function getAdmins() {
     admins.unshift({
         id: "master_admin",
         name: "İlker",
-        email: "ilkerm946@gmail.com",
+        email: email,
         role: "superadmin",
         status: "active",
         title: "Topluluk Yöneticisi",

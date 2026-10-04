@@ -1,6 +1,6 @@
 /* ==========================================
    SDÜ Kültür ve Kitap Topluluğu - Admin Panel JS
-   Roles: Super Admin (ilkerm946@gmail.com), Editor, Moderator, Member
+   Roles: Super Admin, Editor, Moderator, Member
    Zero-cost static sync with LocalStorage & SessionStorage
    ========================================== */
 
@@ -73,15 +73,7 @@ import { getMembers, deleteMember as fbDeleteMember, registerAdmin, loginAdmin, 
         applications: [],
         suggestions: [],
         users: [
-            {
-                id: 1,
-                name: "İlker M.",
-                email: "ilkerm946@gmail.com",
-                password: "ilker123",
-                role: "superadmin",
-                title: "Topluluk Başkanı (Süper Admin)",
-                isMaster: true
-            }
+            
         ]
     };
 
@@ -113,7 +105,7 @@ import { getMembers, deleteMember as fbDeleteMember, registerAdmin, loginAdmin, 
         // Güvenlik: Master kullanıcının varlığını ve şifresini garanti altına al
         let hasMaster = false;
         parsed.users = parsed.users.map(u => {
-            if (u.email.toLowerCase() === 'ilkerm946@gmail.com') {
+            if (u.role === 'superadmin') {
                 hasMaster = true;
                 u.role = 'superadmin';
                 u.isMaster = true;
@@ -440,7 +432,7 @@ import { getMembers, deleteMember as fbDeleteMember, registerAdmin, loginAdmin, 
             sidebarUserAvatar.textContent = initials || 'K';
         }
 
-        const isSuperAdmin = user.email.toLowerCase() === 'ilkerm946@gmail.com' || user.role === 'superadmin';
+        const isSuperAdmin = user.role === 'superadmin';
 
         if (sidebarUserBadge) {
             if (isSuperAdmin) {
@@ -1268,7 +1260,7 @@ import { getMembers, deleteMember as fbDeleteMember, registerAdmin, loginAdmin, 
             } else {
                 activeUsers.forEach(u => {
                     const tr = document.createElement('tr');
-                    const isMaster = u.email === 'ilkerm946@gmail.com' || u.isMaster;
+                    const isMaster = u.role === 'superadmin' || u.isMaster;
 
                     tr.innerHTML = `
                         <td>
@@ -1694,7 +1686,7 @@ import { getMembers, deleteMember as fbDeleteMember, registerAdmin, loginAdmin, 
         const loggedUser = getLoggedInUser();
         if (loggedUser) {
             let isValid = true;
-            if (loggedUser.email !== "ilkerm946@gmail.com") {
+            if (loggedUser.role !== 'superadmin') {
                 try {
                     isValid = await verifyAdmin(loggedUser.id);
                 } catch(e) { console.error("Admin doğrulama hatası:", e); }

@@ -61,7 +61,7 @@
                 <li><a href="#anasayfa" class="nav-link active">Ana Sayfa</a></li>
                 <li><a href="test.html" class="nav-link">Karakter Testi</a></li>
                 <li><a href="#etkinlikler" class="nav-link">Etkinlikler</a></li>
-                <li><a href="#ayin-kitabi" class="nav-link">Ayın Kitabı</a></li>
+                
                 <li><a href="#hakkimizda" class="nav-link">Hakkımızda</a></li>
                 <li><a href="#galeri" class="nav-link">Galeri</a></li>
                 <!-- <li><a href="#ekip" class="nav-link">Ekibimiz</a></li> -->
@@ -84,17 +84,7 @@
             </ul>
 
             <div class="nav-actions">
-                <div class="nav-social-desktop-group">
-                    <a href="https://instagram.com/topluluk_hesabi" target="_blank" rel="noopener" class="glass-icon-btn nav-social-btn" aria-label="Instagram" title="Instagram">
-                        <i class="fab fa-instagram"></i>
-                    </a>
-                    <a href="https://wa.me/905XXXXXXXXX" target="_blank" rel="noopener" class="glass-icon-btn nav-social-btn" aria-label="WhatsApp" title="WhatsApp">
-                        <i class="fab fa-whatsapp"></i>
-                    </a>
-                    <a href="https://twitter.com/topluluk_hesabi" target="_blank" rel="noopener" class="glass-icon-btn nav-social-btn" aria-label="X (Twitter)" title="X (Twitter)">
-                        <i class="fab fa-x-twitter"></i>
-                    </a>
-                </div>
+                
                 <button class="theme-toggle" id="themeToggle" aria-label="Tema değiştir" title="Karanlık / Aydınlık Tema">
                     <i class="fas fa-moon" id="themeIcon"></i>
                 </button>
@@ -173,7 +163,7 @@
             <div class="currently-reading-box glass-card">
                 <div class="cr-badge">
                     <span class="live-pulse-dot"></span>
-                    <span class="cr-badge-text">Şu An Okuduğumuz Eser</span>
+                    <span class="cr-badge-text">Ayın Kitabı & Şu An Okunan</span>
                 </div>
 
                 <div class="cr-layout">
@@ -183,7 +173,7 @@
                             <div class="cr-book-spine"></div>
                             <div class="cr-book-face">
                                 <span class="cr-genre-badge">Klasik Roman</span>
-                                <h4 class="cr-face-title">Beyaz Geceler</h4>
+                                <h4 class="cr-face-title">Ayın Kitabı: Beyaz Geceler</h4>
                                 <p class="cr-face-author">F. M. Dostoyevski</p>
                                 <div class="cr-face-ornament"><i class="fas fa-feather-alt"></i></div>
                             </div>
@@ -236,7 +226,7 @@
                             <a href="https://wa.me/905XXXXXXXXX" target="_blank" rel="noopener" class="btn btn-sm btn-primary cr-discuss-btn">
                                 <i class="fab fa-whatsapp"></i> Kitap Müzakeresine Katıl
                             </a>
-                            <a href="#ayin-kitabi" class="btn btn-sm btn-outline">
+                            <a href="#su-an-okunan" class="btn btn-sm btn-outline">
                                 <i class="fas fa-book-open"></i> Ayın Kitabı Detayları
                             </a>
                         </div>
@@ -521,113 +511,6 @@
             
             <div class="events-grid" id="pastEventsGrid">
                 <!-- Dinamik olarak JS tarafından doldurulacak -->
-            </div>
-        </div>
-    </section>
-
-    <!-- ========== 2. AYIN KİTABI ========== -->
-    <section class="section" id="ayin-kitabi">
-        <div class="container">
-            <div class="section-header">
-                <span class="section-tag">Birlikte Okuyoruz</span>
-                <h2 class="section-title">Ayın Kitabı & Okuma Listemiz</h2>
-                <p class="section-desc">Her ay seçtiğimiz eseri hep birlikte okuyor, ay sonunda samimi bir tahlil oturumunda buluşuyoruz.</p>
-            </div>
-
-            <div class="book-showcase">
-                <div class="book-cover-wrapper">
-                    <div class="book-3d">
-                        <div class="book-spine"></div>
-                        <div class="book-front">
-                            <div class="book-tag">Ekim 2026 Seçkisi</div>
-                            <h3 class="book-title">Kürk Mantolu Madonna</h3>
-                            <p class="book-author">Sabahattin Ali</p>
-                            <div class="book-ornament"><i class="fas fa-feather-alt"></i></div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="book-details">
-                    <div class="book-meta-badges">
-                        <span class="badge"><i class="fas fa-bookmark"></i> Türk Klasikleri</span>
-                        <span class="badge"><i class="fas fa-file-alt"></i> 160 Sayfa</span>
-                        <span class="badge"><i class="fas fa-users"></i> 85 Okur</span>
-                    </div>
-
-                    <h3 class="book-heading">Kürk Mantolu Madonna</h3>
-                    <p class="book-writer">Sabahattin Ali</p>
-                    
-                    <p class="book-synopsis">
-                        "İnsanlara inanmak, onlara güvenmek lazım geldiğini biliyorum... Fakat bir kere aldanan bir adamın bir daha inanmasına imkân var mıdır?"
-                        <br><br>
-                        Topluluğumuzla bu ay Türk edebiyatının derin aşk ve yabancılaşma başyapıtını tahlil ediyoruz. Yalnızlık, sanat ve ruh bağları üzerine konuşacağımız bu özel oturuma tüm üniversitemiz davetlidir.
-                    </p>
-
-                    <div class="reading-progress-box">
-                        <div class="progress-info">
-                            <span>Topluluk Okuma İlerlemesi</span>
-                            <span class="progress-percent" id="readingProgressPercent">0%</span>
-                        </div>
-                        <div class="progress-bar-bg">
-                            <div class="progress-bar-fill" id="readingProgressBar" data-target="75" style="width: 0%;"></div>
-                        </div>
-                    </div>
-
-                    <div class="book-meeting-card">
-                        <div class="meeting-item">
-                            <i class="fas fa-calendar-check"></i>
-                            <div>
-                                <strong>Tahlil Tarihi</strong>
-                                <span>28 Ekim 2026, Çarşamba 17:00</span>
-                            </div>
-                        </div>
-                        <div class="meeting-item">
-                            <i class="fas fa-map-marker-alt"></i>
-                            <div>
-                                <strong>Buluşma Yeri</strong>
-                                <span>Merkez Kütüphane Kitap Kafe</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="book-actions">
-                        <a href="#bize-katil" class="btn btn-primary">
-                            <i class="fas fa-check-circle"></i>
-                            Tahlil Oturumuna Katıl
-                        </a>
-                        <a href="https://wa.me/905XXXXXXXXX" target="_blank" rel="noopener" class="btn btn-outline">
-                            <i class="fab fa-whatsapp"></i>
-                            Okuma Grubuna Dahil Ol
-                        </a>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Geçmiş Okumalar -->
-            <div class="past-books-section">
-                <h4 class="past-books-title">Geçtiğimiz Aylarda Neler Okuduk?</h4>
-                <div class="past-books-grid">
-                    <div class="past-book-card">
-                        <div class="past-book-icon"><i class="fas fa-book"></i></div>
-                        <h5>Saatleri Ayarlama Enstitüsü</h5>
-                        <span>Ahmet Hamdi Tanpınar</span>
-                    </div>
-                    <div class="past-book-card">
-                        <div class="past-book-icon"><i class="fas fa-book"></i></div>
-                        <h5>Dönüşüm</h5>
-                        <span>Franz Kafka</span>
-                    </div>
-                    <div class="past-book-card">
-                        <div class="past-book-icon"><i class="fas fa-book"></i></div>
-                        <h5>Simyacı</h5>
-                        <span>Paulo Coelho</span>
-                    </div>
-                    <div class="past-book-card">
-                        <div class="past-book-icon"><i class="fas fa-book"></i></div>
-                        <h5>Beyaz Zambaklar Ülkesinde</h5>
-                        <span>Grigory Petrov</span>
-                    </div>
-                </div>
             </div>
         </div>
     </section>
@@ -1133,7 +1016,7 @@
                         <li><a href="#anasayfa"><i class="fas fa-home" style="margin-right: 8px; color: var(--primary-lighter); opacity: 0.8;"></i> Ana Sayfa</a></li>
                         <li><a href="#etkinlikler"><i class="fas fa-calendar-check" style="margin-right: 8px; color: var(--primary-lighter); opacity: 0.8;"></i> Etkinlikler & Takvim</a></li>
                         <li><a href="#gecmis-etkinlikler"><i class="fas fa-history" style="margin-right: 8px; color: var(--primary-lighter); opacity: 0.8;"></i> Geçmiş Etkinlikler</a></li>
-                        <li><a href="#ayin-kitabi"><i class="fas fa-book" style="margin-right: 8px; color: var(--primary-lighter); opacity: 0.8;"></i> Ayın Kitabı</a></li>
+                        
                         <li><a href="#hakkimizda"><i class="fas fa-info-circle" style="margin-right: 8px; color: var(--primary-lighter); opacity: 0.8;"></i> Hakkımızda</a></li>
                         <li><a href="#galeri"><i class="fas fa-images" style="margin-right: 8px; color: var(--primary-lighter); opacity: 0.8;"></i> Galeri</a></li>
                         <li><a href="#ekip"><i class="fas fa-users" style="margin-right: 8px; color: var(--primary-lighter); opacity: 0.8;"></i> Ekibimiz & Danışmanlar</a></li>
