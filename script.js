@@ -1613,7 +1613,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         if (qrFrame) {
-            qrFrame.innerHTML = generateSiteQrSvg(siteUrl);
+            qrFrame.innerHTML = '<img src=\"images/qr_code.png\" alt=\"QR Kod\" style=\"width:100%; height:auto; border-radius:10px; display:block; margin: 0 auto; max-width: 250px;\">';
         }
 
         function openModal() {
@@ -1712,104 +1712,42 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     function triggerIvyRosesEasterEgg() {
         if (document.getElementById('ivyRosesEasterEggOverlay')) return;
-
         const overlay = document.createElement('div');
         overlay.id = 'ivyRosesEasterEggOverlay';
-        overlay.className = 'ivy-roses-overlay';
-        overlay.setAttribute('aria-hidden', 'true');
-
-        const cornerSvg = `
-            <svg viewBox="0 0 320 320" class="ivy-corner-svg" xmlns="http://www.w3.org/2000/svg">
-                <defs>
-                    <linearGradient id="vineGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" stop-color="#14532d"/>
-                        <stop offset="60%" stop-color="#15803d"/>
-                        <stop offset="100%" stop-color="#22c55e"/>
-                    </linearGradient>
-                    <radialGradient id="roseRed" cx="45%" cy="45%" r="55%">
-                        <stop offset="0%" stop-color="#f43f5e"/>
-                        <stop offset="40%" stop-color="#e11d48"/>
-                        <stop offset="85%" stop-color="#9f1239"/>
-                        <stop offset="100%" stop-color="#4c0519"/>
-                    </radialGradient>
-                    <radialGradient id="rosePink" cx="45%" cy="45%" r="55%">
-                        <stop offset="0%" stop-color="#fda4af"/>
-                        <stop offset="50%" stop-color="#f43f5e"/>
-                        <stop offset="100%" stop-color="#be123c"/>
-                    </radialGradient>
-                </defs>
-                <!-- Main Vine Stems -->
-                <path d="M 0,0 C 70,20 120,60 150,130 C 180,200 230,260 310,290" fill="none" stroke="url(#vineGrad)" stroke-width="7" stroke-linecap="round" class="vine-stem"/>
-                <path d="M 20,0 C 35,60 80,110 130,140 C 180,170 210,230 240,310" fill="none" stroke="url(#vineGrad)" stroke-width="4.5" stroke-linecap="round" opacity="0.85"/>
-                
-                <!-- Leaves -->
-                <path d="M 75,35 C 95,20 120,30 115,55 C 110,75 85,70 75,35 Z" fill="#15803d" class="ivy-leaf leaf-1"/>
-                <path d="M 125,85 C 150,70 170,90 160,115 C 150,130 130,120 125,85 Z" fill="#16a34a" class="ivy-leaf leaf-2"/>
-                <path d="M 160,155 C 190,140 205,165 195,190 C 180,210 155,195 160,155 Z" fill="#15803d" class="ivy-leaf leaf-3"/>
-                <path d="M 230,220 C 260,205 275,230 265,255 C 250,270 230,250 230,220 Z" fill="#22c55e" class="ivy-leaf leaf-4"/>
-                <path d="M 45,95 C 65,85 85,100 75,120 C 65,135 45,120 45,95 Z" fill="#16a34a" class="ivy-leaf leaf-5"/>
-                
-                <!-- Blooming Roses -->
-                <g class="rose-flower rose-1" transform="translate(65, 55)">
-                    <circle cx="0" cy="0" r="26" fill="url(#roseRed)"/>
-                    <circle cx="-3" cy="-3" r="17" fill="#be123c" opacity="0.85"/>
-                    <circle cx="2" cy="2" r="10" fill="#e11d48"/>
-                    <circle cx="0" cy="0" r="4.5" fill="#fde047"/>
-                </g>
-                <g class="rose-flower rose-2" transform="translate(180, 150)">
-                    <circle cx="0" cy="0" r="22" fill="url(#rosePink)"/>
-                    <circle cx="-2" cy="-2" r="14" fill="#e11d48" opacity="0.85"/>
-                    <circle cx="1" cy="1" r="8" fill="#fda4af"/>
-                    <circle cx="0" cy="0" r="3.5" fill="#fef08a"/>
-                </g>
-                <g class="rose-flower rose-3" transform="translate(265, 255)">
-                    <circle cx="0" cy="0" r="18" fill="url(#roseRed)"/>
-                    <circle cx="-2" cy="-2" r="11" fill="#be123c"/>
-                    <circle cx="0" cy="0" r="3" fill="#fde047"/>
-                </g>
-            </svg>
-        `;
-
-        overlay.innerHTML = `
-            <div class="ivy-corner ivy-top-left">${cornerSvg}</div>
-            <div class="ivy-corner ivy-top-right">${cornerSvg}</div>
-            <div class="ivy-corner ivy-bottom-left">${cornerSvg}</div>
-            <div class="ivy-corner ivy-bottom-right">${cornerSvg}</div>
-            <div class="ivy-banner-toast">
-                <span class="ivy-sparkle">🌹</span>
-                <span>Kültür ve Kitap Topluluğu: Sarmaşık ve Güller Açtı!</span>
-                <span class="ivy-sparkle">✨</span>
-            </div>
-            <div class="rose-petals-box" id="rosePetalsBox"></div>
-        `;
-
+        overlay.style.position = 'fixed';
+        overlay.style.top = '0';
+        overlay.style.left = '0';
+        overlay.style.width = '100vw';
+        overlay.style.height = '100vh';
+        overlay.style.pointerEvents = 'none';
+        overlay.style.zIndex = '999999';
+        overlay.style.display = 'flex';
+        overlay.style.alignItems = 'center';
+        overlay.style.justifyContent = 'center';
+        overlay.style.backgroundColor = 'rgba(0,0,0,0.6)';
+        overlay.style.opacity = '0';
+        overlay.style.transition = 'opacity 0.5s ease';
+        
+        const img = document.createElement('img');
+        img.src = 'images/sarmasik.png';
+        img.alt = 'Sarmaşık';
+        img.style.maxWidth = '90vw';
+        img.style.maxHeight = '90vh';
+        img.style.transform = 'scale(0.8)';
+        img.style.transition = 'transform 3s ease';
+        
+        overlay.appendChild(img);
         document.body.appendChild(overlay);
-
-        // Spawn drifting rose petals
-        const petalsBox = overlay.querySelector('#rosePetalsBox');
-        if (petalsBox) {
-            for (let i = 0; i < 28; i++) {
-                const petal = document.createElement('div');
-                petal.className = 'rose-floating-petal';
-                petal.style.left = Math.random() * 98 + 'vw';
-                petal.style.top = '-30px';
-                petal.style.animationDelay = (Math.random() * 1.8) + 's';
-                petal.style.animationDuration = (2.6 + Math.random() * 2.2) + 's';
-                petal.style.opacity = (0.6 + Math.random() * 0.4).toFixed(2);
-                petal.style.transform = `scale(${0.7 + Math.random() * 0.6})`;
-                petalsBox.appendChild(petal);
-            }
-        }
-
-        // Automatic self-termination after exactly 5.0 seconds
+        
+        // Trigger reflow
+        void overlay.offsetWidth;
+        
+        overlay.style.opacity = '1';
+        img.style.transform = 'scale(1.05)';
+        
         setTimeout(() => {
-            if (overlay) overlay.classList.add('fade-out');
-        }, 4200);
-
-        setTimeout(() => {
-            if (overlay && overlay.parentNode) {
-                overlay.parentNode.removeChild(overlay);
-            }
+            overlay.style.opacity = '0';
+            setTimeout(() => overlay.remove(), 500);
         }, 5000);
     }
 
