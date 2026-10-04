@@ -1687,78 +1687,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     // ==========================================
     // R4. IVY & ROSES EASTER EGG (SARMAŞIK & GÜL)
     // ==========================================
-    function initIvyRosesEasterEgg() {
-        let logoClicks = 0;
-        let logoTimer = null;
-        const navLogo = document.querySelector('.nav-logo');
-
-        if (!navLogo) return;
-
-        navLogo.addEventListener('click', (e) => {
-            logoClicks++;
-            clearTimeout(logoTimer);
-
-            if (logoClicks >= 3) {
-                logoClicks = 0;
-                e.preventDefault();
-                triggerIvyRosesEasterEgg();
-            } else {
-                logoTimer = setTimeout(() => {
-                    logoClicks = 0;
-                }, 1500);
-            }
-        });
-    }
-
-    function triggerIvyRosesEasterEgg() {
-        if (document.getElementById('ivyRosesEasterEggOverlay')) return;
-        const overlay = document.createElement('div');
-        overlay.id = 'ivyRosesEasterEggOverlay';
-        overlay.style.position = 'fixed';
-        overlay.style.top = '0';
-        overlay.style.left = '0';
-        overlay.style.width = '100vw';
-        overlay.style.height = '100vh';
-        overlay.style.pointerEvents = 'none';
-        overlay.style.zIndex = '999999';
-        overlay.style.display = 'flex';
-        overlay.style.alignItems = 'center';
-        overlay.style.justifyContent = 'center';
-        overlay.style.backgroundColor = 'rgba(0,0,0,0.6)';
-        overlay.style.opacity = '0';
-        overlay.style.transition = 'opacity 0.5s ease';
-        
-        const img = document.createElement('img');
-        img.src = 'images/sarmasik.png';
-        img.alt = 'Sarmaşık';
-        img.style.maxWidth = '90vw';
-        img.style.maxHeight = '90vh';
-        img.style.transform = 'scale(0.8)';
-        img.style.transition = 'transform 3s ease';
-        
-        overlay.appendChild(img);
-        document.body.appendChild(overlay);
-        
-        // Trigger reflow
-        void overlay.offsetWidth;
-        
-        overlay.style.opacity = '1';
-        img.style.transform = 'scale(1.05)';
-        
-        setTimeout(() => {
-            overlay.style.opacity = '0';
-            setTimeout(() => overlay.remove(), 500);
-        }, 5000);
-    }
-
-    // Başlangıç Yüklemeleri
+        // Başlangıç Yüklemeleri
     renderUserWidget();
     bindEventJoinButtons();
     initVisitorCounter();
     syncDynamicSiteContent();
     initQrCodeModal();
-    initIvyRosesEasterEgg();
-
+    
     // Initial scroll call
     handleScroll();
 });

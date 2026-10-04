@@ -4872,18 +4872,9 @@ img {
 }
 
 /* === R4: Ivy & Roses Easter Egg Overlay === */
-.ivy-roses-overlay {
-    position: fixed;
-    inset: 0;
-    z-index: 99999;
-    pointer-events: none;
-    overflow: hidden;
-    transition: opacity 0.8s ease;
-}
 
-.ivy-roses-overlay.fade-out {
-    opacity: 0;
-}
+
+
 
 .ivy-corner {
     position: absolute;
@@ -4939,11 +4930,7 @@ img {
     100% { transform: scale(-1, -1) scale(1) rotate(0deg); opacity: 1; }
 }
 
-.ivy-corner-svg {
-    width: 100%;
-    height: 100%;
-    filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.25));
-}
+
 
 .vine-stem {
     stroke-dasharray: 600;
@@ -5044,20 +5031,3 @@ img {
     }
 }
 
-.easter-egg-image {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%) scale(0.8);
-    width: 90vw;
-    max-width: 600px;
-    height: auto;
-    opacity: 0;
-    transition: opacity 2s ease-in-out, transform 3s ease-out;
-    pointer-events: none;
-    z-index: 10000;
-}
-.easter-egg-overlay.active .easter-egg-image {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(1);
-}
