@@ -37,6 +37,15 @@ const TestEngine = {
         if (shareBtn) {
             shareBtn.addEventListener('click', () => this.shareResult());
         }
+
+        const showResultBtn = document.getElementById('showResultBtn');
+        if (showResultBtn) {
+            showResultBtn.addEventListener('click', () => {
+                showResultBtn.disabled = true;
+                showResultBtn.innerText = "Yükleniyor...";
+                this.finalizeAndShowResult();
+            });
+        }
     },
 
     startTest: function() {
@@ -158,11 +167,25 @@ const TestEngine = {
 
     finishTest: function() {
         const questionScreen = document.getElementById('questionScreen');
-        const resultScreen = document.getElementById('resultScreen');
+        const identityScreen = document.getElementById('identityScreen');
 
         if (questionScreen) {
             questionScreen.style.display = 'none';
             questionScreen.classList.remove('active');
+        }
+        if (identityScreen) {
+            identityScreen.style.display = 'block';
+            identityScreen.classList.add('active');
+        }
+    },
+
+    finalizeAndShowResult: async function() {
+        const identityScreen = document.getElementById('identityScreen');
+        const resultScreen = document.getElementById('resultScreen');
+
+        if (identityScreen) {
+            identityScreen.style.display = 'none';
+            identityScreen.classList.remove('active');
         }
         if (resultScreen) {
             resultScreen.style.display = 'block';
@@ -184,7 +207,23 @@ const TestEngine = {
         });
 
         const character = this.findClosestCharacter(userAvg);
+
+        const nameInput = document.getElementById('userNameInput');
+        const userName = (nameInput && nameInput.value.trim() !== '') ? nameInput.value.trim() : 'Anonim';
+        
         this.displayResult(character, userAvg);
+
+        if (window.saveTestResult) {
+            try {
+                await window.saveTestResult({
+                    name: userName,
+                    character: character.name,
+                    dimensions: userAvg
+                });
+            } catch (e) {
+                console.error("Firebase save error", e);
+            }
+        }
     },
 
     findClosestCharacter: function(userAvg) {

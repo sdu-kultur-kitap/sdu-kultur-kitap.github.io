@@ -450,3 +450,71 @@ export async function autoMigrate() {
         console.error("Migration hatası:", e);
     }
 }
+
+// ==========================
+// TEST RESULTS LOGIC
+// ==========================
+export async function saveTestResult(resultData) {
+    try {
+        const docRef = await addDoc(collection(db, "testResults"), {
+            ...resultData,
+            createdAt: new Date().toISOString()
+        });
+        
+        // Update aggregate Counters document for charts
+        const statsRef = doc(db, "settings", "testStats");
+        const updates = {
+            totalTests: increment(1)
+        };
+        
+        if (resultData.character) {
+            updates[`charCounts.${resultData.character}`] = increment(1);
+        }
+        
+        if (resultData.dimensions) {
+            updates["tempSums.extrovert"] = increment(resultData.dimensions.extrovert || 0);
+            updates["tempSums.dreamer"] = increment(resultData.dimensions.dreamer || 0);
+            updates["tempSums.emotional"] = increment(resultData.dimensions.emotional || 0);
+            updates["tempSums.rebel"] = increment(resultData.dimensions.rebel || 0);
+            updates["tempSums.dark"] = increment(resultData.dimensions.dark || 0);
+        }
+        
+        await setDoc(statsRef, updates, { merge: true });
+        
+        return docRef.id;
+    } catch(e) {
+        console.error("Test sonucu kaydedilemedi:", e);
+        throw e;
+    }
+}
+
+export async function getTestResults() {
+    try {
+        // Query only the last 100 tests to prevent loading too much data if there are thousands of tests.
+        // We import limit here if needed, but the original did not have a limit. 
+        // Adding limit to optimize read, since charts no longer need all results.
+        const { limit } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js");
+        const q = query(collection(db, "testResults"), limit(100));
+        const snapshot = await getDocs(q);
+        const results = [];
+        snapshot.forEach(doc => results.push({ id: doc.id, ...doc.data() }));
+        return results.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    } catch(e) {
+        console.error("Test sonuçları alınamadı:", e);
+        return [];
+    }
+}
+
+export async function getTestStats() {
+    try {
+        const docRef = doc(db, "settings", "testStats");
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+            return docSnap.data();
+        }
+        return { totalTests: 0, charCounts: {}, tempSums: { extrovert: 0, dreamer: 0, emotional: 0, rebel: 0, dark: 0 } };
+    } catch(e) {
+        console.error("Test istatistikleri alınamadı:", e);
+        return { totalTests: 0, charCounts: {}, tempSums: { extrovert: 0, dreamer: 0, emotional: 0, rebel: 0, dark: 0 } };
+    }
+}

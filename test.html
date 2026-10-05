@@ -656,6 +656,15 @@
                 </div>
             </div>
 
+            <!-- Identity Screen -->
+            <div id="identityScreen" class="screen" style="display: none; text-align: center;">
+                <h2 class="test-title" style="font-size: 1.8rem; margin-bottom: 1rem;">Sonuçlar Hazır!</h2>
+                <p style="margin-bottom: 2rem; color: var(--text-color); opacity: 0.8;">Sonucunu görmeden önce ismini girmek ister misin? (İsteğe bağlı)</p>
+                <input type="text" id="userNameInput" placeholder="Adınız Soyadınız" style="padding: 1rem; width: 100%; max-width: 300px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--surface-color); color: var(--text-color); margin-bottom: 1.5rem; font-family: 'Plus Jakarta Sans', sans-serif;">
+                <br>
+                <button id="showResultBtn" class="btn btn-primary">Sonucu Gör</button>
+            </div>
+
             <!-- Result Screen -->
             <div id="resultScreen" class="screen">
                 <h2 class="test-title" style="font-size: 2rem;">Ruh Eşin Olan Karakter:</h2>
@@ -760,6 +769,10 @@
                 });
             }
         });
+    </script>
+    <script type="module">
+        import { saveTestResult } from './firebase-service.js';
+        window.saveTestResult = saveTestResult;
     </script>
 </body>
 </html>

@@ -4,7 +4,7 @@
    Zero-cost static sync with LocalStorage & SessionStorage
    ========================================== */
 
-import { getMembers, deleteMember as fbDeleteMember, registerAdmin, loginAdmin, getAdmins, approveAdmin, deleteAdmin as fbDeleteAdmin, getApplications, updateApplicationStatus, deleteApplication as fbDeleteApplication, getSuggestions, updateSuggestionStatus, deleteSuggestion as fbDeleteSuggestion, getAutoAcceptSetting, setAutoAcceptSetting, getPublicData, setPublicData, verifyAdmin, autoMigrate } from './firebase-service.js';
+import { getMembers, deleteMember as fbDeleteMember, registerAdmin, loginAdmin, getAdmins, approveAdmin, deleteAdmin as fbDeleteAdmin, getApplications, updateApplicationStatus, deleteApplication as fbDeleteApplication, getSuggestions, updateSuggestionStatus, deleteSuggestion as fbDeleteSuggestion, getAutoAcceptSetting, setAutoAcceptSetting, getPublicData, setPublicData, verifyAdmin, autoMigrate, getTestResults, getTestStats } from './firebase-service.js';
 
 (function () {
     'use strict';
@@ -488,6 +488,7 @@ import { getMembers, deleteMember as fbDeleteMember, registerAdmin, loginAdmin, 
         members: { title: 'Üyeler (Hızlı Kayıt)', subtitle: 'Siteden hızlı kayıt olan aktif topluluk üyeleri' },
         gallery: { title: 'Galeri Yönetimi', subtitle: 'Ana sayfada sergilenen etkinlik fotoğraflarını yönetin' },
         suggestions: { title: 'Etkinlik Önerileri', subtitle: 'Öğrencilerin gönderdiği etkinlik fikirleri havuzu' },
+        testStats: { title: 'Karakter Testi Analizi', subtitle: 'Test sonuçları, karakter dağılımları ve mizaç ortalamaları' },
         broadcast: { title: 'WhatsApp Bülteni', subtitle: 'Gruba atılacak hazır şablonlu etkinlik duyurusu üret' },
         users: { title: 'Kullanıcılar & Roller', subtitle: 'Yönetim ekibi yetkilerini ve rollerini düzenle' },
         backup: { title: 'Yedekleme & Sıfırlama', subtitle: 'Verileri JSON dosyası olarak indir veya geri yükle' },
@@ -602,6 +603,7 @@ import { getMembers, deleteMember as fbDeleteMember, registerAdmin, loginAdmin, 
         renderUsersSection(data);
         renderDevMessagesSection(data);
         renderGallerySection(data);
+        renderTestStatsSection();
     }
 
     // 1. GENEL BAKIŞ
@@ -1628,6 +1630,101 @@ import { getMembers, deleteMember as fbDeleteMember, registerAdmin, loginAdmin, 
         renderGallerySection(data);
         showToast('Fotoğraf galeriden silindi.', 'fas fa-trash-alt');
     };
+
+    // ==========================================
+    // TEST STATS
+    // ==========================================
+    let charChart = null;
+    let tempChart = null;
+    
+    async function renderTestStatsSection() {
+        const tbody = document.getElementById('tbodyTestResults');
+        if (!tbody) return;
+        
+        try {
+            const results = await getTestResults();
+            const stats = await getTestStats();
+            
+            tbody.innerHTML = '';
+            
+            results.forEach(res => {
+                const tr = document.createElement('tr');
+                const d = new Date(res.createdAt);
+                
+                tr.innerHTML = `
+                    <td>${d.toLocaleDateString('tr-TR')} ${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}</td>
+                    <td>${res.name || 'Anonim'}</td>
+                    <td><span class="status-badge" style="background:var(--primary-color);color:#fff">${res.character || '-'}</span></td>
+                    <td>${res.dimensions?.extrovert ? res.dimensions.extrovert.toFixed(1) : '-'}</td>
+                    <td>${res.dimensions?.dreamer ? res.dimensions.dreamer.toFixed(1) : '-'}</td>
+                    <td>${res.dimensions?.emotional ? res.dimensions.emotional.toFixed(1) : '-'}</td>
+                    <td>${res.dimensions?.rebel ? res.dimensions.rebel.toFixed(1) : '-'}</td>
+                    <td>${res.dimensions?.dark ? res.dimensions.dark.toFixed(1) : '-'}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+            
+            if (results.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center">Henüz test sonucu yok.</td></tr>';
+            }
+            
+            const charCounts = stats.charCounts || {};
+            const tempSums = stats.tempSums || { extrovert: 0, dreamer: 0, emotional: 0, rebel: 0, dark: 0 };
+            const n = stats.totalTests || 1;
+            
+            // Render Charts
+            const charCtx = document.getElementById('chartCharacterDistribution');
+            const tempCtx = document.getElementById('chartTemperamentAverages');
+            
+            if (charCtx && window.Chart) {
+                if (charChart) charChart.destroy();
+                charChart = new Chart(charCtx, {
+                    type: 'pie',
+                    data: {
+                        labels: Object.keys(charCounts),
+                        datasets: [{
+                            data: Object.values(charCounts),
+                            backgroundColor: [
+                                '#1a56db', '#4ade80', '#facc15', '#f87171', '#c084fc', '#fb923c'
+                            ]
+                        }]
+                    }
+                });
+            }
+            
+            if (tempCtx && window.Chart) {
+                if (tempChart) tempChart.destroy();
+                tempChart = new Chart(tempCtx, {
+                    type: 'radar',
+                    data: {
+                        labels: ['Dışadönük', 'Hayalperest', 'Duygusal', 'Asi', 'Gizemli'],
+                        datasets: [{
+                            label: 'Genel Ortalama',
+                            data: [
+                                tempSums.extrovert / n,
+                                tempSums.dreamer / n,
+                                tempSums.emotional / n,
+                                tempSums.rebel / n,
+                                tempSums.dark / n
+                            ],
+                            backgroundColor: 'rgba(26, 86, 219, 0.2)',
+                            borderColor: '#1a56db',
+                            borderWidth: 2
+                        }]
+                    },
+                    options: {
+                        scale: {
+                            ticks: { min: 0, max: 10 }
+                        }
+                    }
+                });
+            }
+            
+        } catch (e) {
+            console.error('Test stats render error:', e);
+            tbody.innerHTML = '<tr><td colspan="8" class="text-center text-red">Sonuçlar yüklenirken hata oluştu.</td></tr>';
+        }
+    }
 
     // ==========================================
     // İLK YÜKLEME KONTROLÜ
