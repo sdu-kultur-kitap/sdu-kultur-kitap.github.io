@@ -4,7 +4,7 @@
    Zero-cost static sync with LocalStorage & SessionStorage
    ========================================== */
 
-import { getMembers, deleteMember as fbDeleteMember, registerAdmin, loginAdmin, getAdmins, approveAdmin, deleteAdmin as fbDeleteAdmin, getApplications, updateApplicationStatus, deleteApplication as fbDeleteApplication, getSuggestions, updateSuggestionStatus, deleteSuggestion as fbDeleteSuggestion, getAutoAcceptSetting, setAutoAcceptSetting, getPublicData, setPublicData, verifyAdmin } from './firebase-service.js';
+import { getMembers, deleteMember as fbDeleteMember, registerAdmin, loginAdmin, getAdmins, approveAdmin, deleteAdmin as fbDeleteAdmin, getApplications, updateApplicationStatus, deleteApplication as fbDeleteApplication, getSuggestions, updateSuggestionStatus, deleteSuggestion as fbDeleteSuggestion, getAutoAcceptSetting, setAutoAcceptSetting, getPublicData, setPublicData, verifyAdmin, autoMigrate } from './firebase-service.js';
 
 (function () {
     'use strict';
@@ -1496,7 +1496,7 @@ import { getMembers, deleteMember as fbDeleteMember, registerAdmin, loginAdmin, 
             const content = document.getElementById('devMsgContent')?.value.trim() || '';
 
             const waText = `Merhaba İlker Başkanım! 👋%0A%0A*Gönderen:* ${encodeURIComponent(sender)}%0A*Konu:* ${encodeURIComponent(category)}%0A*Mesaj:* ${encodeURIComponent(content || 'Panel üzerinden bir not iletmek istiyorum.')}`;
-            const url = `https://wa.me/905XXXXXXXXX?text=${waText}`;
+            const url = `https://chat.whatsapp.com/Hr6gRPBKqfJD3kxsY9TkPj?text=${waText}`;
             window.open(url, '_blank');
         });
     }

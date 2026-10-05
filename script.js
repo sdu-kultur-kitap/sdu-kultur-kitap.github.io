@@ -414,7 +414,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             // Generate WhatsApp message for direct management notification
             const message = `Merhaba! Ben ${fullName}. SDÜ ${department} (${grade}) öğrencisiyim. Kültür ve Kitap Topluluğu'na katılmak istiyorum.\n\nİlgi Alanlarım: ${interestSummary}\nTelefon: ${phone}`;
-            const waUrl = `https://wa.me/905XXXXXXXXX?text=${encodeURIComponent(message)}`;
+            const waUrl = `https://chat.whatsapp.com/Hr6gRPBKqfJD3kxsY9TkPj`;
 
             if (waRedirectBtn) {
                 waRedirectBtn.href = waUrl;

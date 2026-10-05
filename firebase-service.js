@@ -165,7 +165,7 @@ export async function submitApplication(appData) {
 export async function submitSuggestion(suggData) {
     await addDoc(collection(db, "suggestions"), {
         ...suggData,
-        status: "DeÄŸerlendiriliyor",
+        status: "Değerlendiriliyor",
         submittedAt: new Date().toISOString()
     });
 }
@@ -290,7 +290,7 @@ export async function getAdmins() {
     admins.unshift({
         id: "master_admin",
         name: "İlker",
-        email: email,
+        email: "ilkerm946@gmail.com",
         role: "superadmin",
         status: "active",
         title: "Topluluk Yöneticisi",
@@ -410,5 +410,43 @@ export async function incrementVisitorStats() {
         }
     } catch(e) {
         console.error("Ziyaretçi verisi güncellenemedi:", e);
+    }
+}
+
+export async function autoMigrate() {
+    try {
+        const data = await getPublicData();
+        if (data && data.admins && data.admins.length > 0) {
+            console.log("Eski veriler tespit edildi, yeni koleksiyonlara taşınıyor...");
+            
+            // Migrate admins
+            for (let admin of data.admins) {
+                if (admin.email !== "ilkerm946@gmail.com") {
+                    await addDoc(collection(db, "admins"), admin);
+                }
+            }
+            // Migrate members
+            if (data.members) {
+                for (let member of data.members) {
+                    await addDoc(collection(db, "members"), member);
+                }
+            }
+            // Migrate suggestions
+            if (data.suggestions) {
+                for (let sugg of data.suggestions) {
+                    await addDoc(collection(db, "suggestions"), sugg);
+                }
+            }
+            // Remove from publicData to prevent re-migration
+            delete data.admins;
+            delete data.members;
+            delete data.suggestions;
+            await setPublicData(data);
+            console.log("Veri taşıma (Migration) başarıyla tamamlandı!");
+            // Reload page to show new data
+            window.location.reload();
+        }
+    } catch(e) {
+        console.error("Migration hatası:", e);
     }
 }
