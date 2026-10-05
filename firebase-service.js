@@ -490,11 +490,7 @@ export async function saveTestResult(resultData) {
 
 export async function getTestResults() {
     try {
-        // Query only the last 100 tests to prevent loading too much data if there are thousands of tests.
-        // We import limit here if needed, but the original did not have a limit. 
-        // Adding limit to optimize read, since charts no longer need all results.
-        const { limit } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js");
-        const q = query(collection(db, "testResults"), limit(100));
+        const q = query(collection(db, "testResults"));
         const snapshot = await getDocs(q);
         const results = [];
         snapshot.forEach(doc => results.push({ id: doc.id, ...doc.data() }));
@@ -516,5 +512,50 @@ export async function getTestStats() {
     } catch(e) {
         console.error("Test istatistikleri alınamadı:", e);
         return { totalTests: 0, charCounts: {}, tempSums: { extrovert: 0, dreamer: 0, emotional: 0, rebel: 0, dark: 0 } };
+    }
+}
+
+export async function syncLegacyTestStats() {
+    try {
+        const statsRef = doc(db, "settings", "testStats");
+        const docSnap = await getDoc(statsRef);
+        
+        // If it already has tests counted, we don't need to migrate
+        if (docSnap.exists() && docSnap.data().totalTests > 0) {
+            return;
+        }
+
+        const q = query(collection(db, "testResults"));
+        const snapshot = await getDocs(q);
+        
+        if (snapshot.empty) return;
+
+        let charCounts = {};
+        let tempSums = { extrovert: 0, dreamer: 0, emotional: 0, rebel: 0, dark: 0 };
+        let totalTests = 0;
+
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            totalTests++;
+            if (data.character) {
+                charCounts[data.character] = (charCounts[data.character] || 0) + 1;
+            }
+            if (data.dimensions) {
+                tempSums.extrovert += (data.dimensions.extrovert || 0);
+                tempSums.dreamer += (data.dimensions.dreamer || 0);
+                tempSums.emotional += (data.dimensions.emotional || 0);
+                tempSums.rebel += (data.dimensions.rebel || 0);
+                tempSums.dark += (data.dimensions.dark || 0);
+            }
+        });
+
+        await setDoc(statsRef, {
+            totalTests,
+            charCounts,
+            tempSums
+        }, { merge: true });
+        console.log("Legacy test results migrated to testStats!");
+    } catch (e) {
+        console.error("Migration of legacy test stats failed:", e);
     }
 }

@@ -4,7 +4,7 @@
    Zero-cost static sync with LocalStorage & SessionStorage
    ========================================== */
 
-import { getMembers, deleteMember as fbDeleteMember, registerAdmin, loginAdmin, getAdmins, approveAdmin, deleteAdmin as fbDeleteAdmin, getApplications, updateApplicationStatus, deleteApplication as fbDeleteApplication, getSuggestions, updateSuggestionStatus, deleteSuggestion as fbDeleteSuggestion, getAutoAcceptSetting, setAutoAcceptSetting, getPublicData, setPublicData, verifyAdmin, autoMigrate, getTestResults, getTestStats } from './firebase-service.js';
+import { getMembers, deleteMember as fbDeleteMember, registerAdmin, loginAdmin, getAdmins, approveAdmin, deleteAdmin as fbDeleteAdmin, getApplications, updateApplicationStatus, deleteApplication as fbDeleteApplication, getSuggestions, updateSuggestionStatus, deleteSuggestion as fbDeleteSuggestion, getAutoAcceptSetting, setAutoAcceptSetting, getPublicData, setPublicData, verifyAdmin, autoMigrate, getTestResults, getTestStats, syncLegacyTestStats } from './firebase-service.js';
 
 (function () {
     'use strict';
@@ -1643,7 +1643,12 @@ import { getMembers, deleteMember as fbDeleteMember, registerAdmin, loginAdmin, 
         
         try {
             const results = await getTestResults();
-            const stats = await getTestStats();
+            let stats = await getTestStats();
+            
+            if (stats.totalTests === 0 && results.length > 0) {
+                await syncLegacyTestStats();
+                stats = await getTestStats();
+            }
             
             tbody.innerHTML = '';
             
