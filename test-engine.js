@@ -218,7 +218,8 @@ const TestEngine = {
                 await window.saveTestResult({
                     name: userName,
                     character: character.name,
-                    dimensions: userAvg
+                    dimensions: userAvg,
+                    rawAnswers: this.answers.map(a => a.optionIndex)
                 });
             } catch (e) {
                 console.error("Firebase save error", e);
