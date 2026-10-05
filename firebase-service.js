@@ -1,5 +1,5 @@
 import { db } from './firebase-config.js';
-import { collection, addDoc, getDocs, doc, setDoc, getDoc, updateDoc, deleteDoc, query, where, arrayUnion } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { collection, addDoc, getDocs, doc, setDoc, getDoc, updateDoc, deleteDoc, query, where, arrayUnion, increment } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 // SHA-256 Password Hashing
 export async function hashPassword(password) {
@@ -342,4 +342,73 @@ export async function updateSuggestionStatus(id, newStatus) {
 
 export async function deleteSuggestion(id) {
     await deleteDoc(doc(db, "suggestions", id));
+}
+
+
+// ==========================
+// VISITOR COUNTER
+// ==========================
+export async function getVisitorStats() {
+    try {
+        const docRef = doc(db, "settings", "visitorStats");
+        let docSnap = await getDoc(docRef);
+        const todayDate = new Date().toISOString().split('T')[0];
+        
+        if (!docSnap.exists()) {
+            await setDoc(docRef, {
+                total: 124,
+                today: 100,
+                date: todayDate,
+                onlineBase: 5
+            });
+            docSnap = await getDoc(docRef);
+        }
+        
+        let data = docSnap.data();
+        
+        if (data.date !== todayDate) {
+            await updateDoc(docRef, { date: todayDate, today: 0 });
+            data.today = 0;
+            data.date = todayDate;
+        }
+        
+        return data;
+    } catch(e) {
+        console.error("Ziyaretçi verisi alınamadı:", e);
+        return null;
+    }
+}
+
+export async function incrementVisitorStats() {
+    try {
+        const docRef = doc(db, "settings", "visitorStats");
+        const todayDate = new Date().toISOString().split('T')[0];
+        
+        let docSnap = await getDoc(docRef);
+        if (!docSnap.exists()) {
+            await setDoc(docRef, {
+                total: 125,
+                today: 101,
+                date: todayDate,
+                onlineBase: 5
+            });
+            return;
+        }
+
+        let data = docSnap.data();
+        if (data.date !== todayDate) {
+            await updateDoc(docRef, {
+                total: increment(1),
+                today: 1,
+                date: todayDate
+            });
+        } else {
+            await updateDoc(docRef, {
+                total: increment(1),
+                today: increment(1)
+            });
+        }
+    } catch(e) {
+        console.error("Ziyaretçi verisi güncellenemedi:", e);
+    }
 }

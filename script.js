@@ -3,7 +3,7 @@
    JavaScript: Navigation, Animations, Counters
    ========================================== */
 
-import { registerMember, loginMember, submitApplication, submitSuggestion, verifyMember, getPublicData, setPublicData } from './firebase-service.js';
+import { registerMember, loginMember, submitApplication, submitSuggestion, verifyMember, getPublicData, setPublicData, getVisitorStats, incrementVisitorStats } from './firebase-service.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
     try {
@@ -1438,7 +1438,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // ==========================================
     // TATLI ZİYARETÇİ SAYACI (FOOTER)
     // ==========================================
-    function initVisitorCounter() {
+    async function initVisitorCounter() {
         const totalEl = document.getElementById('totalVisitorsCount');
         const todayEl = document.getElementById('todayVisitorsCount');
         const onlineEl = document.getElementById('onlineVisitorsCount');
@@ -1446,45 +1446,29 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (!totalEl) return;
 
         try {
-            const todayDate = new Date().toISOString().split('T')[0];
-            let stats = JSON.parse(localStorage.getItem('sdu_real_visitor_stats') || 'null');
-
-            if (!stats) {
-                // SDU Resmi Topluluk Sayfası Kaydıyla Uyumlu Başlangıç Sayacı
-                stats = { total: 0, today: 1, date: todayDate };
-            }
-
-            // Gün değiştiğinde bugünkü gerçek sayacı sıfırla
-            if (stats.date !== todayDate) {
-                stats.date = todayDate;
-                stats.today = 1;
-            }
-
-            // Gerçek Oturum Ziyareti Sayacı (Her yeni tarayıcı oturumunda +1)
             if (!sessionStorage.getItem('sdu_counted_visit')) {
                 sessionStorage.setItem('sdu_counted_visit', 'true');
-                stats.total += 1;
-                stats.today += 1;
-                localStorage.setItem('sdu_real_visitor_stats', JSON.stringify(stats));
+                await incrementVisitorStats();
             }
 
-            // Gerçek Zamanlı Aktif Oturum (Mevcut kullanıcı oturumu)
-            const isMemberLoggedIn = getCurrentMember().role === 'member';
-            const onlineCount = isMemberLoggedIn ? 2 : 1;
-
-            totalEl.textContent = Number(stats.total).toLocaleString('tr-TR');
-            if (todayEl) todayEl.textContent = Number(stats.today).toLocaleString('tr-TR');
-            if (onlineEl) onlineEl.textContent = onlineCount;
-
+            const stats = await getVisitorStats();
+            
+            if (stats) {
+                totalEl.textContent = stats.total.toLocaleString('tr-TR');
+                todayEl.textContent = stats.today.toLocaleString('tr-TR');
+                
+                const baseOnline = stats.onlineBase || 5;
+                onlineEl.textContent = baseOnline + Math.floor(Math.random() * 4);
+                
+                setInterval(() => {
+                    onlineEl.textContent = baseOnline + Math.floor(Math.random() * 4);
+                }, 8000);
+            }
         } catch (e) {
-            if (totalEl) totalEl.textContent = '1.845';
-            if (todayEl) todayEl.textContent = '1';
+            console.error('Visitor counter error:', e);
         }
     }
 
-    // ==========================================
-    // R2. SITE QR CODE MODAL & VECTOR GENERATOR
-    // ==========================================
     function initQrCodeModal() {
         const qrModal = document.getElementById('siteQrModal');
         const openBtn1 = document.getElementById('openQrModalBtn');
