@@ -549,6 +549,150 @@
             box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5); display: flex; align-items: center; gap: 9px; animation: popIn 0.25s ease;
         }
 
+        /* ================= THEMES & JUICY ANIMATIONS ================= */
+        body[data-theme="royal"] {
+            --bg-main: #071310;
+            --bg-card: rgba(11, 31, 24, 0.88);
+            --bg-elevated: rgba(18, 48, 37, 0.82);
+            --accent-primary: #eab308;
+            background-image:
+                radial-gradient(circle at 20% 15%, rgba(234, 179, 8, 0.18) 0%, transparent 42%),
+                radial-gradient(circle at 80% 25%, rgba(16, 185, 129, 0.18) 0%, transparent 45%),
+                radial-gradient(circle at 50% 85%, rgba(245, 158, 11, 0.12) 0%, transparent 45%);
+        }
+        body[data-theme="crimson"] {
+            --bg-main: #14080e;
+            --bg-card: rgba(34, 12, 22, 0.88);
+            --bg-elevated: rgba(54, 18, 34, 0.82);
+            --accent-primary: #f43f5e;
+            background-image:
+                radial-gradient(circle at 15% 15%, rgba(244, 63, 94, 0.2) 0%, transparent 42%),
+                radial-gradient(circle at 85% 20%, rgba(168, 85, 247, 0.16) 0%, transparent 42%),
+                radial-gradient(circle at 50% 85%, rgba(251, 146, 60, 0.12) 0%, transparent 45%);
+        }
+
+        .icon-ctrl-btn {
+            cursor: pointer; background: rgba(255, 255, 255, 0.06); border: 1px solid var(--border-glass);
+            color: var(--text-main); padding: 7px 12px; border-radius: var(--radius-sm);
+            font-size: 0.78rem; font-weight: 700; font-family: inherit;
+            display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s ease;
+        }
+        .icon-ctrl-btn:hover { background: rgba(255, 255, 255, 0.14); transform: translateY(-1px); }
+
+        /* Ambient Floating Orbs */
+        .ambient-orb {
+            position: fixed; border-radius: 50%; filter: blur(65px); pointer-events: none; z-index: 0; opacity: 0.35;
+            animation: floatOrb 14s ease-in-out infinite alternate;
+        }
+        .ambient-orb.orb-1 { width: 320px; height: 320px; background: #6366f1; top: 8%; left: -80px; }
+        .ambient-orb.orb-2 { width: 280px; height: 280px; background: #10b981; bottom: 5%; right: -60px; animation-delay: -5s; }
+        @keyframes floatOrb {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(40px, -35px) scale(1.12); }
+        }
+        .main-container { position: relative; z-index: 2; }
+
+        /* Animated Treasure Vault Core */
+        .vault-visual-stage {
+            display: flex; align-items: center; justify-content: space-between; gap: 18px;
+            padding: 16px 20px; border-radius: var(--radius-md);
+            background: radial-gradient(circle at center, rgba(251, 191, 36, 0.14) 0%, rgba(9, 13, 22, 0.78) 75%);
+            border: 1px solid rgba(251, 191, 36, 0.3); position: relative; overflow: hidden;
+        }
+        .vault-chest-core {
+            display: flex; align-items: center; gap: 14px;
+        }
+        .vault-chest-icon {
+            width: 58px; height: 58px; border-radius: 18px;
+            background: linear-gradient(135deg, rgba(251, 191, 36, 0.25), rgba(16, 185, 129, 0.2));
+            border: 2px solid rgba(251, 191, 36, 0.55);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.9rem; box-shadow: 0 0 28px rgba(251, 191, 36, 0.3);
+            animation: vaultPulse 2.6s ease-in-out infinite;
+        }
+        .vault-chest-icon.burst {
+            animation: vaultBurst 0.65s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        @keyframes vaultPulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 22px rgba(251, 191, 36, 0.25); }
+            50% { transform: scale(1.06); box-shadow: 0 0 36px rgba(251, 191, 36, 0.5); }
+        }
+        @keyframes vaultBurst {
+            0% { transform: scale(0.85) rotate(-6deg); }
+            45% { transform: scale(1.28) rotate(6deg); box-shadow: 0 0 55px rgba(16, 185, 129, 0.85); }
+            100% { transform: scale(1) rotate(0); }
+        }
+        .vault-progress-wrap { flex: 1; display: flex; flex-direction: column; gap: 6px; }
+        .vault-progress-track {
+            width: 100%; height: 10px; border-radius: 999px;
+            background: rgba(255, 255, 255, 0.08); overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .vault-progress-fill {
+            height: 100%; width: 0%; border-radius: 999px;
+            background: linear-gradient(90deg, #fbbf24, #10b981, #6366f1);
+            transition: width 0.55s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: 0 0 14px rgba(16, 185, 129, 0.6);
+        }
+
+        /* Player Card Enhancements: Streak Fire, Floating Delta, Throw Buttons */
+        .pgg-player-card.on-fire {
+            border-color: rgba(251, 191, 36, 0.75);
+            box-shadow: 0 0 26px rgba(245, 158, 11, 0.28);
+        }
+        .streak-badge {
+            display: inline-flex; align-items: center; gap: 3px;
+            font-size: 0.65rem; font-weight: 800; padding: 2px 7px; border-radius: 999px;
+            background: linear-gradient(135deg, #f59e0b, #ef4444); color: #fff;
+            box-shadow: 0 4px 10px rgba(239, 68, 68, 0.4); animation: popIn 0.25s ease;
+        }
+        .score-float-popup {
+            position: absolute; top: 8px; right: 10px;
+            font-family: 'JetBrains Mono', monospace; font-size: 0.92rem; font-weight: 800;
+            padding: 3px 9px; border-radius: 999px; pointer-events: none; z-index: 25;
+            animation: floatUpFade 1.85s ease forwards;
+        }
+        .score-float-popup.gain { background: rgba(16, 185, 129, 0.95); color: #fff; box-shadow: 0 6px 18px rgba(16, 185, 129, 0.5); }
+        .score-float-popup.penalty { background: rgba(244, 63, 94, 0.95); color: #fff; box-shadow: 0 6px 18px rgba(244, 63, 94, 0.5); }
+        @keyframes floatUpFade {
+            0% { opacity: 0; transform: translateY(12px) scale(0.8); }
+            20% { opacity: 1; transform: translateY(0) scale(1.08); }
+            80% { opacity: 1; transform: translateY(-18px) scale(1); }
+            100% { opacity: 0; transform: translateY(-28px) scale(0.9); }
+        }
+
+        .card-throw-row {
+            display: flex; justify-content: center; gap: 6px; padding-top: 4px;
+        }
+        .throw-mini-btn {
+            background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border-glass);
+            border-radius: 8px; padding: 3px 7px; font-size: 0.78rem; cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        .throw-mini-btn:hover { transform: scale(1.22); background: rgba(255, 255, 255, 0.15); }
+
+        /* Flying Coin & Throwable Projectile */
+        .fx-flying-item {
+            position: fixed; pointer-events: none; z-index: 300; font-size: 1.65rem;
+            transition: all 0.65s cubic-bezier(0.22, 1, 0.36, 1);
+            filter: drop-shadow(0 6px 12px rgba(0,0,0,0.45));
+        }
+
+        /* Screen Shake on Betrayal / Tax Audit / Crisis */
+        @keyframes screenShake {
+            0%, 100% { transform: translateX(0); }
+            20% { transform: translateX(-7px) rotate(-0.5deg); }
+            40% { transform: translateX(7px) rotate(0.5deg); }
+            60% { transform: translateX(-5px); }
+            80% { transform: translateX(5px); }
+        }
+        .shake-anim { animation: screenShake 0.45s ease; }
+
+        #confettiCanvas {
+            position: fixed; inset: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 150;
+        }
+
         @media (max-width: 960px) {
             .lobby-grid, #gameScreen.active { grid-template-columns: 1fr; }
             .pgg-players-grid { grid-template-columns: repeat(2, 1fr); }
@@ -559,7 +703,10 @@
         }
     </style>
 </head>
-<body>
+<body data-theme="cyber">
+    <div class="ambient-orb orb-1"></div>
+    <div class="ambient-orb orb-2"></div>
+    <canvas id="confettiCanvas"></canvas>
 
     <!-- Top Navigation -->
     <header class="topbar">
@@ -573,6 +720,14 @@
             </div>
         </div>
         <div class="topbar-right">
+            <button type="button" class="icon-ctrl-btn" id="themeSwitchBtn" title="Masa Temasını Değiştir">
+                <i class="fas fa-palette" style="color:#fbbf24;"></i>
+                <span id="themeSwitchLabel">Siber Konsey</span>
+            </button>
+            <button type="button" class="icon-ctrl-btn" id="soundToggleBtn" title="Ses Efektlerini Aç/Kapat">
+                <i class="fas fa-volume-up" id="soundToggleIcon" style="color:#34d399;"></i>
+                <span>Ses</span>
+            </button>
             <div class="conn-pill" id="connStatusPill">
                 <span class="conn-dot"></span>
                 <span id="connStatusText">Lobi Hazır</span>
@@ -737,6 +892,25 @@
                                     <p id="pggEventDesc">Ortak havuzdaki altınlar 1.6x ile çarpılıp 4 oyuncuya eşit bölünür.</p>
                                 </div>
                                 <div class="pgg-multiplier-tag" id="pggMultiplierBadge">1.6x Havuz</div>
+                            </div>
+                        </div>
+
+                        <div class="vault-visual-stage" id="vaultVisualStage">
+                            <div class="vault-chest-core">
+                                <div class="vault-chest-icon" id="vaultChestIcon">🏛️</div>
+                                <div>
+                                    <div style="font-size:0.74rem; color:#fbbf24; font-weight:800; text-transform:uppercase; letter-spacing:0.06em;">Ortak Kamu Hazinesi</div>
+                                    <div style="font-size:0.88rem; color:#e2e8f0; font-weight:700;" id="vaultLiveStatusText">Yatırımlar Bekleniyor (0/4 Kilitlendi)</div>
+                                </div>
+                            </div>
+                            <div class="vault-progress-wrap">
+                                <div style="display:flex; justify-content:space-between; font-size:0.72rem; color:var(--text-muted); font-weight:700;">
+                                    <span>Hazine Doluluk Barı</span>
+                                    <span id="vaultFillPctLabel">Max 80 🪙</span>
+                                </div>
+                                <div class="vault-progress-track">
+                                    <div class="vault-progress-fill" id="vaultFillBar"></div>
+                                </div>
                             </div>
                         </div>
 
@@ -1327,6 +1501,182 @@
         pggMaxRoundsEl.textContent = MAX_ROUNDS;
         maxRoundsEl.textContent = MAX_ROUNDS;
 
+        // ================= SOUND SYNTHESIZER & THEME ENGINE =================
+        let soundEnabled = true;
+        let audioCtx = null;
+        const soundToggleBtn = document.getElementById('soundToggleBtn');
+        const soundToggleIcon = document.getElementById('soundToggleIcon');
+        const themeSwitchBtn = document.getElementById('themeSwitchBtn');
+        const themeSwitchLabel = document.getElementById('themeSwitchLabel');
+        const THEMES = [
+            { id: 'cyber', label: 'Siber Konsey' },
+            { id: 'royal', label: 'Zümrüt Casino' },
+            { id: 'crimson', label: 'Kaos Kızılı' }
+        ];
+        let currentThemeIdx = 0;
+
+        if (themeSwitchBtn) {
+            themeSwitchBtn.addEventListener('click', () => {
+                currentThemeIdx = (currentThemeIdx + 1) % THEMES.length;
+                const t = THEMES[currentThemeIdx];
+                document.body.setAttribute('data-theme', t.id);
+                if (themeSwitchLabel) themeSwitchLabel.textContent = t.label;
+                playSound('tick');
+                showToast(`Masa teması "${t.label}" olarak değiştirildi!`, 'fa-palette');
+            });
+        }
+
+        if (soundToggleBtn) {
+            soundToggleBtn.addEventListener('click', () => {
+                soundEnabled = !soundEnabled;
+                if (soundToggleIcon) {
+                    soundToggleIcon.className = soundEnabled ? 'fas fa-volume-up' : 'fas fa-volume-mute';
+                    soundToggleIcon.style.color = soundEnabled ? '#34d399' : '#f43f5e';
+                }
+                if (soundEnabled) playSound('coin');
+            });
+        }
+
+        function playSound(type) {
+            if (!soundEnabled) return;
+            try {
+                if (!audioCtx) {
+                    const AudioContextCls = window.AudioContext || window.webkitAudioContext;
+                    if (!AudioContextCls) return;
+                    audioCtx = new AudioContextCls();
+                }
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+                const now = audioCtx.currentTime;
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                if (type === 'tick') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(520, now);
+                    osc.frequency.exponentialRampToValueAtTime(680, now + 0.04);
+                    gain.gain.setValueAtTime(0.06, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
+                    osc.start(now); osc.stop(now + 0.04);
+                } else if (type === 'lock') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(330, now);
+                    osc.frequency.setValueAtTime(495, now + 0.06);
+                    gain.gain.setValueAtTime(0.12, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.16);
+                    osc.start(now); osc.stop(now + 0.16);
+                } else if (type === 'coin') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(987.77, now);
+                    osc.frequency.setValueAtTime(1318.51, now + 0.08);
+                    gain.gain.setValueAtTime(0.12, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.32);
+                    osc.start(now); osc.stop(now + 0.32);
+                } else if (type === 'siren') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(440, now);
+                    osc.frequency.linearRampToValueAtTime(280, now + 0.25);
+                    gain.gain.setValueAtTime(0.1, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.28);
+                    osc.start(now); osc.stop(now + 0.28);
+                } else if (type === 'pop') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(400, now);
+                    osc.frequency.exponentialRampToValueAtTime(750, now + 0.08);
+                    gain.gain.setValueAtTime(0.09, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
+                    osc.start(now); osc.stop(now + 0.09);
+                } else if (type === 'win') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(523.25, now);
+                    osc.frequency.setValueAtTime(659.25, now + 0.1);
+                    osc.frequency.setValueAtTime(783.99, now + 0.2);
+                    osc.frequency.setValueAtTime(1046.50, now + 0.3);
+                    gain.gain.setValueAtTime(0.14, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.55);
+                    osc.start(now); osc.stop(now + 0.55);
+                }
+            } catch (e) {}
+        }
+
+        function spawnFlyingItem(fromEl, toEl, emoji = '🪙') {
+            if (!fromEl || !toEl) return;
+            try {
+                const r1 = fromEl.getBoundingClientRect();
+                const r2 = toEl.getBoundingClientRect();
+                if (r1.width === 0 || r2.width === 0) return;
+                const el = document.createElement('div');
+                el.className = 'fx-flying-item';
+                el.textContent = emoji;
+                el.style.left = `${r1.left + r1.width / 2 - 14}px`;
+                el.style.top = `${r1.top + r1.height / 2 - 14}px`;
+                el.style.transform = 'scale(0.6) rotate(0deg)';
+                document.body.appendChild(el);
+                requestAnimationFrame(() => {
+                    el.style.left = `${r2.left + r2.width / 2 - 14}px`;
+                    el.style.top = `${r2.top + r2.height / 2 - 14}px`;
+                    el.style.transform = 'scale(1.25) rotate(360deg)';
+                });
+                setTimeout(() => el.remove(), 680);
+            } catch (e) {}
+        }
+
+        function showFloatingScoreDelta(seatIdx, deltaVal, extraTag = '') {
+            const card = document.getElementById(`pggCard_${seatIdx}`);
+            if (!card) return;
+            const pop = document.createElement('div');
+            const isGain = deltaVal >= 0;
+            pop.className = `score-float-popup ${isGain ? 'gain' : 'penalty'}`;
+            pop.textContent = `${isGain ? '+' : ''}${fmtNum(deltaVal)} 🪙 ${extraTag}`.trim();
+            card.appendChild(pop);
+            setTimeout(() => pop.remove(), 1850);
+        }
+
+        function triggerScreenShake() {
+            const container = document.querySelector('.main-container');
+            if (!container) return;
+            container.classList.remove('shake-anim');
+            void container.offsetWidth;
+            container.classList.add('shake-anim');
+        }
+
+        function launchConfetti() {
+            const canvas = document.getElementById('confettiCanvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            const pieces = Array.from({ length: 75 }, () => ({
+                x: Math.random() * canvas.width,
+                y: -20 - Math.random() * 200,
+                w: 7 + Math.random() * 6,
+                h: 10 + Math.random() * 8,
+                color: ['#fbbf24', '#10b981', '#6366f1', '#f43f5e', '#38bdf8'][Math.floor(Math.random() * 5)],
+                vy: 3 + Math.random() * 4,
+                vx: -2 + Math.random() * 4,
+                rot: Math.random() * 360,
+                vrot: -6 + Math.random() * 12
+            }));
+            let frames = 0;
+            function step() {
+                frames++;
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                pieces.forEach(p => {
+                    p.x += p.vx; p.y += p.vy; p.rot += p.vrot;
+                    ctx.save();
+                    ctx.translate(p.x, p.y);
+                    ctx.rotate((p.rot * Math.PI) / 180);
+                    ctx.fillStyle = p.color;
+                    ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+                    ctx.restore();
+                });
+                if (frames < 130) requestAnimationFrame(step);
+                else ctx.clearRect(0, 0, canvas.width, canvas.height);
+            }
+            requestAnimationFrame(step);
+        }
+
         function fmtNum(n) {
             const rounded = Math.round(Number(n) * 10) / 10;
             return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(1);
@@ -1709,7 +2059,17 @@
 
                 case 'EMOTE':
                     if (currentGameMode === '4p' && typeof packet.seatIndex === 'number' && packet.text) {
+                        playSound('pop');
                         showPlayerSpeechBubble(packet.seatIndex, packet.text);
+                    }
+                    break;
+
+                case 'THROW_ITEM':
+                    if (currentGameMode === '4p' && typeof packet.fromSeat === 'number' && typeof packet.toSeat === 'number' && packet.emoji) {
+                        playSound('pop');
+                        const fromEl = document.getElementById(`pggCard_${packet.fromSeat}`);
+                        const toEl = document.getElementById(`pggCard_${packet.toSeat}`);
+                        spawnFlyingItem(fromEl, toEl, packet.emoji);
                     }
                     break;
 
@@ -2055,12 +2415,37 @@
             });
         }
 
-        pggSlider.addEventListener('input', (e) => setSliderVal(e.target.value));
+        pggSlider.addEventListener('input', (e) => {
+            playSound('tick');
+            setSliderVal(e.target.value);
+        });
         pggPresetsRow.querySelectorAll('.preset-pill-btn').forEach(btn => {
             btn.addEventListener('click', () => {
-                if (!pggSlider.disabled) setSliderVal(btn.dataset.val);
+                if (!pggSlider.disabled) {
+                    playSound('tick');
+                    setSliderVal(btn.dataset.val);
+                }
             });
         });
+
+        function getSeatStreak(seatIdx) {
+            let streak = 0;
+            for (let r = currentRound - 1; r >= 1; r--) {
+                const mv = pggMoves[r]?.[seatIdx];
+                if (mv !== undefined && Number(mv) >= 15) streak++;
+                else break;
+            }
+            return streak;
+        }
+
+        window.throwReactionToSeat = function(toSeat, emoji) {
+            if (!isMatched || currentGameMode !== '4p') return;
+            playSound('pop');
+            const fromEl = document.getElementById(`pggCard_${mySeatIndex}`);
+            const toEl = document.getElementById(`pggCard_${toSeat}`);
+            spawnFlyingItem(fromEl, toEl, emoji);
+            sendPacket({ type: 'THROW_ITEM', fromSeat: mySeatIndex, toSeat, emoji });
+        };
 
         function renderPggPlayerCards() {
             const avatars = ['👑', '🛡️', '⚡', '🦊'];
@@ -2074,6 +2459,8 @@
                 const rMoves = pggMoves[currentRound] || {};
                 const hasMoved = rMoves[i] !== undefined;
                 const isResolved = !!resolvedRounds[currentRound];
+                const streak = getSeatStreak(i);
+                const onFire = streak >= 2;
 
                 let statusClass = 'pgg-status-pill';
                 let statusText = '⏳ Düşünüyor...';
@@ -2085,12 +2472,22 @@
                     statusText = '🔒 Karar Kilitlendi (? 🪙)';
                 }
 
+                const streakHtml = onFire ? `<span class="streak-badge" title="Cömertlik Serisi!">🔥 ${streak}x Seri</span>` : '';
+                const throwRowHtml = !isMe ? `
+                    <div class="card-throw-row">
+                        <button type="button" class="throw-mini-btn" onclick="window.throwReactionToSeat(${i}, '🍅')" title="Domates Fırlat!">🍅</button>
+                        <button type="button" class="throw-mini-btn" onclick="window.throwReactionToSeat(${i}, '🌹')" title="Gül Gönder!">🌹</button>
+                        <button type="button" class="throw-mini-btn" onclick="window.throwReactionToSeat(${i}, '⚡')" title="Şimşek Çak!">⚡</button>
+                        <button type="button" class="throw-mini-btn" onclick="window.throwReactionToSeat(${i}, '👑')" title="Taç Tak!">👑</button>
+                    </div>
+                ` : '';
+
                 if (alreadyBuilt) {
                     const card = document.getElementById(`pggCard_${i}`);
                     if (card) {
-                        card.className = `pgg-player-card ${isMe ? 'is-me' : ''} ${hasMoved ? 'locked-in' : ''}`;
+                        card.className = `pgg-player-card ${isMe ? 'is-me' : ''} ${hasMoved ? 'locked-in' : ''} ${onFire ? 'on-fire' : ''}`;
                         const nameEl = card.querySelector('.pgg-player-name');
-                        if (nameEl) nameEl.textContent = seatObj.name;
+                        if (nameEl) nameEl.innerHTML = `${seatObj.name} ${streakHtml}`;
                         const tagEl = card.querySelector('.pgg-seat-tag');
                         if (tagEl) tagEl.textContent = isMe ? 'SEN • KOLTUK #' + (i + 1) : (seatObj.isBot ? 'STRATEJİK BOT' : 'KOLTUK #' + (i + 1));
                         const avEl = card.querySelector('.pgg-avatar');
@@ -2105,7 +2502,7 @@
                     }
                 } else {
                     const card = document.createElement('div');
-                    card.className = `pgg-player-card ${isMe ? 'is-me' : ''} ${hasMoved ? 'locked-in' : ''}`;
+                    card.className = `pgg-player-card ${isMe ? 'is-me' : ''} ${hasMoved ? 'locked-in' : ''} ${onFire ? 'on-fire' : ''}`;
                     card.id = `pggCard_${i}`;
                     card.innerHTML = `
                         <div class="pgg-speech-bubble" id="pggBubble_${i}"></div>
@@ -2113,7 +2510,7 @@
                             <div class="pgg-avatar">${seatObj.isBot ? '🤖' : avatars[i]}</div>
                             <div class="pgg-name-wrap">
                                 <span class="pgg-seat-tag">${isMe ? 'SEN • KOLTUK #' + (i + 1) : (seatObj.isBot ? 'STRATEJİK BOT' : 'KOLTUK #' + (i + 1))}</span>
-                                <span class="pgg-player-name">${seatObj.name}</span>
+                                <span class="pgg-player-name">${seatObj.name} ${streakHtml}</span>
                             </div>
                         </div>
                         <div class="pgg-score-row">
@@ -2121,6 +2518,7 @@
                             <span class="pgg-score-val" id="pggScoreVal_${i}">${fmtNum(pggScores[i])} 🪙</span>
                         </div>
                         <div class="${statusClass}" id="pggSeatStatus_${i}">${statusText}</div>
+                        ${throwRowHtml}
                     `;
                     pggPlayersGrid.appendChild(card);
                 }
@@ -2138,6 +2536,7 @@
         document.querySelectorAll('.emote-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 if (!isMatched || currentGameMode !== '4p') return;
+                playSound('pop');
                 const text = btn.dataset.emote;
                 showPlayerSpeechBubble(mySeatIndex, text);
                 sendPacket({ type: 'EMOTE', seatIndex: mySeatIndex, text });
@@ -2168,6 +2567,15 @@
                 if (rMoves[i] !== undefined) readyCount++;
             }
             pggReadyCountEl.textContent = `${readyCount} / 4`;
+
+            const vaultStatusEl = document.getElementById('vaultLiveStatusText');
+            const vaultFillEl = document.getElementById('vaultFillBar');
+            const vaultIconEl = document.getElementById('vaultChestIcon');
+            if (!isResolved) {
+                if (vaultStatusEl) vaultStatusEl.textContent = `Yatırımlar Kilitleniyor (${readyCount}/4 Hazır)`;
+                if (vaultFillEl) vaultFillEl.style.width = `${(readyCount / 4) * 50}%`;
+                if (vaultIconEl) vaultIconEl.textContent = ev.id === 'TAX_AUDIT' ? '🕵️' : (ev.id === 'GOLDEN_AGE' ? '💎' : '🏛️');
+            }
 
             const lockDisabled = (myMv !== undefined || isResolved || currentRound > MAX_ROUNDS);
             pggSlider.disabled = lockDisabled;
@@ -2201,17 +2609,14 @@
             const persona = seatObj?.persona || 'tit_for_tat';
 
             if (persona === 'free_rider') {
-                // Bencil Baron avoids tax audit penalty when TAX_AUDIT is active!
                 if (ev.id === 'TAX_AUDIT') return 6;
                 if (ev.id === 'CRISIS_THRESHOLD') return 8;
                 return (r % 3 === 0) ? 4 : 0;
             }
             if (persona === 'altruist') {
-                // Robin Hood contributes high, especially on bonus rounds
                 if (ev.id === 'GOLDEN_AGE' || ev.id === 'ROBIN_HOOD' || ev.id === 'LOYALTY_BONUS') return 20;
                 return 16;
             }
-            // Prof. Nash (Adaptive / Tit-for-Tat)
             if (r === 1) return 14;
             const prevMoves = pggMoves[r - 1];
             if (prevMoves) {
@@ -2231,7 +2636,13 @@
             const chosenAmount = Math.max(0, Math.min(20, Number(pggSlider.value) || 0));
             pggMoves[currentRound][mySeatIndex] = chosenAmount;
 
-            // If Host and there are AI Bots, compute Bot moves for this round
+            playSound('lock');
+            if (chosenAmount > 0) {
+                const myCard = document.getElementById(`pggCard_${mySeatIndex}`);
+                const vaultEl = document.getElementById('vaultChestIcon');
+                spawnFlyingItem(myCard, vaultEl, '🪙');
+            }
+
             if (isHost) {
                 ensureHostBotMovesForRound(currentRound);
             }
@@ -2254,7 +2665,6 @@
 
         function syncPggProgress() {
             if (isHost) {
-                // Whenever any human submits a move for currentRound, make sure bots also lock in
                 const rMoves = pggMoves[currentRound] || {};
                 const anyHumanMoved = Object.keys(rMoves).length > 0;
                 if (anyHumanMoved) {
@@ -2293,6 +2703,7 @@
 
             let effectiveMultiplier = ev.multiplier || BASE_MULTIPLIER;
             let eventNotes = [];
+            let hadPenaltyOrCrisis = false;
 
             if (ev.id === 'CRISIS_THRESHOLD') {
                 if (totalPool >= 40) {
@@ -2300,6 +2711,7 @@
                     eventNotes.push('Baraj Aşıldı (2.0x)!');
                 } else {
                     effectiveMultiplier = 0.8;
+                    hadPenaltyOrCrisis = true;
                     eventNotes.push('Kriz Çıktı (0.8x)!');
                 }
             }
@@ -2312,21 +2724,67 @@
 
             for (let i = 0; i < 4; i++) {
                 let net = (ROUND_ENDOWMENT - c[i]) + equalShare;
+                let tag = '';
 
                 if (ev.id === 'TAX_AUDIT' && c[i] < 5) {
                     net -= 8;
+                    hadPenaltyOrCrisis = true;
+                    tag = '🕵️ CEZA!';
                     eventNotes.push(`${roomSeats[i]?.name || ('K' + (i + 1))} vergi cezası yedi (-8 🪙)`);
                 }
                 if (ev.id === 'ROBIN_HOOD' && maxContrib >= 12 && c[i] === maxContrib) {
                     net += 6;
+                    tag = '🦸 +6';
                     eventNotes.push(`${roomSeats[i]?.name || ('K' + (i + 1))} Robin Hood ödülü aldı (+6 🪙)`);
                 }
                 if (ev.id === 'LOYALTY_BONUS' && c[i] >= 15) {
                     net += 5;
+                    tag = '💎 +5';
                 }
 
                 roundGains[i] = Math.round(net * 10) / 10;
                 pggScores[i] = Math.round((pggScores[i] + roundGains[i]) * 10) / 10;
+                showFloatingScoreDelta(i, roundGains[i], tag);
+            }
+
+            // Animate Vault Burst & Flying Coins from Vault to Players
+            const vaultIconEl = document.getElementById('vaultChestIcon');
+            const vaultStatusEl = document.getElementById('vaultLiveStatusText');
+            const vaultFillEl = document.getElementById('vaultFillBar');
+            const vaultPctEl = document.getElementById('vaultFillPctLabel');
+
+            if (vaultFillEl) vaultFillEl.style.width = `${Math.min(100, Math.round((totalPool / 80) * 100))}%`;
+            if (vaultPctEl) vaultPctEl.textContent = `${totalPool} / 80 🪙`;
+            if (vaultStatusEl) vaultStatusEl.textContent = `Havuz Açıldı: ${totalPool} 🪙 × ${effectiveMultiplier} = +${fmtNum(equalShare)} 🪙/kişi`;
+
+            if (vaultIconEl) {
+                vaultIconEl.classList.remove('burst');
+                void vaultIconEl.offsetWidth;
+                vaultIconEl.classList.add('burst');
+                for (let i = 0; i < 4; i++) {
+                    const cardEl = document.getElementById(`pggCard_${i}`);
+                    spawnFlyingItem(vaultIconEl, cardEl, '🪙');
+                }
+            }
+
+            if (hadPenaltyOrCrisis || totalPool <= 15) {
+                playSound('siren');
+                triggerScreenShake();
+            } else {
+                playSound('coin');
+            }
+
+            // Funny AI Bot Reactions after round resolves
+            for (let i = 0; i < 4; i++) {
+                if (roomSeats[i] && roomSeats[i].isBot) {
+                    if (c[i] === 0 && totalPool >= 40) {
+                        showPlayerSpeechBubble(i, '😈 Beleş altın tatlıymış!');
+                    } else if (ev.id === 'TAX_AUDIT' && c[i] >= 5) {
+                        showPlayerSpeechBubble(i, '🕵️ Vergimi ödedim, kafam rahat!');
+                    } else if (totalPool >= 65 && i === 1) {
+                        showPlayerSpeechBubble(i, '🤝 Harika dayanışma!');
+                    }
+                }
             }
 
             pggLastPoolEl.textContent = `${totalPool} 🪙 (×${effectiveMultiplier})`;
@@ -2343,7 +2801,6 @@
                 myGain: roundGains[mySeatIndex]
             });
 
-            // Dynamic Notification Banner
             const freeRiders = c.filter(x => x === 0).length;
             let emoji = '🏛️';
             let title = '';
@@ -2484,6 +2941,8 @@
             const avgContributionRate = Math.round((totalPoolContributed / (4 * MAX_ROUNDS * ROUND_ENDOWMENT)) * 100);
             modalStatsLine.textContent = `Topluluk Dayanışma Oranı: %${avgContributionRate} • Tam Katkı (20🪙) Sayısı: ${fullCoopCount} • Beleşçilik (0🪙) Sayısı: ${freeRideCount}`;
 
+            playSound('win');
+            launchConfetti();
             gameOverModal.classList.add('open');
 
             if (!matchLogged) {
