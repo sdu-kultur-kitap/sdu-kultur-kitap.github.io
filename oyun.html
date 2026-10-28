@@ -1,0 +1,1977 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tutsak İkilemi (1v1 VS) | Oyun Teorisi Laboratuvarı — SDÜ Kültür ve Kitap</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <style>
+        :root {
+            --bg-main: #090d16;
+            --bg-card: rgba(17, 24, 39, 0.82);
+            --bg-card-solid: #111827;
+            --bg-elevated: rgba(31, 41, 55, 0.75);
+            --border-glass: rgba(255, 255, 255, 0.09);
+            --border-highlight: rgba(99, 102, 241, 0.45);
+            --text-main: #f9fafb;
+            --text-muted: #9ca3af;
+            --accent-primary: #6366f1;
+            --accent-glow: rgba(99, 102, 241, 0.35);
+            --coop-color: #10b981;
+            --coop-bg: rgba(16, 185, 129, 0.14);
+            --coop-border: rgba(16, 185, 129, 0.4);
+            --defect-color: #f43f5e;
+            --defect-bg: rgba(244, 63, 94, 0.14);
+            --defect-border: rgba(244, 63, 94, 0.4);
+            --warn-color: #f59e0b;
+            --radius-lg: 20px;
+            --radius-md: 14px;
+            --radius-sm: 10px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--bg-main);
+            background-image:
+                radial-gradient(circle at 15% 15%, rgba(99, 102, 241, 0.14) 0%, transparent 40%),
+                radial-gradient(circle at 85% 20%, rgba(244, 63, 94, 0.12) 0%, transparent 40%),
+                radial-gradient(circle at 50% 85%, rgba(16, 185, 129, 0.10) 0%, transparent 45%);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        /* Top Bar */
+        .topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 28px;
+            border-bottom: 1px solid var(--border-glass);
+            background: rgba(9, 13, 22, 0.85);
+            backdrop-filter: blur(14px);
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+
+        .brand-wrap {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .brand-logo {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #6366f1, #ec4899);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            color: #fff;
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.35);
+        }
+
+        .brand-title h1 {
+            font-size: 1.05rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            line-height: 1.2;
+        }
+
+        .brand-title span {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .conn-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 13px;
+            border-radius: 999px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-glass);
+            color: var(--text-muted);
+        }
+
+        .conn-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--warn-color);
+            box-shadow: 0 0 8px var(--warn-color);
+        }
+
+        .conn-pill.connected .conn-dot {
+            background: var(--coop-color);
+            box-shadow: 0 0 10px var(--coop-color);
+        }
+
+        .conn-pill.connected {
+            color: #d1fae5;
+            border-color: var(--coop-border);
+        }
+
+        .conn-pill.error .conn-dot {
+            background: var(--defect-color);
+            box-shadow: 0 0 10px var(--defect-color);
+        }
+
+        .btn-back-site {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 8px 14px;
+            border-radius: var(--radius-sm);
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid var(--border-glass);
+            color: var(--text-main);
+            text-decoration: none;
+            font-size: 0.82rem;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        .btn-back-site:hover {
+            background: rgba(255, 255, 255, 0.12);
+            transform: translateY(-1px);
+        }
+
+        /* Main Container */
+        .main-container {
+            flex: 1;
+            width: 100%;
+            max-width: 1180px;
+            margin: 0 auto;
+            padding: 28px 20px 48px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        /* Glass Card */
+        .glass-card {
+            background: var(--bg-card);
+            backdrop-filter: blur(18px);
+            border: 1px solid var(--border-glass);
+            border-radius: var(--radius-lg);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
+        }
+
+        /* ================= LOBBY SCREEN ================= */
+        #lobbyScreen {
+            width: 100%;
+            max-width: 920px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .lobby-hero {
+            text-align: center;
+            padding: 12px 10px;
+        }
+
+        .lobby-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 14px;
+            border-radius: 999px;
+            background: rgba(99, 102, 241, 0.14);
+            border: 1px solid rgba(99, 102, 241, 0.35);
+            color: #a5b4fc;
+            font-size: 0.78rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 14px;
+        }
+
+        .lobby-hero h2 {
+            font-size: clamp(1.8rem, 4vw, 2.6rem);
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #ffffff 0%, #a5b4fc 55%, #f43f5e 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .lobby-hero p {
+            color: var(--text-muted);
+            font-size: 0.98rem;
+            max-width: 620px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        .nickname-bar {
+            max-width: 420px;
+            margin: 0 auto;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: var(--bg-card);
+            padding: 10px 16px;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-glass);
+        }
+
+        .nickname-bar i {
+            color: var(--accent-primary);
+        }
+
+        .nickname-bar input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--text-main);
+            font-size: 0.92rem;
+            font-family: inherit;
+            font-weight: 600;
+            outline: none;
+        }
+
+        .nickname-bar input::placeholder {
+            color: #6b7280;
+            font-weight: 400;
+        }
+
+        .lobby-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 22px;
+        }
+
+        .lobby-box {
+            padding: 28px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            gap: 20px;
+            position: relative;
+            overflow: hidden;
+            transition: border-color 0.25s ease, transform 0.25s ease;
+        }
+
+        .lobby-box:hover {
+            border-color: rgba(255, 255, 255, 0.18);
+        }
+
+        .lobby-box-header {
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+        }
+
+        .box-icon {
+            width: 46px;
+            height: 46px;
+            border-radius: 13px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            flex-shrink: 0;
+        }
+
+        .box-icon.host-icon {
+            background: rgba(99, 102, 241, 0.16);
+            color: #818cf8;
+            border: 1px solid rgba(99, 102, 241, 0.35);
+        }
+
+        .box-icon.guest-icon {
+            background: rgba(16, 185, 129, 0.16);
+            color: #34d399;
+            border: 1px solid rgba(16, 185, 129, 0.35);
+        }
+
+        .lobby-box h3 {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .lobby-box p {
+            font-size: 0.86rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 9px;
+            padding: 13px 20px;
+            border-radius: var(--radius-md);
+            font-family: inherit;
+            font-size: 0.92rem;
+            font-weight: 700;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .btn-host {
+            background: linear-gradient(135deg, #6366f1, #4f46e5);
+            color: #fff;
+            box-shadow: 0 10px 25px rgba(99, 102, 241, 0.35);
+        }
+
+        .btn-host:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 14px 30px rgba(99, 102, 241, 0.5);
+        }
+
+        .btn-join {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: #fff;
+            box-shadow: 0 10px 25px rgba(16, 185, 129, 0.3);
+        }
+
+        .btn-join:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 14px 30px rgba(16, 185, 129, 0.45);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.07);
+            border: 1px solid var(--border-glass);
+            color: var(--text-main);
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background: rgba(255, 255, 255, 0.13);
+        }
+
+        /* Host Created Room Panel */
+        .host-room-panel {
+            display: none;
+            flex-direction: column;
+            gap: 14px;
+            padding-top: 6px;
+        }
+
+        .host-room-panel.active {
+            display: flex;
+        }
+
+        .room-code-box {
+            background: rgba(9, 13, 22, 0.75);
+            border: 1px dashed rgba(99, 102, 241, 0.5);
+            border-radius: var(--radius-md);
+            padding: 14px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .room-code-label {
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-muted);
+            display: block;
+            margin-bottom: 3px;
+        }
+
+        .room-code-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.55rem;
+            font-weight: 800;
+            letter-spacing: 0.15em;
+            color: #a5b4fc;
+        }
+
+        .copy-actions-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .btn-copy-sm {
+            padding: 10px 12px;
+            font-size: 0.8rem;
+            border-radius: var(--radius-sm);
+            background: rgba(99, 102, 241, 0.14);
+            border: 1px solid rgba(99, 102, 241, 0.35);
+            color: #c7d2fe;
+            cursor: pointer;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 7px;
+            transition: all 0.2s;
+        }
+
+        .btn-copy-sm:hover {
+            background: rgba(99, 102, 241, 0.28);
+            color: #fff;
+        }
+
+        .waiting-indicator {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 9px;
+            font-size: 0.83rem;
+            color: #fcd34d;
+            padding: 8px;
+            background: rgba(245, 158, 11, 0.1);
+            border-radius: var(--radius-sm);
+            border: 1px solid rgba(245, 158, 11, 0.25);
+        }
+
+        /* Guest Input */
+        .join-input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .room-input {
+            width: 100%;
+            padding: 14px 16px;
+            border-radius: var(--radius-md);
+            background: rgba(9, 13, 22, 0.75);
+            border: 1px solid var(--border-glass);
+            color: var(--text-main);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.15rem;
+            font-weight: 700;
+            text-align: center;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .room-input:focus {
+            border-color: var(--coop-color);
+        }
+
+        .room-input::placeholder {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 0.88rem;
+            letter-spacing: normal;
+            text-transform: none;
+            color: #6b7280;
+            font-weight: 500;
+        }
+
+        /* ================= GAME SCREEN ================= */
+        #gameScreen {
+            display: none;
+            grid-template-columns: 1fr 330px;
+            gap: 22px;
+            align-items: start;
+        }
+
+        #gameScreen.active {
+            display: grid;
+        }
+
+        .game-left-col {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* Scoreboard & Round Header */
+        .Arena-header {
+            padding: 22px 26px;
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .player-score-card {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .player-score-card.opponent {
+            justify-content: flex-end;
+            text-align: right;
+        }
+
+        .player-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 1.15rem;
+            flex-shrink: 0;
+        }
+
+        .player-avatar.you {
+            background: rgba(99, 102, 241, 0.2);
+            border: 1px solid rgba(99, 102, 241, 0.45);
+            color: #a5b4fc;
+        }
+
+        .player-avatar.opp {
+            background: rgba(244, 63, 94, 0.2);
+            border: 1px solid rgba(244, 63, 94, 0.45);
+            color: #fda4af;
+        }
+
+        .player-meta {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .player-tag {
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 0.07em;
+            color: var(--text-muted);
+            font-weight: 700;
+        }
+
+        .player-name {
+            font-size: 1.02rem;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .score-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 2rem;
+            font-weight: 800;
+            line-height: 1;
+            margin: 0 8px;
+        }
+
+        .score-num.you-score {
+            color: #818cf8;
+        }
+
+        .score-num.opp-score {
+            color: #fb7185;
+        }
+
+        .round-center-badge {
+            text-align: center;
+            padding: 10px 20px;
+            border-radius: var(--radius-md);
+            background: rgba(9, 13, 22, 0.7);
+            border: 1px solid var(--border-glass);
+            min-width: 140px;
+        }
+
+        .round-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-muted);
+            display: block;
+            margin-bottom: 2px;
+        }
+
+        .round-number {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.35rem;
+            font-weight: 800;
+            color: #fff;
+        }
+
+        /* Decision Arena */
+        .decision-arena {
+            padding: 28px;
+            display: flex;
+            flex-direction: column;
+            gap: 22px;
+            position: relative;
+        }
+
+        .arena-status-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 18px;
+            border-radius: var(--radius-md);
+            background: rgba(9, 13, 22, 0.65);
+            border: 1px solid var(--border-glass);
+            font-size: 0.88rem;
+            font-weight: 600;
+        }
+
+        .status-side {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-badge {
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            background: rgba(255, 255, 255, 0.07);
+            color: var(--text-muted);
+        }
+
+        .status-badge.ready {
+            background: rgba(16, 185, 129, 0.18);
+            color: #6ee7b7;
+            border: 1px solid rgba(16, 185, 129, 0.4);
+        }
+
+        .status-badge.waiting {
+            background: rgba(245, 158, 11, 0.15);
+            color: #fcd34d;
+            border: 1px solid rgba(245, 158, 11, 0.35);
+        }
+
+        .choices-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 18px;
+        }
+
+        .choice-card-btn {
+            background: rgba(17, 24, 39, 0.9);
+            border: 2px solid var(--border-glass);
+            border-radius: var(--radius-lg);
+            padding: 28px 22px;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            gap: 12px;
+            color: var(--text-main);
+            font-family: inherit;
+            transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .choice-card-btn .choice-icon {
+            width: 64px;
+            height: 64px;
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.75rem;
+            transition: transform 0.22s ease;
+        }
+
+        .choice-card-btn.cooperate .choice-icon {
+            background: var(--coop-bg);
+            color: var(--coop-color);
+            border: 1px solid var(--coop-border);
+        }
+
+        .choice-card-btn.defect .choice-icon {
+            background: var(--defect-bg);
+            color: var(--defect-color);
+            border: 1px solid var(--defect-border);
+        }
+
+        .choice-card-btn h4 {
+            font-size: 1.22rem;
+            font-weight: 800;
+        }
+
+        .choice-card-btn p {
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            line-height: 1.45;
+        }
+
+        .choice-card-btn.cooperate:hover:not(:disabled) {
+            border-color: var(--coop-color);
+            background: rgba(16, 185, 129, 0.08);
+            transform: translateY(-4px);
+            box-shadow: 0 16px 35px rgba(16, 185, 129, 0.2);
+        }
+
+        .choice-card-btn.defect:hover:not(:disabled) {
+            border-color: var(--defect-color);
+            background: rgba(244, 63, 94, 0.08);
+            transform: translateY(-4px);
+            box-shadow: 0 16px 35px rgba(244, 63, 94, 0.2);
+        }
+
+        .choice-card-btn:hover:not(:disabled) .choice-icon {
+            transform: scale(1.08);
+        }
+
+        .choice-card-btn.selected.cooperate {
+            border-color: var(--coop-color);
+            background: rgba(16, 185, 129, 0.16);
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.25);
+        }
+
+        .choice-card-btn.selected.defect {
+            border-color: var(--defect-color);
+            background: rgba(244, 63, 94, 0.16);
+            box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.25);
+        }
+
+        .choice-card-btn:disabled {
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .choice-card-btn.selected:disabled {
+            opacity: 1;
+        }
+
+        .blind-status-prompt {
+            text-align: center;
+            font-size: 0.92rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            min-height: 24px;
+        }
+
+        /* Dynamic Round Result Banner */
+        .round-result-banner {
+            display: none;
+            padding: 18px 22px;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-glass);
+            background: rgba(17, 24, 39, 0.95);
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            animation: popIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .round-result-banner.show {
+            display: flex;
+        }
+
+        @keyframes popIn {
+            0% { opacity: 0; transform: scale(0.94) translateY(8px); }
+            100% { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        .banner-left {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .banner-emoji {
+            font-size: 1.9rem;
+        }
+
+        .banner-text h5 {
+            font-size: 1.05rem;
+            font-weight: 800;
+            margin-bottom: 2px;
+        }
+
+        .banner-text p {
+            font-size: 0.84rem;
+            color: var(--text-muted);
+        }
+
+        .banner-delta {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 800;
+            font-size: 0.95rem;
+            padding: 8px 14px;
+            border-radius: var(--radius-sm);
+            background: rgba(255, 255, 255, 0.06);
+            white-space: nowrap;
+        }
+
+        /* History Table Card */
+        .history-card {
+            padding: 22px 24px;
+        }
+
+        .card-section-title {
+            font-size: 0.92rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text-muted);
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .history-table-wrap {
+            max-height: 270px;
+            overflow-y: auto;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border-glass);
+        }
+
+        table.history-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+            text-align: left;
+        }
+
+        .history-table th {
+            background: rgba(9, 13, 22, 0.85);
+            color: var(--text-muted);
+            font-weight: 700;
+            padding: 11px 14px;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            position: sticky;
+            top: 0;
+        }
+
+        .history-table td {
+            padding: 11px 14px;
+            border-top: 1px solid var(--border-glass);
+            font-weight: 600;
+        }
+
+        .move-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 3px 10px;
+            border-radius: 999px;
+            font-size: 0.76rem;
+            font-weight: 700;
+        }
+
+        .move-pill.coop {
+            background: var(--coop-bg);
+            color: #34d399;
+            border: 1px solid var(--coop-border);
+        }
+
+        .move-pill.defect {
+            background: var(--defect-bg);
+            color: #fb7185;
+            border: 1px solid var(--defect-border);
+        }
+
+        /* Right Sidebar: Payoff Matrix Card */
+        .game-right-col {
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        .matrix-card {
+            padding: 22px;
+        }
+
+        .matrix-desc {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-bottom: 14px;
+            line-height: 1.5;
+        }
+
+        .matrix-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .matrix-cell {
+            padding: 12px;
+            border-radius: var(--radius-sm);
+            background: rgba(9, 13, 22, 0.65);
+            border: 1px solid var(--border-glass);
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .matrix-cell-moves {
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .matrix-cell-pts {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.95rem;
+            font-weight: 800;
+            color: #fff;
+        }
+
+        .matrix-cell.both-coop {
+            border-color: rgba(16, 185, 129, 0.35);
+            background: rgba(16, 185, 129, 0.07);
+        }
+
+        .matrix-cell.both-defect {
+            border-color: rgba(244, 63, 94, 0.35);
+            background: rgba(244, 63, 94, 0.07);
+        }
+
+        .theory-tip-box {
+            padding: 18px 20px;
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            line-height: 1.55;
+        }
+
+        .theory-tip-box strong {
+            color: var(--text-main);
+            display: block;
+            margin-bottom: 5px;
+            font-size: 0.86rem;
+        }
+
+        /* ================= MODALS ================= */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(5, 8, 15, 0.82);
+            backdrop-filter: blur(10px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            z-index: 100;
+        }
+
+        .modal-overlay.open {
+            display: flex;
+        }
+
+        .modal-card {
+            width: 100%;
+            max-width: 480px;
+            padding: 32px 28px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            animation: popIn 0.3s ease;
+        }
+
+        .modal-trophy {
+            width: 72px;
+            height: 72px;
+            border-radius: 22px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.1rem;
+            background: rgba(99, 102, 241, 0.16);
+            border: 1px solid rgba(99, 102, 241, 0.4);
+            color: #a5b4fc;
+        }
+
+        .modal-card h3 {
+            font-size: 1.65rem;
+            font-weight: 800;
+        }
+
+        .final-scores-box {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            align-items: center;
+            gap: 12px;
+            padding: 18px;
+            border-radius: var(--radius-md);
+            background: rgba(9, 13, 22, 0.75);
+            border: 1px solid var(--border-glass);
+        }
+
+        .final-score-col span {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .final-score-col strong {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 2rem;
+            font-weight: 800;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 6px;
+        }
+
+        .modal-actions .btn {
+            flex: 1;
+        }
+
+        /* Toast */
+        .toast-wrap {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 200;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .toast-msg {
+            background: #1f2937;
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            color: #fff;
+            padding: 12px 18px;
+            border-radius: var(--radius-sm);
+            font-size: 0.85rem;
+            font-weight: 600;
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            animation: popIn 0.25s ease;
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .lobby-grid {
+                grid-template-columns: 1fr;
+            }
+            #gameScreen.active {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .topbar {
+                padding: 12px 16px;
+            }
+            .Arena-header {
+                grid-template-columns: 1fr;
+                text-align: center;
+                gap: 12px;
+            }
+            .player-score-card, .player-score-card.opponent {
+                justify-content: center;
+                text-align: left;
+            }
+            .choices-grid {
+                grid-template-columns: 1fr;
+            }
+            .copy-actions-row {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Top Navigation -->
+    <header class="topbar">
+        <div class="brand-wrap">
+            <div class="brand-logo">
+                <i class="fas fa-chess-knight"></i>
+            </div>
+            <div class="brand-title">
+                <h1>Tutsak İkilemi <span style="color:#818cf8;">1v1 VS</span></h1>
+                <span>SDÜ Kültür ve Kitap Topluluğu • Oyun Teorisi</span>
+            </div>
+        </div>
+        <div class="topbar-right">
+            <div class="conn-pill" id="connStatusPill">
+                <span class="conn-dot"></span>
+                <span id="connStatusText">Lobi Hazır</span>
+            </div>
+            <a href="index.html" class="btn-back-site">
+                <i class="fas fa-arrow-left"></i> Ana Sayfa
+            </a>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-container">
+
+        <!-- ================= 1. LOBBY SCREEN ================= -->
+        <section id="lobbyScreen">
+            <div class="lobby-hero">
+                <div class="lobby-badge">
+                    <i class="fas fa-bolt"></i> P2P Gerçek Zamanlı Oyun Teorisi
+                </div>
+                <h2>Güvenecek misin, İhanet mi Edeceksin?</h2>
+                <p>Arkadaşınla 10 turluk <strong>Tutsak İkilemi (Prisoner's Dilemma)</strong> düellosuna gir. Karşılıklı iş birliği mi kazanacak, yoksa soğukkanlı strateji mi?</p>
+            </div>
+
+            <!-- Player Nickname -->
+            <div class="nickname-bar">
+                <i class="fas fa-user-astronaut"></i>
+                <input type="text" id="playerNameInput" placeholder="Takma Adın (İsteğe bağlı, ör: Nash)" maxlength="18">
+            </div>
+
+            <div class="lobby-grid">
+                <!-- Option 1: Host Room -->
+                <div class="glass-card lobby-box">
+                    <div>
+                        <div class="lobby-box-header">
+                            <div class="box-icon host-icon">
+                                <i class="fas fa-plus-circle"></i>
+                            </div>
+                            <div>
+                                <h3>Oda Oluştur (Host)</h3>
+                                <p>5 haneli özel bir oda kodu üret ve davet bağlantısını arkadaşına göndererek düelloyu başlat.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="button" class="btn btn-host" id="createRoomBtn">
+                        <i class="fas fa-satellite-dish"></i> Yeni Oda Oluştur
+                    </button>
+
+                    <!-- Shown after room creation -->
+                    <div class="host-room-panel" id="hostRoomPanel">
+                        <div class="room-code-box">
+                            <div>
+                                <span class="room-code-label">Oda Kodun</span>
+                                <span class="room-code-value" id="displayRoomCode">-----</span>
+                            </div>
+                            <span class="status-badge ready">Aktif</span>
+                        </div>
+                        <div class="copy-actions-row">
+                            <button type="button" class="btn-copy-sm" id="copyCodeBtn">
+                                <i class="fas fa-copy"></i> Kodu Kopyala
+                            </button>
+                            <button type="button" class="btn-copy-sm" id="copyLinkBtn">
+                                <i class="fas fa-link"></i> Davet Linkini Kopyala
+                            </button>
+                        </div>
+                        <div class="waiting-indicator">
+                            <i class="fas fa-circle-notch fa-spin"></i>
+                            <span>Rakibin odaya bağlanması bekleniyor...</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Option 2: Join Room -->
+                <div class="glass-card lobby-box">
+                    <div>
+                        <div class="lobby-box-header">
+                            <div class="box-icon guest-icon">
+                                <i class="fas fa-sign-in-alt"></i>
+                            </div>
+                            <div>
+                                <h3>Odaya Katıl (Guest)</h3>
+                                <p>Arkadaşının paylaştığı 5 haneli oda kodunu girerek doğrudan düello masasına bağlan.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="join-input-group">
+                        <input type="text" id="joinRoomInput" class="room-input" placeholder="5 Haneli Oda Kodu (Örn: A7K9X)" maxlength="10">
+                        <button type="button" class="btn btn-join" id="joinRoomBtn">
+                            <i class="fas fa-bolt"></i> Odaya Bağlan ve Başla
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= 2. GAME ARENA SCREEN ================= -->
+        <section id="gameScreen">
+            <div class="game-left-col">
+
+                <!-- Scoreboard & Round Counter -->
+                <div class="glass-card Arena-header">
+                    <div class="player-score-card">
+                        <div class="player-avatar you"><i class="fas fa-user-shield"></i></div>
+                        <div class="player-meta">
+                            <span class="player-tag">Sen</span>
+                            <span class="player-name" id="myNameDisplay">Oyuncu 1</span>
+                        </div>
+                        <span class="score-num you-score" id="myScoreEl">0</span>
+                    </div>
+
+                    <div class="round-center-badge">
+                        <span class="round-label">Mevcut Tur</span>
+                        <span class="round-number"><span id="currentRoundEl">1</span> / <span id="maxRoundsEl">10</span></span>
+                    </div>
+
+                    <div class="player-score-card opponent">
+                        <span class="score-num opp-score" id="oppScoreEl">0</span>
+                        <div class="player-meta">
+                            <span class="player-tag">Rakip</span>
+                            <span class="player-name" id="oppNameDisplay">Rakip</span>
+                        </div>
+                        <div class="player-avatar opp"><i class="fas fa-user-ninja"></i></div>
+                    </div>
+                </div>
+
+                <!-- Blind Choice Decision Area -->
+                <div class="glass-card decision-arena">
+                    <div class="arena-status-bar">
+                        <div class="status-side">
+                            <span>Senin Durumun:</span>
+                            <span class="status-badge waiting" id="myStatusBadge">Karar Bekleniyor</span>
+                        </div>
+                        <div class="status-side">
+                            <span>Rakip Durumu:</span>
+                            <span class="status-badge waiting" id="oppStatusBadge">Karar Bekleniyor</span>
+                        </div>
+                    </div>
+
+                    <div class="choices-grid">
+                        <button type="button" class="choice-card-btn cooperate" id="btnCooperate">
+                            <div class="choice-icon">
+                                <i class="fas fa-handshake"></i>
+                            </div>
+                            <h4>İş Birliği Yap</h4>
+                            <p>Ortak kazanç için güvenmeyi seç. İkiniz de iş birliği yaparsanız <strong>+3 Puan</strong> alırsınız.</p>
+                        </button>
+
+                        <button type="button" class="choice-card-btn defect" id="btnDefect">
+                            <div class="choice-icon">
+                                <i class="fas fa-dagger" style="font-style:normal;">🗡️</i>
+                            </div>
+                            <h4>İhanet Et</h4>
+                            <p>Kendi çıkarını koru. Rakibin iş birliği yaparken ihanet edersen <strong>+5 Puan</strong> kazanırsın.</p>
+                        </button>
+                    </div>
+
+                    <div class="blind-status-prompt" id="blindStatusPrompt">
+                        Bu tur için hamleni seç. İki taraf da seçim yapana kadar kararlar gizli kalır.
+                    </div>
+
+                    <!-- Dynamic Notification Banner after Round Resolves -->
+                    <div class="round-result-banner" id="roundResultBanner">
+                        <div class="banner-left">
+                            <span class="banner-emoji" id="bannerEmoji">🤝</span>
+                            <div class="banner-text">
+                                <h5 id="bannerTitle">Karşılıklı İş Birliği!</h5>
+                                <p id="bannerSub">İkiniz de birbirinize güvendiniz.</p>
+                            </div>
+                        </div>
+                        <div class="banner-delta" id="bannerDelta">Sen +3 | Rakip +3</div>
+                    </div>
+                </div>
+
+                <!-- Round History Table -->
+                <div class="glass-card history-card">
+                    <div class="card-section-title">
+                        <span><i class="fas fa-history"></i> Tur Geçmişi</span>
+                        <span id="historyCountLabel">0 Tur Tamamlandı</span>
+                    </div>
+                    <div class="history-table-wrap">
+                        <table class="history-table">
+                            <thead>
+                                <tr>
+                                    <th>Tur</th>
+                                    <th>Senin Seçimin</th>
+                                    <th>Rakibin Seçimi</th>
+                                    <th>Bu Tur Puanı</th>
+                                </tr>
+                            </thead>
+                            <tbody id="historyTableBody">
+                                <tr>
+                                    <td colspan="4" style="text-align:center; color: var(--text-muted); padding: 20px;">
+                                        Henüz tamamlanan tur yok. İlk hamleni yap!
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Right Column: Payoff Matrix & Game Theory Info -->
+            <aside class="game-right-col">
+                <div class="glass-card matrix-card">
+                    <div class="card-section-title">
+                        <span><i class="fas fa-border-all"></i> Puan Matrisi</span>
+                        <span style="font-size: 0.72rem; color: #818cf8;">Sen / Rakip</span>
+                    </div>
+                    <p class="matrix-desc">Her turun sonunda seçimler açılır ve aşağıdaki matrise göre puanlar eklenir:</p>
+
+                    <div class="matrix-grid">
+                        <div class="matrix-cell both-coop">
+                            <div class="matrix-cell-moves">
+                                <span style="color:#34d399;">İş Birliği</span>
+                                <span>×</span>
+                                <span style="color:#34d399;">İş Birliği</span>
+                            </div>
+                            <div class="matrix-cell-pts">+3 / +3 Puan</div>
+                            <small style="color:var(--text-muted); font-size:0.72rem;">Pareto Optimal (Ortak Kazanç)</small>
+                        </div>
+
+                        <div class="matrix-cell">
+                            <div class="matrix-cell-moves">
+                                <span style="color:#fb7185;">İhanet</span>
+                                <span>×</span>
+                                <span style="color:#34d399;">İş Birliği</span>
+                            </div>
+                            <div class="matrix-cell-pts">+5 / 0 Puan</div>
+                            <small style="color:var(--text-muted); font-size:0.72rem;">Ters Köşe (İhanet Ödülü)</small>
+                        </div>
+
+                        <div class="matrix-cell">
+                            <div class="matrix-cell-moves">
+                                <span style="color:#34d399;">İş Birliği</span>
+                                <span>×</span>
+                                <span style="color:#fb7185;">İhanet</span>
+                            </div>
+                            <div class="matrix-cell-pts">0 / +5 Puan</div>
+                            <small style="color:var(--text-muted); font-size:0.72rem;">Saf İyi Niyet Bedeli</small>
+                        </div>
+
+                        <div class="matrix-cell both-defect">
+                            <div class="matrix-cell-moves">
+                                <span style="color:#fb7185;">İhanet</span>
+                                <span>×</span>
+                                <span style="color:#fb7185;">İhanet</span>
+                            </div>
+                            <div class="matrix-cell-pts">+1 / +1 Puan</div>
+                            <small style="color:var(--text-muted); font-size:0.72rem;">Nash Dengesi (Kayıp Döngüsü)</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-card theory-tip-box">
+                    <strong><i class="fas fa-lightbulb" style="color:#f59e0b;"></i> Oyun Teorisi Notu:</strong>
+                    Tek turda ihanet etmek rasyonel görünse de, tekrarlı Tutsak İkilemi'nde Robert Axelrod'un turnuvalarını kazanan en güçlü strateji <em>"Kısasa Kısas" (Tit-for-Tat)</em> olmuştur: İş birliği ile başla, sonra rakibinin bir önceki hamlesini kopyala!
+                </div>
+            </aside>
+        </section>
+
+    </main>
+
+    <!-- ================= GAME OVER SUMMARY MODAL ================= -->
+    <div class="modal-overlay" id="gameOverModal">
+        <div class="glass-card modal-card">
+            <div class="modal-trophy" id="modalTrophyIcon">🏆</div>
+            <div>
+                <h3 id="modalWinnerTitle">Oyun Bitti!</h3>
+                <p id="modalWinnerDesc" style="color: var(--text-muted); font-size: 0.92rem; margin-top: 4px;"></p>
+            </div>
+
+            <div class="final-scores-box">
+                <div class="final-score-col">
+                    <span id="finalMyName">Sen</span>
+                    <strong style="color:#818cf8;" id="finalMyScore">0</strong>
+                </div>
+                <div style="font-weight:800; color:var(--text-muted);">VS</div>
+                <div class="final-score-col">
+                    <span id="finalOppName">Rakip</span>
+                    <strong style="color:#fb7185;" id="finalOppScore">0</strong>
+                </div>
+            </div>
+
+            <div id="modalStatsLine" style="font-size: 0.82rem; color: var(--text-muted);"></div>
+
+            <div class="modal-actions">
+                <button type="button" class="btn btn-host" id="rematchBtn">
+                    <i class="fas fa-redo"></i> Yeniden Oyna
+                </button>
+                <button type="button" class="btn btn-secondary" id="backToLobbyBtn">
+                    <i class="fas fa-door-open"></i> Lobiye Dön
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= DISCONNECT MODAL ================= -->
+    <div class="modal-overlay" id="disconnectModal">
+        <div class="glass-card modal-card">
+            <div class="modal-trophy" style="background: rgba(244,63,94,0.16); border-color: rgba(244,63,94,0.4); color: #fb7185;">
+                <i class="fas fa-unlink"></i>
+            </div>
+            <div>
+                <h3>Bağlantı Kesildi</h3>
+                <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 6px;">Rakip oyundan ayrıldı veya P2P ağ bağlantısı koptu.</p>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-host" onclick="window.location.href = window.location.pathname">
+                    <i class="fas fa-sync-alt"></i> Yeni Lobiye Dön
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div class="toast-wrap" id="toastWrap"></div>
+
+    <script>
+        (() => {
+            'use strict';
+
+            const PEER_PREFIX = 'sdu-pd-room-';
+            const MAX_ROUNDS = 10;
+
+            // State
+            let peer = null;
+            let conn = null;
+            let isHost = false;
+            let currentRoomCode = '';
+            let myName = 'Oyuncu 1';
+            let oppName = 'Rakip';
+
+            let currentRound = 1;
+            let myScore = 0;
+            let oppScore = 0;
+            let myMove = null;       // 'C' or 'D'
+            let oppMove = null;      // 'C' or 'D'
+            let roundLocked = false; // true while transitioning between rounds
+            let history = [];
+
+            // DOM Elements
+            const lobbyScreen = document.getElementById('lobbyScreen');
+            const gameScreen = document.getElementById('gameScreen');
+            const connStatusPill = document.getElementById('connStatusPill');
+            const connStatusText = document.getElementById('connStatusText');
+
+            const playerNameInput = document.getElementById('playerNameInput');
+            const createRoomBtn = document.getElementById('createRoomBtn');
+            const hostRoomPanel = document.getElementById('hostRoomPanel');
+            const displayRoomCode = document.getElementById('displayRoomCode');
+            const copyCodeBtn = document.getElementById('copyCodeBtn');
+            const copyLinkBtn = document.getElementById('copyLinkBtn');
+
+            const joinRoomInput = document.getElementById('joinRoomInput');
+            const joinRoomBtn = document.getElementById('joinRoomBtn');
+
+            const myNameDisplay = document.getElementById('myNameDisplay');
+            const oppNameDisplay = document.getElementById('oppNameDisplay');
+            const myScoreEl = document.getElementById('myScoreEl');
+            const oppScoreEl = document.getElementById('oppScoreEl');
+            const currentRoundEl = document.getElementById('currentRoundEl');
+            const maxRoundsEl = document.getElementById('maxRoundsEl');
+
+            const myStatusBadge = document.getElementById('myStatusBadge');
+            const oppStatusBadge = document.getElementById('oppStatusBadge');
+            const btnCooperate = document.getElementById('btnCooperate');
+            const btnDefect = document.getElementById('btnDefect');
+            const blindStatusPrompt = document.getElementById('blindStatusPrompt');
+
+            const roundResultBanner = document.getElementById('roundResultBanner');
+            const bannerEmoji = document.getElementById('bannerEmoji');
+            const bannerTitle = document.getElementById('bannerTitle');
+            const bannerSub = document.getElementById('bannerSub');
+            const bannerDelta = document.getElementById('bannerDelta');
+
+            const historyCountLabel = document.getElementById('historyCountLabel');
+            const historyTableBody = document.getElementById('historyTableBody');
+
+            const gameOverModal = document.getElementById('gameOverModal');
+            const modalTrophyIcon = document.getElementById('modalTrophyIcon');
+            const modalWinnerTitle = document.getElementById('modalWinnerTitle');
+            const modalWinnerDesc = document.getElementById('modalWinnerDesc');
+            const finalMyName = document.getElementById('finalMyName');
+            const finalOppName = document.getElementById('finalOppName');
+            const finalMyScore = document.getElementById('finalMyScore');
+            const finalOppScore = document.getElementById('finalOppScore');
+            const modalStatsLine = document.getElementById('modalStatsLine');
+            const rematchBtn = document.getElementById('rematchBtn');
+            const backToLobbyBtn = document.getElementById('backToLobbyBtn');
+            const disconnectModal = document.getElementById('disconnectModal');
+
+            maxRoundsEl.textContent = MAX_ROUNDS;
+
+            function showToast(msg, icon = 'fa-info-circle') {
+                const wrap = document.getElementById('toastWrap');
+                const el = document.createElement('div');
+                el.className = 'toast-msg';
+                el.innerHTML = `<i class="fas ${icon}" style="color:#818cf8;"></i> <span>${msg}</span>`;
+                wrap.appendChild(el);
+                setTimeout(() => el.remove(), 3200);
+            }
+
+            function setConnStatus(state, text) {
+                connStatusPill.className = 'conn-pill ' + (state || '');
+                connStatusText.textContent = text;
+            }
+
+            function generateShortCode() {
+                const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+                let code = '';
+                for (let i = 0; i < 5; i++) {
+                    code += chars.charAt(Math.floor(Math.random() * chars.length));
+                }
+                return code;
+            }
+
+            function getMyNickname(fallback) {
+                const val = playerNameInput.value.trim();
+                return val ? val : fallback;
+            }
+
+            function getInviteUrl(code) {
+                return `${window.location.origin}${window.location.pathname}?room=${encodeURIComponent(code)}`;
+            }
+
+            async function copyText(text, successMsg) {
+                try {
+                    if (navigator.clipboard && navigator.clipboard.writeText) {
+                        await navigator.clipboard.writeText(text);
+                    } else {
+                        const ta = document.createElement('textarea');
+                        ta.value = text;
+                        document.body.appendChild(ta);
+                        ta.select();
+                        document.execCommand('copy');
+                        document.body.removeChild(ta);
+                    }
+                    showToast(successMsg, 'fa-check-circle');
+                } catch (err) {
+                    showToast('Kopyalama başarısız oldu.', 'fa-exclamation-triangle');
+                }
+            }
+
+            // ================= HOST LOGIC =================
+            createRoomBtn.addEventListener('click', () => {
+                createRoomBtn.disabled = true;
+                createRoomBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Oda Açılıyor...';
+
+                isHost = true;
+                myName = getMyNickname('Ev Sahibi');
+                currentRoomCode = generateShortCode();
+                const fullPeerId = PEER_PREFIX + currentRoomCode;
+
+                if (peer) peer.destroy();
+                peer = new Peer(fullPeerId);
+
+                peer.on('open', () => {
+                    createRoomBtn.style.display = 'none';
+                    hostRoomPanel.classList.add('active');
+                    displayRoomCode.textContent = currentRoomCode;
+                    setConnStatus('', 'Rakip Bekleniyor (' + currentRoomCode + ')');
+                    showToast('Oda oluşturuldu! Arkadaşını davet et.', 'fa-satellite-dish');
+                });
+
+                peer.on('connection', (incomingConn) => {
+                    if (conn && conn.open) {
+                        incomingConn.close();
+                        return;
+                    }
+                    conn = incomingConn;
+                    setupConnectionHandlers();
+                });
+
+                peer.on('error', (err) => {
+                    console.error('Peer error:', err);
+                    if (err.type === 'unavailable-id') {
+                        // Retry with another code
+                        createRoomBtn.disabled = false;
+                        createRoomBtn.click();
+                        return;
+                    }
+                    setConnStatus('error', 'Bağlantı Hatası');
+                    showToast('Ağ hatası: ' + err.type, 'fa-exclamation-circle');
+                    createRoomBtn.disabled = false;
+                    createRoomBtn.innerHTML = '<i class="fas fa-satellite-dish"></i> Yeni Oda Oluştur';
+                });
+            });
+
+            copyCodeBtn.addEventListener('click', () => {
+                if (currentRoomCode) copyText(currentRoomCode, `Oda kodu (${currentRoomCode}) kopyalandı!`);
+            });
+
+            copyLinkBtn.addEventListener('click', () => {
+                if (currentRoomCode) copyText(getInviteUrl(currentRoomCode), 'Davet bağlantısı panoya kopyalandı!');
+            });
+
+            // ================= GUEST LOGIC =================
+            function joinRoomByCode(rawCode) {
+                const cleanCode = (rawCode || '').trim().toUpperCase();
+                if (!cleanCode) {
+                    showToast('Lütfen geçerli bir oda kodu girin.', 'fa-exclamation-triangle');
+                    return;
+                }
+
+                joinRoomBtn.disabled = true;
+                joinRoomBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Bağlanılıyor...';
+                setConnStatus('', 'Odaya Bağlanılıyor...');
+
+                isHost = false;
+                myName = getMyNickname('Misafir Oyuncu');
+                currentRoomCode = cleanCode;
+
+                const targetPeerId = cleanCode.startsWith(PEER_PREFIX) ? cleanCode : (PEER_PREFIX + cleanCode);
+
+                if (peer) peer.destroy();
+                peer = new Peer();
+
+                peer.on('open', () => {
+                    conn = peer.connect(targetPeerId, { reliable: true });
+                    setupConnectionHandlers();
+                });
+
+                peer.on('error', (err) => {
+                    console.error('Guest peer error:', err);
+                    setConnStatus('error', 'Oda Bulunamadı');
+                    showToast('Odaya bağlanılamadı. Kodu kontrol edin.', 'fa-exclamation-triangle');
+                    joinRoomBtn.disabled = false;
+                    joinRoomBtn.innerHTML = '<i class="fas fa-bolt"></i> Odaya Bağlan ve Başla';
+                });
+            }
+
+            joinRoomBtn.addEventListener('click', () => {
+                joinRoomByCode(joinRoomInput.value);
+            });
+
+            joinRoomInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') joinRoomByCode(joinRoomInput.value);
+            });
+
+            // ================= P2P CONNECTION & GAME SYNC =================
+            function setupConnectionHandlers() {
+                conn.on('open', () => {
+                    setConnStatus('connected', 'Eşleşti • Oda: ' + currentRoomCode);
+                    // Exchange hello message
+                    conn.send({
+                        type: 'HELLO',
+                        name: myName
+                    });
+                    startArena();
+                });
+
+                conn.on('data', (data) => {
+                    if (!data || typeof data !== 'object') return;
+
+                    switch (data.type) {
+                        case 'HELLO':
+                            oppName = data.name || 'Rakip';
+                            oppNameDisplay.textContent = oppName;
+                            break;
+
+                        case 'MOVE_COMMIT':
+                            // Opponent made their blind choice
+                            oppMove = data.move;
+                            updateBlindStatusUI();
+                            checkAndResolveRound();
+                            break;
+
+                        case 'REMATCH':
+                            showToast(`${oppName} yeni maç başlattı!`, 'fa-redo');
+                            resetMatchState();
+                            break;
+                    }
+                });
+
+                conn.on('close', () => {
+                    handleDisconnect();
+                });
+
+                conn.on('error', () => {
+                    handleDisconnect();
+                });
+            }
+
+            function handleDisconnect() {
+                setConnStatus('error', 'Bağlantı Koptu');
+                gameOverModal.classList.remove('open');
+                disconnectModal.classList.add('open');
+            }
+
+            function startArena() {
+                lobbyScreen.style.display = 'none';
+                gameScreen.classList.add('active');
+                myNameDisplay.textContent = myName;
+                oppNameDisplay.textContent = oppName;
+                resetMatchState();
+                showToast('Rakip bağlandı! Düello başlıyor.', 'fa-handshake');
+            }
+
+            function resetMatchState() {
+                currentRound = 1;
+                myScore = 0;
+                oppScore = 0;
+                myMove = null;
+                oppMove = null;
+                roundLocked = false;
+                history = [];
+
+                gameOverModal.classList.remove('open');
+                roundResultBanner.classList.remove('show');
+
+                updateScoreboardUI();
+                resetRoundButtonsUI();
+                renderHistoryTable();
+            }
+
+            function updateScoreboardUI() {
+                myScoreEl.textContent = myScore;
+                oppScoreEl.textContent = oppScore;
+                currentRoundEl.textContent = Math.min(currentRound, MAX_ROUNDS);
+            }
+
+            function resetRoundButtonsUI() {
+                btnCooperate.disabled = false;
+                btnDefect.disabled = false;
+                btnCooperate.classList.remove('selected');
+                btnDefect.classList.remove('selected');
+
+                myStatusBadge.className = 'status-badge waiting';
+                myStatusBadge.textContent = 'Karar Bekleniyor';
+
+                oppStatusBadge.className = 'status-badge waiting';
+                oppStatusBadge.textContent = 'Karar Bekleniyor';
+
+                blindStatusPrompt.textContent = `${currentRound}. Tur: Hamleni seç. İki taraf da karar verene kadar seçimler gizlidir.`;
+                blindStatusPrompt.style.color = 'var(--text-muted)';
+            }
+
+            function makeMove(choice) {
+                if (roundLocked || myMove !== null || !conn || !conn.open) return;
+
+                myMove = choice; // 'C' or 'D'
+                btnCooperate.disabled = true;
+                btnDefect.disabled = true;
+
+                if (choice === 'C') {
+                    btnCooperate.classList.add('selected');
+                } else {
+                    btnDefect.classList.add('selected');
+                }
+
+                conn.send({
+                    type: 'MOVE_COMMIT',
+                    move: choice,
+                    round: currentRound
+                });
+
+                updateBlindStatusUI();
+                checkAndResolveRound();
+            }
+
+            btnCooperate.addEventListener('click', () => makeMove('C'));
+            btnDefect.addEventListener('click', () => makeMove('D'));
+
+            function updateBlindStatusUI() {
+                if (myMove !== null) {
+                    myStatusBadge.className = 'status-badge ready';
+                    myStatusBadge.textContent = 'Seçim Kilitlendi ✓';
+                }
+
+                if (oppMove !== null) {
+                    oppStatusBadge.className = 'status-badge ready';
+                    oppStatusBadge.textContent = 'Seçimini Yaptı ✓';
+                }
+
+                if (myMove !== null && oppMove === null) {
+                    blindStatusPrompt.textContent = '⏳ Rakibin hamlesi bekleniyor...';
+                    blindStatusPrompt.style.color = '#fcd34d';
+                } else if (myMove === null && oppMove !== null) {
+                    blindStatusPrompt.textContent = '⚡ Rakip seçimini yaptı, senin kararın bekleniyor!';
+                    blindStatusPrompt.style.color = '#34d399';
+                }
+            }
+
+            function checkAndResolveRound() {
+                if (myMove === null || oppMove === null || roundLocked) return;
+
+                roundLocked = true;
+
+                let myPts = 0;
+                let oppPts = 0;
+                let emoji = '🤝';
+                let title = '';
+                let sub = '';
+
+                if (myMove === 'C' && oppMove === 'C') {
+                    myPts = 3;
+                    oppPts = 3;
+                    emoji = '🤝';
+                    title = 'Karşılıklı İş Birliği!';
+                    sub = 'İkiniz de güvenmeyi seçtiniz ve kazandınız.';
+                } else if (myMove === 'D' && oppMove === 'C') {
+                    myPts = 5;
+                    oppPts = 0;
+                    emoji = '🗡️';
+                    title = 'Ters Köşe! İhanet Kazandı';
+                    sub = `${oppName} iş birliği yaparken sen ihanet ettin!`;
+                } else if (myMove === 'C' && oppMove === 'D') {
+                    myPts = 0;
+                    oppPts = 5;
+                    emoji = '🛡️';
+                    title = 'Ters Köşe! Rakip İhanet Etti';
+                    sub = `Sen iş birliği yaptın ama ${oppName} ihanet etti.`;
+                } else {
+                    myPts = 1;
+                    oppPts = 1;
+                    emoji = '💥';
+                    title = 'Karşılıklı İhanet!';
+                    sub = 'İkiniz de birbirinize güvenmediniz (Nash Dengesi).';
+                }
+
+                myScore += myPts;
+                oppScore += oppPts;
+
+                history.unshift({
+                    round: currentRound,
+                    myMove,
+                    oppMove,
+                    myPts,
+                    oppPts
+                });
+
+                // Show dynamic banner
+                bannerEmoji.textContent = emoji;
+                bannerTitle.textContent = `${currentRound}. Tur Sonucu: ${title}`;
+                bannerSub.textContent = sub;
+                bannerDelta.textContent = `Sen +${myPts} | ${oppName} +${oppPts}`;
+                roundResultBanner.classList.remove('show');
+                void roundResultBanner.offsetWidth; // trigger reflow for animation
+                roundResultBanner.classList.add('show');
+
+                updateScoreboardUI();
+                renderHistoryTable();
+
+                if (currentRound >= MAX_ROUNDS) {
+                    blindStatusPrompt.textContent = '🏁 10. Tur tamamlandı! Sonuçlar hesaplanıyor...';
+                    setTimeout(() => {
+                        showGameOverModal();
+                    }, 1200);
+                } else {
+                    blindStatusPrompt.textContent = `✨ ${currentRound}. Tur çözüldü! Yeni tur hazırlanıyor...`;
+                    setTimeout(() => {
+                        currentRound++;
+                        myMove = null;
+                        oppMove = null;
+                        roundLocked = false;
+                        updateScoreboardUI();
+                        resetRoundButtonsUI();
+                    }, 1400);
+                }
+            }
+
+            function renderHistoryTable() {
+                historyCountLabel.textContent = `${history.length} / ${MAX_ROUNDS} Tur Tamamlandı`;
+
+                if (history.length === 0) {
+                    historyTableBody.innerHTML = `
+                        <tr>
+                            <td colspan="4" style="text-align:center; color: var(--text-muted); padding: 20px;">
+                                Henüz tamamlanan tur yok. İlk hamleni yap!
+                            </td>
+                        </tr>
+                    `;
+                    return;
+                }
+
+                historyTableBody.innerHTML = history.map(item => {
+                    const myPill = item.myMove === 'C'
+                        ? `<span class="move-pill coop"><i class="fas fa-handshake"></i> İş Birliği</span>`
+                        : `<span class="move-pill defect">🗡️ İhanet</span>`;
+
+                    const oppPill = item.oppMove === 'C'
+                        ? `<span class="move-pill coop"><i class="fas fa-handshake"></i> İş Birliği</span>`
+                        : `<span class="move-pill defect">🗡️ İhanet</span>`;
+
+                    return `
+                        <tr>
+                            <td><strong>#${item.round}</strong></td>
+                            <td>${myPill}</td>
+                            <td>${oppPill}</td>
+                            <td style="font-family:'JetBrains Mono',monospace;">
+                                <span style="color:#818cf8;">+${item.myPts}</span> / <span style="color:#fb7185;">+${item.oppPts}</span>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+
+            function showGameOverModal() {
+                finalMyName.textContent = myName;
+                finalOppName.textContent = oppName;
+                finalMyScore.textContent = myScore;
+                finalOppScore.textContent = oppScore;
+
+                const myCoopCount = history.filter(h => h.myMove === 'C').length;
+                const oppCoopCount = history.filter(h => h.oppMove === 'C').length;
+
+                if (myScore > oppScore) {
+                    modalTrophyIcon.textContent = '🏆';
+                    modalWinnerTitle.textContent = 'Tebrikler, Düelloyu Kazandın!';
+                    modalWinnerDesc.textContent = `Stratejinle ${oppName} karşısında üstünlük kurdun.`;
+                } else if (myScore < oppScore) {
+                    modalTrophyIcon.textContent = '🎭';
+                    modalWinnerTitle.textContent = `${oppName} Kazandı!`;
+                    modalWinnerDesc.textContent = 'Rakibin bu kez oyun teorisi matrisini kendi lehine çevirdi.';
+                } else {
+                    modalTrophyIcon.textContent = '⚖️';
+                    modalWinnerTitle.textContent = 'Kusursuz Beraberlik!';
+                    modalWinnerDesc.textContent = '10 tur sonunda ikiniz de tam olarak aynı puanı topladınız.';
+                }
+
+                modalStatsLine.innerHTML = `İş Birliği Oranı — <strong>Sen:</strong> %${myCoopCount * 10} (${myCoopCount}/10) • <strong>${oppName}:</strong> %${oppCoopCount * 10} (${oppCoopCount}/10)`;
+                gameOverModal.classList.add('open');
+            }
+
+            rematchBtn.addEventListener('click', () => {
+                if (conn && conn.open) {
+                    conn.send({ type: 'REMATCH' });
+                }
+                resetMatchState();
+            });
+
+            backToLobbyBtn.addEventListener('click', () => {
+                window.location.href = window.location.pathname;
+            });
+
+            // Auto-join if ?room=XXXXX is in URL
+            window.addEventListener('DOMContentLoaded', () => {
+                const params = new URLSearchParams(window.location.search);
+                const roomParam = params.get('room');
+                if (roomParam) {
+                    const clean = roomParam.trim().toUpperCase();
+                    joinRoomInput.value = clean;
+                    showToast(`Davet algılandı (${clean}), odaya bağlanılıyor...`, 'fa-bolt');
+                    setTimeout(() => joinRoomByCode(clean), 350);
+                }
+            });
+        })();
+    </script>
+</body>
+</html>

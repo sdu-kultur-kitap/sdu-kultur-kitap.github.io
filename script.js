@@ -6,6 +6,11 @@
 import { registerMember, loginMember, submitApplication, submitSuggestion, verifyMember, getPublicData, setPublicData, getVisitorStats, incrementVisitorStats } from './firebase-service.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('room')) {
+        window.location.replace('oyun.html?room=' + encodeURIComponent(urlParams.get('room').trim()));
+        return;
+    }
     try {
         window.SduAppData = await getPublicData() || { events: [], book: {} };
     } catch (err) {
@@ -1345,17 +1350,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     function handleEventJoinClick(evId, title, btn) {
-        const member = getCurrentMember();
-
-        if (member.role !== 'member') {
-            showToast(`💡 "${title}" etkinliğine tek tıkla katılmak için lütfen üye olun veya giriş yapın!`, 'fas fa-info-circle');
-            openAuthModal('register', `⚡ "${title}" etkinliğine kaydolmak için lütfen üye olun veya giriş yapın.`, (loggedInMember) => {
-                executeEventJoin(evId, title, btn, loggedInMember);
-            });
-            return;
-        }
-
-        executeEventJoin(evId, title, btn, member);
+        showToast(`🎉 "${title}" etkinliği için WhatsApp duyuru kanalımıza yönlendiriliyorsunuz!`, 'fab fa-whatsapp');
+        window.open('https://chat.whatsapp.com/Hr6gRPBKqfJD3kxsY9TkPj?mode=gi_t', '_blank');
     }
 
     async function executeEventJoin(evId, title, btn, member) {
