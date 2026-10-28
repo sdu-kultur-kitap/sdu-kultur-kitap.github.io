@@ -635,16 +635,41 @@
             box-shadow: 0 0 14px rgba(16, 185, 129, 0.6);
         }
 
-        /* Player Card Enhancements: Streak Fire, Floating Delta, Throw Buttons */
+        /* Player Card Enhancements: Streak Fire, Wanted Free-Rider, Floating Delta, Throw Buttons */
         .pgg-player-card.on-fire {
             border-color: rgba(251, 191, 36, 0.75);
             box-shadow: 0 0 26px rgba(245, 158, 11, 0.28);
+        }
+        .pgg-player-card.wanted-freerider {
+            border-color: rgba(244, 63, 94, 0.75);
+            box-shadow: 0 0 24px rgba(244, 63, 94, 0.25);
         }
         .streak-badge {
             display: inline-flex; align-items: center; gap: 3px;
             font-size: 0.65rem; font-weight: 800; padding: 2px 7px; border-radius: 999px;
             background: linear-gradient(135deg, #f59e0b, #ef4444); color: #fff;
             box-shadow: 0 4px 10px rgba(239, 68, 68, 0.4); animation: popIn 0.25s ease;
+        }
+        .wanted-badge {
+            display: inline-flex; align-items: center; gap: 3px;
+            font-size: 0.65rem; font-weight: 800; padding: 2px 7px; border-radius: 999px;
+            background: linear-gradient(135deg, #e11d48, #881337); color: #fda4af;
+            border: 1px solid rgba(251, 113, 133, 0.5);
+            box-shadow: 0 4px 10px rgba(225, 29, 72, 0.35); animation: popIn 0.25s ease;
+        }
+        .tier-hint-bar {
+            padding: 9px 13px; border-radius: 11px; font-size: 0.78rem; font-weight: 600;
+            display: flex; align-items: center; gap: 8px; line-height: 1.4;
+            border: 1px solid rgba(255, 255, 255, 0.1); transition: all 0.2s ease;
+        }
+        .tier-hint-bar.tier-danger {
+            background: rgba(244, 63, 94, 0.12); border-color: rgba(244, 63, 94, 0.38); color: #fda4af;
+        }
+        .tier-hint-bar.tier-balanced {
+            background: rgba(99, 102, 241, 0.12); border-color: rgba(99, 102, 241, 0.38); color: #c7d2fe;
+        }
+        .tier-hint-bar.tier-generous {
+            background: rgba(16, 185, 129, 0.13); border-color: rgba(16, 185, 129, 0.42); color: #6ee7b7;
         }
         .score-float-popup {
             position: absolute; top: 8px; right: 10px;
@@ -758,10 +783,10 @@
 
             <div class="lobby-hero">
                 <div class="lobby-badge" id="lobbyBadgeText">
-                    <i class="fas fa-coins"></i> 4 Oyunculu Kamu Malları Deneyi • 1.6x Ortak Havuz & Kaos Kartları
+                    <i class="fas fa-coins"></i> 4 Oyunculu Kamu Malları Deneyi • Adil Havuz Temettüsü & Kaos Kartları
                 </div>
                 <h2 id="lobbyHeroTitle">Ortak Havuza Katkı mı, Beleşçilik mi?</h2>
-                <p id="lobbyHeroDesc">4 kişi aynı masada! Her tur <strong>20 Altın</strong> bütçenden istediğin kadarını (0-20) ortak havuza yatır. Havuzdaki altınlar <strong>1.6x</strong> ile çarpılıp 4 kişiye eşit bölünür; üstelik her tur <em>Vergi Müfettişi</em> ve <em>Altın Çağ</em> gibi sürpriz olaylar dengeleri değiştirir!</p>
+                <p id="lobbyHeroDesc">4 kişi aynı masada! Her tur <strong>20 Altın</strong> bütçenden istediğin kadarını (0-20) ortak havuza yatır. Havuz <strong>1.6x</strong> ile büyür; yarısı <em>Taban Kamu Payı</em>, diğer yarısı ise <strong>Katkı Oranlı Dayanışma Temettüsü</strong> olarak dağıtılır. 6 altından az yatıran beleşçiler temettü alamaz, üstelik masada iş birliği varken beleşçilik yapanlar <strong>Mahalle Baskısı Cezası</strong> öder!</p>
             </div>
 
             <!-- Player Nickname -->
@@ -960,11 +985,15 @@
                             <input type="range" id="pggSlider" class="pgg-range-slider" min="0" max="20" step="1" value="10">
                             <div class="pgg-presets-row" id="pggPresetsRow">
                                 <button type="button" class="preset-pill-btn" data-val="0">0 🪙 (Beleşçi)</button>
-                                <button type="button" class="preset-pill-btn" data-val="5">5 🪙 (Temkinli)</button>
+                                <button type="button" class="preset-pill-btn" data-val="6">6 🪙 (Taban Baraj)</button>
                                 <button type="button" class="preset-pill-btn active" data-val="10">10 🪙 (Dengeli)</button>
                                 <button type="button" class="preset-pill-btn" data-val="15">15 🪙 (Cömert)</button>
                                 <button type="button" class="preset-pill-btn" data-val="20">20 🪙 (Tam Katkı)</button>
                             </div>
+                        </div>
+
+                        <div class="tier-hint-bar tier-balanced" id="pggTierHint">
+                            <span>⚖️ <strong>Dengeli Katılım (6-13 🪙):</strong> %100 Taban Havuz Payı + yatırdığın oranda Dayanışma Temettüsü alırsın, ceza yemezsin.</span>
                         </div>
 
                         <button type="button" class="btn btn-join" id="btnLockPggMove" style="width:100%; font-size:1rem;">
@@ -1130,32 +1159,32 @@
                 <div id="sidebar4P" style="display:flex; flex-direction:column; gap:16px;">
                     <div class="glass-card matrix-card">
                         <div class="card-section-title">
-                            <span><i class="fas fa-balance-scale"></i> Kamu Malları Matematiği</span>
-                            <span style="font-size: 0.72rem; color: #34d399;">1.6x Havuz</span>
+                            <span><i class="fas fa-balance-scale"></i> Adil Havuz & Temettü Sistemi</span>
+                            <span style="font-size: 0.72rem; color: #34d399;">Ostrom Modeli</span>
                         </div>
-                        <p class="matrix-desc">Her tur <strong>20 Altın</strong> alırsın. Havuza yatırdığın miktar <strong>1.6x</strong> ile çarpılıp 4 kişiye eşit bölünür:</p>
+                        <p class="matrix-desc">Büyüyen havuzun <strong>%50'si Taban Pay</strong>, <strong>%50'si Katkı Temettüsü</strong> olarak dağıtılır (Katılım barajı: <strong>en az 6 🪙</strong>):</p>
                         <div class="matrix-grid">
                             <div class="matrix-cell both-coop">
-                                <div style="font-size:0.76rem; color:#6ee7b7; font-weight:700;">🏛️ Tam Dayanışma (Herkes 20 Yatırırsa)</div>
-                                <div class="matrix-cell-pts">Herkese +32 🪙</div>
-                                <small style="color:var(--text-muted); font-size:0.72rem;">Havuz: 80 × 1.6 = 128 🪙 (4'e bölünür)</small>
+                                <div style="font-size:0.76rem; color:#6ee7b7; font-weight:700;">🏛️ Tam Dayanışma + 🔥 Seri (Herkes 20)</div>
+                                <div class="matrix-cell-pts">Herkese +32 🪙 (+3/+5 Seri)</div>
+                                <small style="color:var(--text-muted); font-size:0.72rem;">Havuz: 128 🪙 + Cömertlik Serisi ikramiyesi!</small>
                             </div>
                             <div class="matrix-cell">
-                                <div style="font-size:0.76rem; color:#fda4af; font-weight:700;">🦊 Beleşçi Vurgunu (3 Kişi 20, Sen 0)</div>
-                                <div class="matrix-cell-pts">Sen +44 🪙 / Diğerleri +24 🪙</div>
-                                <small style="color:var(--text-muted); font-size:0.72rem;">Cebindeki 20 + Havuz Payı (60×1.6÷4 = 24)</small>
+                                <div style="font-size:0.76rem; color:#c7d2fe; font-weight:700;">⚖️ Taktiksel Pragmatist (3 Kişi 20, Sen 10)</div>
+                                <div class="matrix-cell-pts">Sen +32 🪙 / Cömertler +30 🪙</div>
+                                <small style="color:var(--text-muted); font-size:0.72rem;">6+ 🪙 yatırdığın için ceza yemezsin ama temettün ve seri bonusun düşer.</small>
                             </div>
                             <div class="matrix-cell both-defect">
-                                <div style="font-size:0.76rem; color:#fcd34d; font-weight:700;">💥 Ortak Malların Trajedisi (Herkes 0)</div>
-                                <div class="matrix-cell-pts">Herkese +20 🪙</div>
-                                <small style="color:var(--text-muted); font-size:0.72rem;">Kimse havuza güvenmezse ekstra kazanç 0 olur!</small>
+                                <div style="font-size:0.76rem; color:#fda4af; font-weight:700;">🚨 Beleşçi Tuzağı (3 Kişi 20, Sen 0)</div>
+                                <div class="matrix-cell-pts">Sen +17 🪙 / Cömertler +33 🪙</div>
+                                <small style="color:var(--text-muted); font-size:0.72rem;">0-5 🪙 yatıran temettü alamaz, havuz payı kesilir ve -6 🪙 Mahalle Baskısı cezası cömertlere dağıtılır!</small>
                             </div>
                         </div>
                     </div>
 
                     <div class="glass-card theory-tip-box">
-                        <strong><i class="fas fa-dice" style="color:#f59e0b;"></i> Kaos & Tur Olayları:</strong>
-                        Sıradan beleşçilik her zaman işe yaramaz! <em>🕵️ Vergi Müfettişi</em> turlarında 5 altından az yatıranlar <strong>-8 🪙 ceza</strong> yer; <em>🌟 Altın Çağ</em> turlarında çarpan <strong>2.4x</strong> olur; <em>🦸 Robin Hood</em> turunda en cömert oyuncu <strong>+6 🪙 ödül</strong> kapar!
+                        <strong><i class="fas fa-fire" style="color:#f59e0b;"></i> İtibar Serisi & Sabıka Kuralları:</strong>
+                        Üst üste <strong>14+ 🪙</strong> yatıranlar <em>🔥 İtibar Serisi</em> yakalar ve her tur ekstra <strong>+3 / +5 🪙</strong> kazanır. Üst üste <strong>6 🪙 altı</strong> yatıranlar ise <em>🚨 Sabıkalı Beleşçi</em> ilan edilip havuzdan <strong>%0 pay (Ambargo)</strong> alır ve <em>🕵️ Vergi Müfettişi</em> turlarında <strong>-10 🪙 ceza</strong> öder!
                     </div>
                 </div>
 
@@ -1276,16 +1305,16 @@
         const PGG_EVENT_CATALOG = {
             STANDARD: {
                 id: 'STANDARD',
-                title: '⚖️ Standart Akademik Dönem',
-                desc: 'Ortak havuzdaki altınlar 1.6x ile çarpılıp 4 oyuncuya eşit bölünür.',
-                badge: '1.6x Havuz',
+                title: '⚖️ Standart Akademik Dönem (Ostrom Modeli)',
+                desc: 'Havuz 1.6x büyür: %50 Taban Pay + %50 Katkı Temettüsü! 6 🪙 altı yatıran beleşçiler temettü alamaz ve Mahalle Baskısı cezası yer.',
+                badge: '1.6x Adil Havuz',
                 cls: 'event-standard',
                 multiplier: 1.6
             },
             GOLDEN_AGE: {
                 id: 'GOLDEN_AGE',
                 title: '🌟 Altın Çağ (Bereket Teşviği!)',
-                desc: 'Hazine coştu! Bu tur ortak havuza yatırılan altınlar 1.6x yerine tam 2.4x ile çarpılır!',
+                desc: 'Hazine coştu! Bu tur ortak havuza yatırılan altınlar 1.6x yerine tam 2.4x ile çarpılır; yüksek yatıran temettüyle servet kazanır!',
                 badge: '2.4x Havuz!',
                 cls: 'event-golden',
                 multiplier: 2.4
@@ -1293,16 +1322,16 @@
             TAX_AUDIT: {
                 id: 'TAX_AUDIT',
                 title: '🕵️ Vergi Müfettişi Baskını!',
-                desc: 'Dikkat! Bu tur ortak havuza 5 Altından az yatıran "Beleşçiler" denetime yakalanır ve -8 🪙 ceza yer!',
-                badge: 'Denetim (-8 🪙)',
+                desc: 'Dikkat! Bu tur ortak havuza 8 Altından az yatıranlar denetime yakalanıp -10 🪙 ceza öder; kesilen cezalar dürüst oyunculara dağıtılır!',
+                badge: 'Denetim (-10 🪙)',
                 cls: 'event-audit',
                 multiplier: 1.6
             },
             ROBIN_HOOD: {
                 id: 'ROBIN_HOOD',
                 title: '🦸 Robin Hood Dayanışma Fonu',
-                desc: 'Bu tur havuza en yüksek katkıyı yapan oyuncu(lar) (en az 12 🪙 yatırmak şartıyla) ekstra +6 🪙 ödül alır!',
-                badge: '+6 🪙 Ödül',
+                desc: 'Havuza en yüksek katkıyı yapan(lar) (en az 12 🪙) ekstra +8 🪙 ödül alır; 8 🪙 altı yatıran cimrilerden ise -4 🪙 kesilir!',
+                badge: '+8 🪙 Ödül',
                 cls: 'event-golden',
                 multiplier: 1.6
             },
@@ -1317,8 +1346,8 @@
             LOYALTY_BONUS: {
                 id: 'LOYALTY_BONUS',
                 title: '💎 Sadakat İkramiyesi Turu',
-                desc: 'Bu tur ortak havuza 15 veya daha fazla Altın yatıran her cömert oyuncuya hazineden ekstra +5 🪙 ikramiye!',
-                badge: '+5 🪙 Bonus',
+                desc: 'Bu tur ortak havuza 14 veya daha fazla Altın yatıran her cömert oyuncuya hazineden ekstra +6 🪙 ikramiye!',
+                badge: '+6 🪙 Bonus',
                 cls: 'event-golden',
                 multiplier: 1.6
             }
@@ -2413,6 +2442,20 @@
             pggPresetsRow.querySelectorAll('.preset-pill-btn').forEach(btn => {
                 btn.classList.toggle('active', Number(btn.dataset.val) === num);
             });
+
+            const tierHintEl = document.getElementById('pggTierHint');
+            if (tierHintEl) {
+                if (num < 6) {
+                    tierHintEl.className = 'tier-hint-bar tier-danger';
+                    tierHintEl.innerHTML = `<span>🚨 <strong>Beleşçi Bölgesi (${num} 🪙 &lt; 6 🪙 Barajı):</strong> Katkı temettüsü alamazsın, taban havuz payın kesilir ve diğerleri iş birliği yaparsa <strong>-5/-8 🪙 Mahalle Baskısı Cezası</strong> yersin!</span>`;
+                } else if (num < 14) {
+                    tierHintEl.className = 'tier-hint-bar tier-balanced';
+                    tierHintEl.innerHTML = `<span>⚖️ <strong>Dengeli Katılım (${num} 🪙):</strong> %100 Taban Havuz Payı + yatırdığın oranda Dayanışma Temettüsü alırsın, ceza yemezsin.</span>`;
+                } else {
+                    tierHintEl.className = 'tier-hint-bar tier-generous';
+                    tierHintEl.innerHTML = `<span>🔥 <strong>Yüksek İtibar &amp; Cömertlik (${num} 🪙):</strong> En yüksek Temettü Payı + Üst üste yatırımda <strong>+3/+5 🪙 Seri İkramiyesi</strong> + Beleşçilerden kesilen cezaları paylaşma hakkı!</span>`;
+                }
+            }
         }
 
         pggSlider.addEventListener('input', (e) => {
@@ -2428,14 +2471,24 @@
             });
         });
 
-        function getSeatStreak(seatIdx) {
+        function getSeatStreak(seatIdx, upToRound = currentRound - 1) {
             let streak = 0;
-            for (let r = currentRound - 1; r >= 1; r--) {
+            for (let r = upToRound; r >= 1; r--) {
                 const mv = pggMoves[r]?.[seatIdx];
-                if (mv !== undefined && Number(mv) >= 15) streak++;
+                if (mv !== undefined && Number(mv) >= 14) streak++;
                 else break;
             }
             return streak;
+        }
+
+        function getSeatWantedStreak(seatIdx, upToRound = currentRound - 1) {
+            let wStreak = 0;
+            for (let r = upToRound; r >= 1; r--) {
+                const mv = pggMoves[r]?.[seatIdx];
+                if (mv !== undefined && Number(mv) < 6) wStreak++;
+                else break;
+            }
+            return wStreak;
         }
 
         window.throwReactionToSeat = function(toSeat, emoji) {
@@ -2459,8 +2512,11 @@
                 const rMoves = pggMoves[currentRound] || {};
                 const hasMoved = rMoves[i] !== undefined;
                 const isResolved = !!resolvedRounds[currentRound];
-                const streak = getSeatStreak(i);
+                const checkRound = isResolved ? currentRound : (currentRound - 1);
+                const streak = getSeatStreak(i, checkRound);
+                const wantedStreak = getSeatWantedStreak(i, checkRound);
                 const onFire = streak >= 2;
+                const isWanted = !onFire && wantedStreak >= 2;
 
                 let statusClass = 'pgg-status-pill';
                 let statusText = '⏳ Düşünüyor...';
@@ -2472,7 +2528,9 @@
                     statusText = '🔒 Karar Kilitlendi (? 🪙)';
                 }
 
-                const streakHtml = onFire ? `<span class="streak-badge" title="Cömertlik Serisi!">🔥 ${streak}x Seri</span>` : '';
+                const streakHtml = onFire
+                    ? `<span class="streak-badge" title="Cömertlik & İtibar Serisi!">🔥 ${streak}x Seri</span>`
+                    : (isWanted ? `<span class="wanted-badge" title="Üst üste düşük katkı: Havuz Ambargosu!">🚨 Sabıkalı</span>` : '');
                 const throwRowHtml = !isMe ? `
                     <div class="card-throw-row">
                         <button type="button" class="throw-mini-btn" onclick="window.throwReactionToSeat(${i}, '🍅')" title="Domates Fırlat!">🍅</button>
@@ -2485,7 +2543,7 @@
                 if (alreadyBuilt) {
                     const card = document.getElementById(`pggCard_${i}`);
                     if (card) {
-                        card.className = `pgg-player-card ${isMe ? 'is-me' : ''} ${hasMoved ? 'locked-in' : ''} ${onFire ? 'on-fire' : ''}`;
+                        card.className = `pgg-player-card ${isMe ? 'is-me' : ''} ${hasMoved ? 'locked-in' : ''} ${onFire ? 'on-fire' : ''} ${isWanted ? 'wanted-freerider' : ''}`;
                         const nameEl = card.querySelector('.pgg-player-name');
                         if (nameEl) nameEl.innerHTML = `${seatObj.name} ${streakHtml}`;
                         const tagEl = card.querySelector('.pgg-seat-tag');
@@ -2502,7 +2560,7 @@
                     }
                 } else {
                     const card = document.createElement('div');
-                    card.className = `pgg-player-card ${isMe ? 'is-me' : ''} ${hasMoved ? 'locked-in' : ''} ${onFire ? 'on-fire' : ''}`;
+                    card.className = `pgg-player-card ${isMe ? 'is-me' : ''} ${hasMoved ? 'locked-in' : ''} ${onFire ? 'on-fire' : ''} ${isWanted ? 'wanted-freerider' : ''}`;
                     card.id = `pggCard_${i}`;
                     card.innerHTML = `
                         <div class="pgg-speech-bubble" id="pggBubble_${i}"></div>
@@ -2719,32 +2777,119 @@
             const multipliedPool = totalPool * effectiveMultiplier;
             const equalShare = multipliedPool / 4;
 
-            const roundGains = [0, 0, 0, 0];
+            // =================================================================
+            // OSTROM & FEHR-GÄCHTER ADİL HAVUZ VE TEMETTÜ MODELİ
+            // 1) Havuzun %50'si Taban Kamu Payı (6+ yatıran tam hak, 1-5 yatıran %45 hak,
+            //    0 yatıran %20 hak, üst üste <6 yatıran Sabıkalı Beleşçi %0 Ambargo!)
+            // 2) Havuzun %50'si Dayanışma Temettüsü (6+ 🪙 yatıranlar arasında yatırdıkları
+            //    miktarla doğru orantılı bölüşülür!)
+            // =================================================================
+            const basePool = multipliedPool * 0.5;
+            const dividendPool = multipliedPool * 0.5;
+
+            const baseWeights = [0, 0, 0, 0];
+            const eligContribs = [0, 0, 0, 0];
+
+            for (let i = 0; i < 4; i++) {
+                const prevLow = (r > 1 && pggMoves[r - 1]?.[i] !== undefined && Number(pggMoves[r - 1][i]) < 6);
+                if (c[i] >= 6) {
+                    baseWeights[i] = 1.0;
+                    eligContribs[i] = c[i];
+                } else if (prevLow) {
+                    baseWeights[i] = 0.0; // 🚫 Ambargo: Üst üste <6 yatıran havuzdan 0 pay alır!
+                } else if (c[i] >= 1) {
+                    baseWeights[i] = 0.45;
+                } else {
+                    baseWeights[i] = 0.2;
+                }
+            }
+
+            const sumBaseW = baseWeights[0] + baseWeights[1] + baseWeights[2] + baseWeights[3];
+            const sumEligC = eligContribs[0] + eligContribs[1] + eligContribs[2] + eligContribs[3];
+
+            const playerPoolShares = [0, 0, 0, 0];
+            for (let i = 0; i < 4; i++) {
+                const bShare = sumBaseW > 0 ? (basePool * (baseWeights[i] / sumBaseW)) : (basePool / 4);
+                const dShare = sumEligC > 0
+                    ? (dividendPool * (eligContribs[i] / sumEligC))
+                    : (totalPool > 0 ? (dividendPool * (c[i] / totalPool)) : 0);
+                playerPoolShares[i] = bShare + dShare;
+            }
+
+            // 3) Akran Cezası / Mahalle Baskısı & Vergi Denetimi Cezaları (Toplanan cezalar dürüst oyunculara dağıtılır!)
+            const penalties = [0, 0, 0, 0];
+            const bonuses = [0, 0, 0, 0];
+            const tags = ['', '', '', ''];
+            let collectedFinesPool = 0;
             const maxContrib = Math.max(...c);
 
             for (let i = 0; i < 4; i++) {
-                let net = (ROUND_ENDOWMENT - c[i]) + equalShare;
-                let tag = '';
+                const othersAvg = (totalPool - c[i]) / 3;
+                const prevLow = (r > 1 && pggMoves[r - 1]?.[i] !== undefined && Number(pggMoves[r - 1][i]) < 6);
+                const pName = (roomSeats[i]?.name || ('K' + (i + 1))).split(' ')[0];
 
-                if (ev.id === 'TAX_AUDIT' && c[i] < 5) {
-                    net -= 8;
+                // Mahalle Baskısı (Diğerleri ort. >= 10 yatırırken < 6 yatıran beleşçiye toplum cezası)
+                if (c[i] < 6 && othersAvg >= 10) {
+                    const peerFine = (c[i] === 0 ? 6 : 4) + (prevLow ? 3 : 0);
+                    penalties[i] += peerFine;
+                    collectedFinesPool += peerFine;
                     hadPenaltyOrCrisis = true;
-                    tag = '🕵️ CEZA!';
-                    eventNotes.push(`${roomSeats[i]?.name || ('K' + (i + 1))} vergi cezası yedi (-8 🪙)`);
-                }
-                if (ev.id === 'ROBIN_HOOD' && maxContrib >= 12 && c[i] === maxContrib) {
-                    net += 6;
-                    tag = '🦸 +6';
-                    eventNotes.push(`${roomSeats[i]?.name || ('K' + (i + 1))} Robin Hood ödülü aldı (+6 🪙)`);
-                }
-                if (ev.id === 'LOYALTY_BONUS' && c[i] >= 15) {
-                    net += 5;
-                    tag = '💎 +5';
+                    tags[i] = prevLow ? '🚫 AMBARGO!' : '🚨 BASKI!';
+                    eventNotes.push(`${pName} beleşçilik cezası ödedi (-${peerFine} 🪙)`);
                 }
 
+                // Vergi Müfettişi Baskını (8 🪙 altı yatıranlara -10 🪙 ceza)
+                if (ev.id === 'TAX_AUDIT' && c[i] < 8) {
+                    penalties[i] += 10;
+                    collectedFinesPool += 10;
+                    hadPenaltyOrCrisis = true;
+                    tags[i] = '🕵️ VERGİ CEZASI!';
+                    eventNotes.push(`${pName} vergi denetimine yakalandı (-10 🪙)`);
+                }
+
+                // Robin Hood Turu
+                if (ev.id === 'ROBIN_HOOD' && maxContrib >= 12) {
+                    if (c[i] === maxContrib) {
+                        bonuses[i] += 8;
+                        tags[i] = '🦸 +8';
+                        eventNotes.push(`${pName} Robin Hood ödülü aldı (+8 🪙)`);
+                    } else if (c[i] < 8) {
+                        penalties[i] += 4;
+                        collectedFinesPool += 4;
+                        hadPenaltyOrCrisis = true;
+                    }
+                }
+
+                // Sadakat İkramiyesi Turu
+                if (ev.id === 'LOYALTY_BONUS' && c[i] >= 14) {
+                    bonuses[i] += 6;
+                    if (!tags[i]) tags[i] = '💎 +6';
+                }
+
+                // 🔥 İtibar & Cömertlik Serisi Bonusu (Üst üste >= 14 🪙 yatıranlar)
+                const repStreak = getSeatStreak(i, r);
+                if (repStreak >= 2) {
+                    const streakBonus = repStreak >= 3 ? 5 : 3;
+                    bonuses[i] += streakBonus;
+                    if (!tags[i]) tags[i] = `🔥 +${streakBonus}`;
+                }
+            }
+
+            // Kesilen cezaları masadaki dürüst oyunculara (>= 10 🪙 yatıranlara) eşit dağıt!
+            const honestSeats = [0, 1, 2, 3].filter(idx => c[idx] >= 10);
+            if (collectedFinesPool > 0 && honestSeats.length > 0) {
+                const fineShare = collectedFinesPool / honestSeats.length;
+                for (const hIdx of honestSeats) {
+                    bonuses[hIdx] += fineShare;
+                }
+            }
+
+            const roundGains = [0, 0, 0, 0];
+            for (let i = 0; i < 4; i++) {
+                const net = (ROUND_ENDOWMENT - c[i]) + playerPoolShares[i] + bonuses[i] - penalties[i];
                 roundGains[i] = Math.round(net * 10) / 10;
                 pggScores[i] = Math.round((pggScores[i] + roundGains[i]) * 10) / 10;
-                showFloatingScoreDelta(i, roundGains[i], tag);
+                showFloatingScoreDelta(i, roundGains[i], tags[i]);
             }
 
             // Animate Vault Burst & Flying Coins from Vault to Players
@@ -2755,15 +2900,17 @@
 
             if (vaultFillEl) vaultFillEl.style.width = `${Math.min(100, Math.round((totalPool / 80) * 100))}%`;
             if (vaultPctEl) vaultPctEl.textContent = `${totalPool} / 80 🪙`;
-            if (vaultStatusEl) vaultStatusEl.textContent = `Havuz Açıldı: ${totalPool} 🪙 × ${effectiveMultiplier} = +${fmtNum(equalShare)} 🪙/kişi`;
+            if (vaultStatusEl) vaultStatusEl.textContent = `Havuz: ${totalPool} 🪙 × ${effectiveMultiplier} = ${fmtNum(multipliedPool)} 🪙 (Senin Havuz Payın: +${fmtNum(playerPoolShares[mySeatIndex])} 🪙)`;
 
             if (vaultIconEl) {
                 vaultIconEl.classList.remove('burst');
                 void vaultIconEl.offsetWidth;
                 vaultIconEl.classList.add('burst');
                 for (let i = 0; i < 4; i++) {
-                    const cardEl = document.getElementById(`pggCard_${i}`);
-                    spawnFlyingItem(vaultIconEl, cardEl, '🪙');
+                    if (playerPoolShares[i] > 0) {
+                        const cardEl = document.getElementById(`pggCard_${i}`);
+                        spawnFlyingItem(vaultIconEl, cardEl, '🪙');
+                    }
                 }
             }
 
@@ -2777,18 +2924,18 @@
             // Funny AI Bot Reactions after round resolves
             for (let i = 0; i < 4; i++) {
                 if (roomSeats[i] && roomSeats[i].isBot) {
-                    if (c[i] === 0 && totalPool >= 40) {
-                        showPlayerSpeechBubble(i, '😈 Beleş altın tatlıymış!');
-                    } else if (ev.id === 'TAX_AUDIT' && c[i] >= 5) {
+                    if (penalties[i] > 0) {
+                        showPlayerSpeechBubble(i, '😭 Beleşçilik yaparken yakalandık!');
+                    } else if (ev.id === 'TAX_AUDIT' && c[i] >= 8) {
                         showPlayerSpeechBubble(i, '🕵️ Vergimi ödedim, kafam rahat!');
                     } else if (totalPool >= 65 && i === 1) {
-                        showPlayerSpeechBubble(i, '🤝 Harika dayanışma!');
+                        showPlayerSpeechBubble(i, '🤝 Harika dayanışma, temettüler coştu!');
                     }
                 }
             }
 
             pggLastPoolEl.textContent = `${totalPool} 🪙 (×${effectiveMultiplier})`;
-            pggLastShareEl.textContent = `+${fmtNum(equalShare)} 🪙`;
+            pggLastShareEl.textContent = `+${fmtNum(playerPoolShares[mySeatIndex])} 🪙`;
 
             pggHistory.unshift({
                 round: r,
@@ -2796,12 +2943,14 @@
                 contributions: [...c],
                 totalPool,
                 effectiveMultiplier,
+                multipliedPool,
                 equalShare,
+                myPoolShare: playerPoolShares[mySeatIndex],
                 roundGains: [...roundGains],
                 myGain: roundGains[mySeatIndex]
             });
 
-            const freeRiders = c.filter(x => x === 0).length;
+            const freeRiders = c.filter(x => x < 6).length;
             let emoji = '🏛️';
             let title = '';
             let sub = '';
@@ -2809,25 +2958,25 @@
             if (totalPool >= 65) {
                 emoji = '🌟';
                 title = `${r}. Tur: Muazzam Kamu Dayanışması!`;
-                sub = `Havuzda ${totalPool} 🪙 birikti! Herkese havuzdan +${fmtNum(equalShare)} 🪙 dağıtıldı.`;
-            } else if (freeRiders >= 1 && totalPool >= 30) {
-                emoji = '🦊';
-                title = `${r}. Tur: Masada Beleşçi Vurgunu Var!`;
-                sub = `Bazı oyuncular havuza 0 yatırıp ortak havuzdan (+${fmtNum(equalShare)} 🪙) geçindi!`;
+                sub = `Havuzda ${totalPool} 🪙 birikti (×${effectiveMultiplier} = ${fmtNum(multipliedPool)} 🪙)! Yüksek katkı yapanlar temettü ve seri ikramiyesiyle ödüllendirildi.`;
+            } else if (freeRiders >= 1 && collectedFinesPool > 0) {
+                emoji = '🚨';
+                title = `${r}. Tur: Beleşçilere Mahalle Baskısı & Kesinti!`;
+                sub = `Düşük katkı yapanların havuz temettüsü kesildi ve toplam ${fmtNum(collectedFinesPool)} 🪙 ceza dürüst oyunculara dağıtıldı!`;
             } else if (totalPool <= 15) {
                 emoji = '💥';
                 title = `${r}. Tur: Ortak Malların Trajedisi!`;
-                sub = `Havuza neredeyse kimse güvenmedi (Toplam: ${totalPool} 🪙).`;
+                sub = `Havuza neredeyse kimse güvenmedi (Toplam: ${totalPool} 🪙). Kimse temettü kazanamadı!`;
             } else {
                 emoji = '⚖️';
-                title = `${r}. Tur Tamamlandı (Havuz: ${totalPool} 🪙)`;
-                sub = eventNotes.length > 0 ? eventNotes.join(' • ') : `Havuz ×${effectiveMultiplier} katlanıp kişi başı +${fmtNum(equalShare)} 🪙 verdi.`;
+                title = `${r}. Tur Tamamlandı (Havuz: ${totalPool} 🪙 × ${effectiveMultiplier})`;
+                sub = eventNotes.length > 0 ? eventNotes.join(' • ') : `Senin Havuz Payın: +${fmtNum(playerPoolShares[mySeatIndex])} 🪙 • Net Kazancın: +${fmtNum(roundGains[mySeatIndex])} 🪙`;
             }
 
             pggBannerEmoji.textContent = emoji;
             pggBannerTitle.textContent = title;
             pggBannerSub.textContent = sub;
-            pggBannerDelta.textContent = `Senin Kazancın: +${fmtNum(roundGains[mySeatIndex])} 🪙`;
+            pggBannerDelta.textContent = `Bu Tur: +${fmtNum(roundGains[mySeatIndex])} 🪙`;
             pggRoundBanner.classList.remove('show');
             void pggRoundBanner.offsetWidth;
             pggRoundBanner.classList.add('show');
@@ -2861,14 +3010,14 @@
             pggHistoryTableBody.innerHTML = pggHistory.map(item => {
                 const pills = item.contributions.map((val, idx) => {
                     const name = (roomSeats[idx]?.name || `K${idx + 1}`).split(' ')[0];
-                    const cls = val >= 10 ? 'coop' : (val === 0 ? 'defect' : '');
+                    const cls = val >= 10 ? 'coop' : (val < 6 ? 'defect' : '');
                     return `<span class="move-pill ${cls}" style="margin:2px;">${name}: ${val}🪙</span>`;
                 }).join(' ');
                 return `
                     <tr>
                         <td><strong>#${item.round}</strong> <small style="color:var(--text-muted); display:block;">${item.eventTitle}</small></td>
                         <td>${pills}</td>
-                        <td style="font-family:'JetBrains Mono', monospace;">${item.totalPool}🪙 × ${item.effectiveMultiplier} = <strong>+${fmtNum(item.equalShare)}🪙/kişi</strong></td>
+                        <td style="font-family:'JetBrains Mono', monospace;">${item.totalPool}🪙 × ${item.effectiveMultiplier} = <strong>${fmtNum(item.multipliedPool || (item.totalPool * item.effectiveMultiplier))}🪙</strong> <small style="display:block; color:#fbbf24;">Payın: +${fmtNum(item.myPoolShare ?? item.equalShare)}🪙</small></td>
                         <td style="font-family:'JetBrains Mono', monospace; color:#34d399; font-weight:800;">+${fmtNum(item.myGain)} 🪙</td>
                     </tr>
                 `;
