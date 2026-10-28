@@ -562,7 +562,7 @@ export async function syncLegacyTestStats() {
 
 
 // ==========================
-// GAME THEORY (PRISONER'S DILEMMA) LOGGING
+// GAME THEORY (PUBLIC GOODS 4P & PRISONER'S DILEMMA 1V1) LOGGING
 // ==========================
 export async function saveGameResult(gameData) {
     const entry = {
@@ -584,18 +584,30 @@ export async function saveGameResult(gameData) {
 
         // Update aggregate Counters document in settings/gameStats
         const statsRef = doc(db, "settings", "gameStats");
-        const totalCoop = (Number(entry.hostCoopCount) || 0) + (Number(entry.guestCoopCount) || 0);
-        const totalDefect = (Number(entry.totalRounds) || 10) * 2 - totalCoop;
+        if (entry.gameMode === '4p') {
+            await setDoc(statsRef, {
+                totalGames: increment(1),
+                total4PGames: increment(1),
+                totalPoolContributed: increment(Number(entry.totalPoolContributed) || 0),
+                freeRideCount: increment(Number(entry.freeRideCount) || 0),
+                fullCoopCount: increment(Number(entry.fullCoopCount) || 0),
+                updatedAt: new Date().toISOString()
+            }, { merge: true });
+        } else {
+            const totalCoop = (Number(entry.hostCoopCount) || 0) + (Number(entry.guestCoopCount) || 0);
+            const totalDefect = (Number(entry.totalRounds) || 10) * 2 - totalCoop;
 
-        await setDoc(statsRef, {
-            totalGames: increment(1),
-            totalCooperations: increment(totalCoop),
-            totalDefections: increment(Math.max(0, totalDefect)),
-            mutualCoops: increment(Number(entry.mutualCoopCount) || 0),
-            mutualDefects: increment(Number(entry.mutualDefectCount) || 0),
-            betrayals: increment(Number(entry.betrayalCount) || 0),
-            updatedAt: new Date().toISOString()
-        }, { merge: true });
+            await setDoc(statsRef, {
+                totalGames: increment(1),
+                total1v1Games: increment(1),
+                totalCooperations: increment(totalCoop),
+                totalDefections: increment(Math.max(0, totalDefect)),
+                mutualCoops: increment(Number(entry.mutualCoopCount) || 0),
+                mutualDefects: increment(Number(entry.mutualDefectCount) || 0),
+                betrayals: increment(Number(entry.betrayalCount) || 0),
+                updatedAt: new Date().toISOString()
+            }, { merge: true });
+        }
 
         return docRef.id;
     } catch (e) {

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tutsak İkilemi (1v1 VS) | Oyun Teorisi Laboratuvarı — SDÜ Kültür ve Kitap</title>
+    <title>Oyun Teorisi Arenası: 4 Kişilik Kamu Malları & 1v1 Tutsak İkilemi — SDÜ Kültür ve Kitap</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
@@ -14,9 +14,9 @@
     <style>
         :root {
             --bg-main: #090d16;
-            --bg-card: rgba(17, 24, 39, 0.82);
+            --bg-card: rgba(17, 24, 39, 0.85);
             --bg-card-solid: #111827;
-            --bg-elevated: rgba(31, 41, 55, 0.75);
+            --bg-elevated: rgba(31, 41, 55, 0.78);
             --border-glass: rgba(255, 255, 255, 0.09);
             --border-highlight: rgba(99, 102, 241, 0.45);
             --text-main: #f9fafb;
@@ -30,16 +30,13 @@
             --defect-bg: rgba(244, 63, 94, 0.14);
             --defect-border: rgba(244, 63, 94, 0.4);
             --warn-color: #f59e0b;
+            --gold-color: #fbbf24;
             --radius-lg: 20px;
             --radius-md: 14px;
             --radius-sm: 10px;
         }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
             font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -60,1069 +57,505 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 16px 28px;
+            padding: 14px 28px;
             border-bottom: 1px solid var(--border-glass);
-            background: rgba(9, 13, 22, 0.85);
+            background: rgba(9, 13, 22, 0.88);
             backdrop-filter: blur(14px);
             position: sticky;
             top: 0;
             z-index: 50;
         }
-
-        .brand-wrap {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
+        .brand-wrap { display: flex; align-items: center; gap: 12px; }
         .brand-logo {
-            width: 40px;
-            height: 40px;
-            border-radius: 12px;
-            background: linear-gradient(135deg, #6366f1, #ec4899);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.2rem;
-            color: #fff;
+            width: 40px; height: 40px; border-radius: 12px;
+            background: linear-gradient(135deg, #6366f1, #10b981);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.2rem; color: #fff;
             box-shadow: 0 6px 20px rgba(99, 102, 241, 0.35);
         }
-
-        .brand-title h1 {
-            font-size: 1.05rem;
-            font-weight: 800;
-            letter-spacing: -0.02em;
-            line-height: 1.2;
-        }
-
-        .brand-title span {
-            font-size: 0.75rem;
-            color: var(--text-muted);
-            font-weight: 500;
-        }
-
-        .topbar-right {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
+        .brand-title h1 { font-size: 1.05rem; font-weight: 800; letter-spacing: -0.02em; line-height: 1.2; }
+        .brand-title span { font-size: 0.75rem; color: var(--text-muted); font-weight: 500; }
+        .topbar-right { display: flex; align-items: center; gap: 12px; }
         .conn-pill {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 6px 13px;
-            border-radius: 999px;
-            font-size: 0.78rem;
-            font-weight: 600;
-            background: var(--bg-elevated);
-            border: 1px solid var(--border-glass);
-            color: var(--text-muted);
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 6px 13px; border-radius: 999px; font-size: 0.78rem; font-weight: 600;
+            background: var(--bg-elevated); border: 1px solid var(--border-glass); color: var(--text-muted);
         }
-
-        .conn-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: var(--warn-color);
-            box-shadow: 0 0 8px var(--warn-color);
-        }
-
-        .conn-pill.connected .conn-dot {
-            background: var(--coop-color);
-            box-shadow: 0 0 10px var(--coop-color);
-        }
-
-        .conn-pill.connected {
-            color: #d1fae5;
-            border-color: var(--coop-border);
-        }
-
-        .conn-pill.error .conn-dot {
-            background: var(--defect-color);
-            box-shadow: 0 0 10px var(--defect-color);
-        }
-
+        .conn-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--warn-color); box-shadow: 0 0 8px var(--warn-color); }
+        .conn-pill.connected { color: #6ee7b7; border-color: rgba(16, 185, 129, 0.35); background: rgba(16, 185, 129, 0.1); }
+        .conn-pill.connected .conn-dot { background: var(--coop-color); box-shadow: 0 0 8px var(--coop-color); }
+        .conn-pill.error { color: #fda4af; border-color: rgba(244, 63, 94, 0.35); background: rgba(244, 63, 94, 0.1); }
+        .conn-pill.error .conn-dot { background: var(--defect-color); box-shadow: 0 0 8px var(--defect-color); }
         .btn-back-site {
-            display: inline-flex;
-            align-items: center;
-            gap: 7px;
-            padding: 8px 14px;
-            border-radius: var(--radius-sm);
-            background: rgba(255, 255, 255, 0.06);
-            border: 1px solid var(--border-glass);
-            color: var(--text-main);
-            text-decoration: none;
-            font-size: 0.82rem;
-            font-weight: 600;
-            transition: all 0.2s ease;
+            text-decoration: none; color: var(--text-main); font-size: 0.82rem; font-weight: 600;
+            padding: 8px 14px; border-radius: var(--radius-sm);
+            background: rgba(255, 255, 255, 0.06); border: 1px solid var(--border-glass);
+            transition: all 0.2s ease; display: inline-flex; align-items: center; gap: 6px;
         }
+        .btn-back-site:hover { background: rgba(255, 255, 255, 0.12); border-color: rgba(255, 255, 255, 0.2); }
 
-        .btn-back-site:hover {
-            background: rgba(255, 255, 255, 0.12);
-            transform: translateY(-1px);
-        }
-
-        /* Main Container */
         .main-container {
-            flex: 1;
-            width: 100%;
-            max-width: 1180px;
-            margin: 0 auto;
-            padding: 28px 20px 48px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
+            flex: 1; width: 100%; max-width: 1260px; margin: 0 auto;
+            padding: 24px 20px 48px; display: flex; flex-direction: column; justify-content: center;
         }
-
-        /* Glass Card */
         .glass-card {
-            background: var(--bg-card);
-            backdrop-filter: blur(18px);
-            border: 1px solid var(--border-glass);
-            border-radius: var(--radius-lg);
+            background: var(--bg-card); backdrop-filter: blur(16px);
+            border: 1px solid var(--border-glass); border-radius: var(--radius-lg);
             box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
         }
 
-        /* ================= LOBBY SCREEN ================= */
-        #lobbyScreen {
-            width: 100%;
-            max-width: 920px;
-            margin: 0 auto;
-            display: flex;
-            flex-direction: column;
-            gap: 24px;
+        /* Mode Switcher Tabs */
+        .mode-switch-bar {
+            display: flex; gap: 10px; max-width: 680px; margin: 0 auto 22px;
+            background: rgba(17, 24, 39, 0.9); padding: 6px; border-radius: 16px;
+            border: 1px solid var(--border-glass);
+        }
+        .mode-tab-btn {
+            flex: 1; padding: 12px 16px; border-radius: 12px; border: 1px solid transparent;
+            background: transparent; color: var(--text-muted); font-family: inherit;
+            font-size: 0.88rem; font-weight: 700; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            transition: all 0.2s ease;
+        }
+        .mode-tab-btn .mode-pill-tag {
+            font-size: 0.68rem; padding: 2px 7px; border-radius: 999px;
+            background: rgba(16, 185, 129, 0.2); color: #6ee7b7; font-weight: 800;
+        }
+        .mode-tab-btn.active {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.25), rgba(16, 185, 129, 0.18));
+            color: #fff; border-color: rgba(99, 102, 241, 0.5);
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.2);
         }
 
-        .lobby-hero {
-            text-align: center;
-            padding: 12px 10px;
-        }
-
+        /* Lobby */
+        #lobbyScreen { width: 100%; max-width: 960px; margin: 0 auto; }
+        .lobby-hero { text-align: center; margin-bottom: 22px; }
         .lobby-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 6px 14px;
-            border-radius: 999px;
-            background: rgba(99, 102, 241, 0.14);
-            border: 1px solid rgba(99, 102, 241, 0.35);
-            color: #a5b4fc;
-            font-size: 0.78rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            margin-bottom: 14px;
+            display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px;
+            border-radius: 999px; font-size: 0.78rem; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.06em;
+            background: rgba(99, 102, 241, 0.15); color: #a5b4fc;
+            border: 1px solid rgba(99, 102, 241, 0.35); margin-bottom: 12px;
         }
-
         .lobby-hero h2 {
-            font-size: clamp(1.8rem, 4vw, 2.6rem);
-            font-weight: 800;
-            letter-spacing: -0.03em;
-            margin-bottom: 10px;
-            background: linear-gradient(135deg, #ffffff 0%, #a5b4fc 55%, #f43f5e 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            font-size: clamp(1.7rem, 3.5vw, 2.45rem); font-weight: 800; letter-spacing: -0.03em;
+            margin-bottom: 8px; background: linear-gradient(135deg, #ffffff 0%, #a5b4fc 50%, #6ee7b7 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
         }
-
-        .lobby-hero p {
-            color: var(--text-muted);
-            font-size: 0.98rem;
-            max-width: 620px;
-            margin: 0 auto;
-            line-height: 1.6;
-        }
+        .lobby-hero p { color: var(--text-muted); font-size: 0.95rem; max-width: 650px; margin: 0 auto; line-height: 1.55; }
 
         .nickname-bar {
-            max-width: 420px;
-            margin: 0 auto;
-            width: 100%;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            background: var(--bg-card);
-            padding: 10px 16px;
-            border-radius: var(--radius-md);
-            border: 1px solid var(--border-glass);
+            max-width: 440px; margin: 0 auto 22px; background: var(--bg-card);
+            border: 1px solid var(--border-glass); border-radius: var(--radius-md);
+            padding: 10px 16px; display: flex; align-items: center; gap: 10px;
         }
-
-        .nickname-bar i {
-            color: var(--accent-primary);
-        }
-
+        .nickname-bar i { color: var(--accent-primary); }
         .nickname-bar input {
-            flex: 1;
-            background: transparent;
-            border: none;
-            color: var(--text-main);
-            font-size: 0.92rem;
-            font-family: inherit;
-            font-weight: 600;
-            outline: none;
+            background: transparent; border: none; color: var(--text-main);
+            font-family: inherit; font-size: 0.92rem; font-weight: 600; width: 100%; outline: none;
         }
 
-        .nickname-bar input::placeholder {
-            color: #6b7280;
-            font-weight: 400;
-        }
-
-        .lobby-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 22px;
-        }
-
-        .lobby-box {
-            padding: 28px;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            gap: 20px;
-            position: relative;
-            overflow: hidden;
-            transition: border-color 0.25s ease, transform 0.25s ease;
-        }
-
-        .lobby-box:hover {
-            border-color: rgba(255, 255, 255, 0.18);
-        }
-
-        .lobby-box-header {
-            display: flex;
-            align-items: flex-start;
-            gap: 14px;
-        }
-
+        .lobby-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 22px; }
+        .lobby-box { padding: 26px; display: flex; flex-direction: column; justify-content: space-between; gap: 18px; }
+        .lobby-box-header { display: flex; align-items: flex-start; gap: 14px; }
         .box-icon {
-            width: 46px;
-            height: 46px;
-            border-radius: 13px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.25rem;
-            flex-shrink: 0;
+            width: 48px; height: 48px; border-radius: 14px;
+            display: flex; align-items: center; justify-content: center; font-size: 1.3rem; flex-shrink: 0;
         }
-
-        .box-icon.host-icon {
-            background: rgba(99, 102, 241, 0.16);
-            color: #818cf8;
-            border: 1px solid rgba(99, 102, 241, 0.35);
-        }
-
-        .box-icon.guest-icon {
-            background: rgba(16, 185, 129, 0.16);
-            color: #34d399;
-            border: 1px solid rgba(16, 185, 129, 0.35);
-        }
-
-        .lobby-box h3 {
-            font-size: 1.2rem;
-            font-weight: 700;
-            margin-bottom: 4px;
-        }
-
-        .lobby-box p {
-            font-size: 0.86rem;
-            color: var(--text-muted);
-            line-height: 1.5;
-        }
+        .box-icon.host-icon { background: rgba(99, 102, 241, 0.16); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.35); }
+        .box-icon.guest-icon { background: rgba(16, 185, 129, 0.16); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.35); }
+        .lobby-box h3 { font-size: 1.2rem; font-weight: 700; margin-bottom: 4px; }
+        .lobby-box p { font-size: 0.86rem; color: var(--text-muted); line-height: 1.5; }
 
         .btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 9px;
-            padding: 13px 20px;
-            border-radius: var(--radius-md);
-            font-family: inherit;
-            font-size: 0.92rem;
-            font-weight: 700;
-            border: none;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            text-decoration: none;
+            cursor: pointer; border: none; font-family: inherit; font-weight: 700; font-size: 0.92rem;
+            padding: 13px 20px; border-radius: var(--radius-md);
+            display: inline-flex; align-items: center; justify-content: center; gap: 9px;
+            transition: all 0.2s ease; color: #fff;
         }
-
-        .btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none !important;
+        .btn:disabled { opacity: 0.55; cursor: not-allowed; transform: none !important; }
+        .btn-host { background: linear-gradient(135deg, #6366f1, #4f46e5); box-shadow: 0 10px 25px rgba(99, 102, 241, 0.35); }
+        .btn-host:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 14px 30px rgba(99, 102, 241, 0.5); }
+        .btn-join { background: linear-gradient(135deg, #10b981, #059669); box-shadow: 0 10px 25px rgba(16, 185, 129, 0.3); }
+        .btn-join:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 14px 30px rgba(16, 185, 129, 0.45); }
+        .btn-bot-fill {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            box-shadow: 0 8px 20px rgba(245, 158, 11, 0.3); font-size: 0.84rem; padding: 11px 14px;
         }
+        .btn-bot-fill:hover:not(:disabled) { transform: translateY(-2px); }
+        .btn-secondary { background: rgba(255, 255, 255, 0.08); border: 1px solid var(--border-glass); color: var(--text-main); }
+        .btn-secondary:hover:not(:disabled) { background: rgba(255, 255, 255, 0.14); }
 
-        .btn-host {
-            background: linear-gradient(135deg, #6366f1, #4f46e5);
-            color: #fff;
-            box-shadow: 0 10px 25px rgba(99, 102, 241, 0.35);
-        }
-
-        .btn-host:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 14px 30px rgba(99, 102, 241, 0.5);
-        }
-
-        .btn-join {
-            background: linear-gradient(135deg, #10b981, #059669);
-            color: #fff;
-            box-shadow: 0 10px 25px rgba(16, 185, 129, 0.3);
-        }
-
-        .btn-join:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 14px 30px rgba(16, 185, 129, 0.45);
-        }
-
-        .btn-secondary {
-            background: rgba(255, 255, 255, 0.07);
-            border: 1px solid var(--border-glass);
-            color: var(--text-main);
-        }
-
-        .btn-secondary:hover:not(:disabled) {
-            background: rgba(255, 255, 255, 0.13);
-        }
-
-        /* Host Created Room Panel */
         .host-room-panel {
-            display: none;
-            flex-direction: column;
-            gap: 14px;
-            padding-top: 6px;
-        }
-
-        .host-room-panel.active {
-            display: flex;
-        }
-
-        .room-code-box {
-            background: rgba(9, 13, 22, 0.75);
+            display: none; flex-direction: column; gap: 12px; padding: 16px;
+            border-radius: var(--radius-md); background: rgba(9, 13, 22, 0.75);
             border: 1px dashed rgba(99, 102, 241, 0.5);
-            border-radius: var(--radius-md);
-            padding: 14px 16px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 10px;
         }
-
-        .room-code-label {
-            font-size: 0.72rem;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            color: var(--text-muted);
-            display: block;
-            margin-bottom: 3px;
-        }
-
-        .room-code-value {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 1.55rem;
-            font-weight: 800;
-            letter-spacing: 0.15em;
-            color: #a5b4fc;
-        }
-
-        .copy-actions-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-        }
-
+        .host-room-panel.active { display: flex; }
+        .room-code-box { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+        .room-code-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); display: block; }
+        .room-code-value { font-family: 'JetBrains Mono', monospace; font-size: 1.65rem; font-weight: 800; color: #a5b4fc; letter-spacing: 0.12em; }
+        .copy-actions-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
         .btn-copy-sm {
-            padding: 10px 12px;
-            font-size: 0.8rem;
-            border-radius: var(--radius-sm);
-            background: rgba(99, 102, 241, 0.14);
-            border: 1px solid rgba(99, 102, 241, 0.35);
-            color: #c7d2fe;
-            cursor: pointer;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 7px;
-            transition: all 0.2s;
+            padding: 9px 12px; font-size: 0.78rem; border-radius: var(--radius-sm);
+            background: rgba(99, 102, 241, 0.15); border: 1px solid rgba(99, 102, 241, 0.35);
+            color: #c7d2fe; cursor: pointer; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 6px;
+        }
+        .btn-copy-sm:hover { background: rgba(99, 102, 241, 0.28); color: #fff; }
+
+        /* 4-Seat Live Lobby Grid */
+        .lobby-seats-grid {
+            display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 4px;
+        }
+        .lobby-seat-chip {
+            padding: 8px 10px; border-radius: 10px; font-size: 0.78rem; font-weight: 600;
+            background: rgba(255, 255, 255, 0.04); border: 1px solid var(--border-glass);
+            display: flex; align-items: center; justify-content: space-between; gap: 6px;
+        }
+        .lobby-seat-chip.filled {
+            background: rgba(16, 185, 129, 0.12); border-color: rgba(16, 185, 129, 0.4); color: #ecfdf5;
+        }
+        .lobby-seat-chip.bot {
+            background: rgba(245, 158, 11, 0.12); border-color: rgba(245, 158, 11, 0.4); color: #fef3c7;
         }
 
-        .btn-copy-sm:hover {
-            background: rgba(99, 102, 241, 0.28);
-            color: #fff;
-        }
-
-        .waiting-indicator {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 9px;
-            font-size: 0.83rem;
-            color: #fcd34d;
-            padding: 8px;
-            background: rgba(245, 158, 11, 0.1);
-            border-radius: var(--radius-sm);
-            border: 1px solid rgba(245, 158, 11, 0.25);
-        }
-
-        /* Guest Input */
-        .join-input-group {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
+        .waiting-indicator { display: flex; align-items: center; gap: 8px; font-size: 0.8rem; color: var(--warn-color); font-weight: 600; }
+        .join-input-group { display: flex; flex-direction: column; gap: 12px; }
         .room-input {
-            width: 100%;
-            padding: 14px 16px;
-            border-radius: var(--radius-md);
-            background: rgba(9, 13, 22, 0.75);
-            border: 1px solid var(--border-glass);
-            color: var(--text-main);
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 1.15rem;
-            font-weight: 700;
-            text-align: center;
-            letter-spacing: 0.18em;
-            text-transform: uppercase;
-            outline: none;
-            transition: border-color 0.2s;
+            width: 100%; padding: 13px 16px; border-radius: var(--radius-md);
+            background: rgba(9, 13, 22, 0.8); border: 1px solid var(--border-glass);
+            color: var(--text-main); font-family: 'JetBrains Mono', monospace;
+            font-size: 1.05rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; text-align: center; outline: none;
+        }
+        .room-input:focus { border-color: var(--coop-color); }
+
+        /* Game Screen Layout */
+        #gameScreen { display: none; width: 100%; gap: 22px; }
+        #gameScreen.active { display: grid; grid-template-columns: 1fr 350px; align-items: start; }
+        .game-left-col { display: flex; flex-direction: column; gap: 18px; }
+        .game-right-col { display: flex; flex-direction: column; gap: 16px; position: sticky; top: 82px; }
+
+        /* ================= 4-PLAYER PUBLIC GOODS ARENA ================= */
+        .pgg-players-grid {
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;
+        }
+        .pgg-player-card {
+            background: var(--bg-card); border: 1px solid var(--border-glass);
+            border-radius: var(--radius-md); padding: 14px 12px;
+            display: flex; flex-direction: column; gap: 8px; position: relative;
+            transition: all 0.25s ease;
+        }
+        .pgg-player-card.is-me {
+            border-color: rgba(99, 102, 241, 0.65);
+            background: linear-gradient(180deg, rgba(99, 102, 241, 0.16), rgba(17, 24, 39, 0.9));
+            box-shadow: 0 8px 25px rgba(99, 102, 241, 0.2);
+        }
+        .pgg-player-card.locked-in {
+            border-color: rgba(16, 185, 129, 0.55);
+        }
+        .pgg-card-top { display: flex; align-items: center; gap: 8px; }
+        .pgg-avatar {
+            width: 36px; height: 36px; border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1rem; font-weight: 800; flex-shrink: 0;
+            background: rgba(99, 102, 241, 0.2); color: #a5b4fc; border: 1px solid rgba(99, 102, 241, 0.4);
+        }
+        .pgg-name-wrap { overflow: hidden; flex: 1; }
+        .pgg-seat-tag { font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); font-weight: 700; display: block; }
+        .pgg-player-name { font-size: 0.9rem; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
+        .pgg-score-row {
+            display: flex; align-items: baseline; justify-content: space-between;
+            padding-top: 4px; border-top: 1px solid rgba(255, 255, 255, 0.06);
+        }
+        .pgg-score-val { font-family: 'JetBrains Mono', monospace; font-size: 1.35rem; font-weight: 800; color: var(--gold-color); }
+        .pgg-status-pill {
+            font-size: 0.72rem; font-weight: 700; padding: 4px 8px; border-radius: 8px;
+            text-align: center; background: rgba(255, 255, 255, 0.05); color: var(--text-muted);
+        }
+        .pgg-status-pill.ready { background: rgba(16, 185, 129, 0.16); color: #6ee7b7; border: 1px solid rgba(16, 185, 129, 0.35); }
+        .pgg-status-pill.revealed { background: rgba(99, 102, 241, 0.18); color: #c7d2fe; border: 1px solid rgba(99, 102, 241, 0.4); }
+
+        /* Speech Bubble for Live Emotes/Bluffs */
+        .pgg-speech-bubble {
+            position: absolute; top: -34px; left: 50%; transform: translateX(-50%);
+            background: #ffffff; color: #0f172a; padding: 5px 11px; border-radius: 999px;
+            font-size: 0.74rem; font-weight: 800; white-space: nowrap;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.45); z-index: 20;
+            display: none; animation: popIn 0.25s ease;
+        }
+        .pgg-speech-bubble.show { display: block; }
+
+        /* Central Pool & Chaos Event Card */
+        .pgg-pool-card {
+            padding: 22px 24px; display: flex; flex-direction: column; gap: 16px;
+            background: linear-gradient(135deg, rgba(17, 24, 39, 0.92), rgba(30, 27, 75, 0.85));
+        }
+        .pgg-pool-header {
+            display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;
+        }
+        .pgg-round-pill {
+            display: inline-flex; align-items: center; gap: 8px;
+            background: rgba(9, 13, 22, 0.8); border: 1px solid var(--border-glass);
+            padding: 8px 16px; border-radius: 12px; font-family: 'JetBrains Mono', monospace;
+            font-size: 1rem; font-weight: 800; color: #fff;
+        }
+        .pgg-event-banner {
+            flex: 1; min-width: 240px; padding: 10px 16px; border-radius: 12px;
+            background: rgba(245, 158, 11, 0.14); border: 1px solid rgba(245, 158, 11, 0.45);
+            display: flex; align-items: center; justify-content: space-between; gap: 12px;
+        }
+        .pgg-event-banner.event-golden { background: rgba(16, 185, 129, 0.16); border-color: rgba(16, 185, 129, 0.5); }
+        .pgg-event-banner.event-audit { background: rgba(244, 63, 94, 0.16); border-color: rgba(244, 63, 94, 0.5); }
+        .pgg-event-banner.event-standard { background: rgba(99, 102, 241, 0.14); border-color: rgba(99, 102, 241, 0.4); }
+        .pgg-event-info h4 { font-size: 0.92rem; font-weight: 800; color: #fff; margin-bottom: 2px; }
+        .pgg-event-info p { font-size: 0.78rem; color: #e2e8f0; }
+        .pgg-multiplier-tag {
+            font-family: 'JetBrains Mono', monospace; font-size: 1.1rem; font-weight: 800;
+            padding: 6px 12px; border-radius: 10px; background: rgba(9, 13, 22, 0.75);
+            color: var(--gold-color); border: 1px solid rgba(251, 191, 36, 0.4); white-space: nowrap;
         }
 
-        .room-input:focus {
-            border-color: var(--coop-color);
+        .pgg-vault-box {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
+            padding: 16px; border-radius: var(--radius-md);
+            background: rgba(9, 13, 22, 0.65); border: 1px solid var(--border-glass); text-align: center;
+        }
+        .vault-stat span { font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; display: block; margin-bottom: 4px; }
+        .vault-stat strong { font-family: 'JetBrains Mono', monospace; font-size: 1.35rem; font-weight: 800; color: #fff; }
+
+        /* Contribution Slider & Controls */
+        .pgg-decision-box { padding: 24px; display: flex; flex-direction: column; gap: 18px; }
+        .pgg-split-preview {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 14px;
+        }
+        .split-card {
+            padding: 14px 16px; border-radius: var(--radius-md);
+            display: flex; align-items: center; justify-content: space-between;
+            background: rgba(9, 13, 22, 0.7); border: 1px solid var(--border-glass);
+        }
+        .split-card.pocket { border-color: rgba(251, 191, 36, 0.35); }
+        .split-card.pool { border-color: rgba(16, 185, 129, 0.45); background: rgba(16, 185, 129, 0.08); }
+        .split-card span { font-size: 0.8rem; color: var(--text-muted); font-weight: 600; display: block; }
+        .split-card strong { font-family: 'JetBrains Mono', monospace; font-size: 1.45rem; font-weight: 800; }
+
+        .slider-wrap { display: flex; flex-direction: column; gap: 10px; }
+        .pgg-range-slider {
+            -webkit-appearance: none; appearance: none;
+            width: 100%; height: 12px; border-radius: 999px;
+            background: linear-gradient(90deg, #f43f5e 0%, #f59e0b 50%, #10b981 100%);
+            outline: none; cursor: pointer;
+        }
+        .pgg-range-slider::-webkit-slider-thumb {
+            -webkit-appearance: none; appearance: none;
+            width: 28px; height: 28px; border-radius: 50%;
+            background: #ffffff; border: 4px solid #6366f1;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5); cursor: pointer;
+        }
+        .pgg-presets-row {
+            display: flex; flex-wrap: wrap; gap: 8px; justify-content: space-between;
+        }
+        .preset-pill-btn {
+            flex: 1; min-width: 85px; padding: 8px 10px; border-radius: 10px;
+            background: rgba(255, 255, 255, 0.06); border: 1px solid var(--border-glass);
+            color: var(--text-main); font-family: inherit; font-size: 0.78rem; font-weight: 700;
+            cursor: pointer; transition: all 0.15s ease;
+        }
+        .preset-pill-btn:hover:not(:disabled) {
+            background: rgba(99, 102, 241, 0.22); border-color: rgba(99, 102, 241, 0.5);
+        }
+        .preset-pill-btn.active {
+            background: rgba(16, 185, 129, 0.22); border-color: var(--coop-color); color: #6ee7b7;
         }
 
-        .room-input::placeholder {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            font-size: 0.88rem;
-            letter-spacing: normal;
-            text-transform: none;
-            color: #6b7280;
-            font-weight: 500;
+        .pgg-emote-bar {
+            display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+            padding-top: 10px; border-top: 1px solid var(--border-glass);
         }
-
-        /* ================= GAME SCREEN ================= */
-        #gameScreen {
-            display: none;
-            grid-template-columns: 1fr 330px;
-            gap: 22px;
-            align-items: start;
+        .emote-btn {
+            padding: 6px 11px; border-radius: 999px; font-size: 0.75rem; font-weight: 700;
+            background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border-glass);
+            color: #cbd5e1; cursor: pointer; font-family: inherit; transition: all 0.15s ease;
         }
+        .emote-btn:hover { background: rgba(99, 102, 241, 0.25); color: #fff; border-color: rgba(99, 102, 241, 0.5); }
 
-        #gameScreen.active {
-            display: grid;
-        }
-
-        .game-left-col {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-
-        /* Scoreboard & Round Header */
+        /* ================= 1v1 PRISONER'S DILEMMA ARENA ================= */
         .Arena-header {
-            padding: 22px 26px;
-            display: grid;
-            grid-template-columns: 1fr auto 1fr;
-            align-items: center;
-            gap: 16px;
+            padding: 20px 24px; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 16px;
         }
-
-        .player-score-card {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-        }
-
-        .player-score-card.opponent {
-            justify-content: flex-end;
-            text-align: right;
-        }
-
+        .player-score-card { display: flex; align-items: center; gap: 14px; }
+        .player-score-card.opponent { justify-content: flex-end; text-align: right; }
         .player-avatar {
-            width: 48px;
-            height: 48px;
-            border-radius: 14px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 800;
-            font-size: 1.15rem;
-            flex-shrink: 0;
+            width: 48px; height: 48px; border-radius: 14px;
+            display: flex; align-items: center; justify-content: center; font-size: 1.25rem; font-weight: 800;
         }
-
-        .player-avatar.you {
-            background: rgba(99, 102, 241, 0.2);
-            border: 1px solid rgba(99, 102, 241, 0.45);
-            color: #a5b4fc;
-        }
-
-        .player-avatar.opp {
-            background: rgba(244, 63, 94, 0.2);
-            border: 1px solid rgba(244, 63, 94, 0.45);
-            color: #fda4af;
-        }
-
-        .player-meta {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .player-tag {
-            font-size: 0.72rem;
-            text-transform: uppercase;
-            letter-spacing: 0.07em;
-            color: var(--text-muted);
-            font-weight: 700;
-        }
-
-        .player-name {
-            font-size: 1.02rem;
-            font-weight: 700;
-            color: var(--text-main);
-        }
-
-        .score-num {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 2rem;
-            font-weight: 800;
-            line-height: 1;
-            margin: 0 8px;
-        }
-
-        .score-num.you-score {
-            color: #818cf8;
-        }
-
-        .score-num.opp-score {
-            color: #fb7185;
-        }
-
+        .player-avatar.you { background: rgba(99, 102, 241, 0.2); border: 1px solid rgba(99, 102, 241, 0.45); color: #a5b4fc; }
+        .player-avatar.opp { background: rgba(244, 63, 94, 0.2); border: 1px solid rgba(244, 63, 94, 0.45); color: #fda4af; }
+        .player-meta { display: flex; flex-direction: column; }
+        .player-tag { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text-muted); font-weight: 700; }
+        .player-name { font-size: 1.02rem; font-weight: 700; color: var(--text-main); }
+        .score-num { font-family: 'JetBrains Mono', monospace; font-size: 2rem; font-weight: 800; line-height: 1; margin: 0 8px; }
+        .score-num.you-score { color: #818cf8; }
+        .score-num.opp-score { color: #fb7185; }
         .round-center-badge {
-            text-align: center;
-            padding: 10px 20px;
-            border-radius: var(--radius-md);
-            background: rgba(9, 13, 22, 0.7);
-            border: 1px solid var(--border-glass);
-            min-width: 140px;
+            text-align: center; padding: 10px 20px; border-radius: var(--radius-md);
+            background: rgba(9, 13, 22, 0.7); border: 1px solid var(--border-glass); min-width: 140px;
         }
+        .round-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); display: block; margin-bottom: 2px; }
+        .round-number { font-family: 'JetBrains Mono', monospace; font-size: 1.35rem; font-weight: 800; color: #fff; }
 
-        .round-label {
-            font-size: 0.7rem;
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-            color: var(--text-muted);
-            display: block;
-            margin-bottom: 2px;
-        }
-
-        .round-number {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 1.35rem;
-            font-weight: 800;
-            color: #fff;
-        }
-
-        /* Decision Arena */
-        .decision-arena {
-            padding: 28px;
-            display: flex;
-            flex-direction: column;
-            gap: 22px;
-            position: relative;
-        }
-
+        .decision-arena { padding: 24px; display: flex; flex-direction: column; gap: 20px; }
         .arena-status-bar {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 12px 18px;
-            border-radius: var(--radius-md);
-            background: rgba(9, 13, 22, 0.65);
-            border: 1px solid var(--border-glass);
-            font-size: 0.88rem;
-            font-weight: 600;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 12px 18px; border-radius: var(--radius-md);
+            background: rgba(9, 13, 22, 0.65); border: 1px solid var(--border-glass); font-size: 0.88rem; font-weight: 600;
         }
+        .status-side { display: flex; align-items: center; gap: 8px; }
+        .status-badge { padding: 4px 10px; border-radius: 999px; font-size: 0.75rem; font-weight: 700; background: rgba(255, 255, 255, 0.07); color: var(--text-muted); }
+        .status-badge.ready { background: rgba(16, 185, 129, 0.18); color: #6ee7b7; border: 1px solid rgba(16, 185, 129, 0.4); }
+        .status-badge.waiting { background: rgba(245, 158, 11, 0.15); color: #fcd34d; border: 1px solid rgba(245, 158, 11, 0.35); }
 
-        .status-side {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .status-badge {
-            padding: 4px 10px;
-            border-radius: 999px;
-            font-size: 0.75rem;
-            font-weight: 700;
-            background: rgba(255, 255, 255, 0.07);
-            color: var(--text-muted);
-        }
-
-        .status-badge.ready {
-            background: rgba(16, 185, 129, 0.18);
-            color: #6ee7b7;
-            border: 1px solid rgba(16, 185, 129, 0.4);
-        }
-
-        .status-badge.waiting {
-            background: rgba(245, 158, 11, 0.15);
-            color: #fcd34d;
-            border: 1px solid rgba(245, 158, 11, 0.35);
-        }
-
-        .choices-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 18px;
-        }
-
+        .choices-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; }
         .choice-card-btn {
-            background: rgba(17, 24, 39, 0.9);
-            border: 2px solid var(--border-glass);
-            border-radius: var(--radius-lg);
-            padding: 28px 22px;
-            cursor: pointer;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            text-align: center;
-            gap: 12px;
-            color: var(--text-main);
-            font-family: inherit;
-            transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
-            position: relative;
-            overflow: hidden;
+            background: rgba(17, 24, 39, 0.9); border: 2px solid var(--border-glass);
+            border-radius: var(--radius-lg); padding: 24px 20px; cursor: pointer;
+            display: flex; flex-direction: column; align-items: center; text-align: center; gap: 10px;
+            color: var(--text-main); font-family: inherit; transition: all 0.22s ease;
         }
-
         .choice-card-btn .choice-icon {
-            width: 64px;
-            height: 64px;
-            border-radius: 18px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.75rem;
-            transition: transform 0.22s ease;
+            width: 58px; height: 58px; border-radius: 16px;
+            display: flex; align-items: center; justify-content: center; font-size: 1.6rem;
         }
-
-        .choice-card-btn.cooperate .choice-icon {
-            background: var(--coop-bg);
-            color: var(--coop-color);
-            border: 1px solid var(--coop-border);
+        .choice-card-btn.cooperate .choice-icon { background: var(--coop-bg); color: var(--coop-color); border: 1px solid var(--coop-border); }
+        .choice-card-btn.defect .choice-icon { background: var(--defect-bg); color: var(--defect-color); border: 1px solid var(--defect-border); }
+        .choice-card-btn.cooperate:hover:not(:disabled), .choice-card-btn.selected.cooperate {
+            border-color: var(--coop-color); background: rgba(16, 185, 129, 0.12);
         }
-
-        .choice-card-btn.defect .choice-icon {
-            background: var(--defect-bg);
-            color: var(--defect-color);
-            border: 1px solid var(--defect-border);
+        .choice-card-btn.defect:hover:not(:disabled), .choice-card-btn.selected.defect {
+            border-color: var(--defect-color); background: rgba(244, 63, 94, 0.12);
         }
-
-        .choice-card-btn h4 {
-            font-size: 1.22rem;
-            font-weight: 800;
-        }
-
-        .choice-card-btn p {
-            font-size: 0.82rem;
-            color: var(--text-muted);
-            line-height: 1.45;
-        }
-
-        .choice-card-btn.cooperate:hover:not(:disabled) {
-            border-color: var(--coop-color);
-            background: rgba(16, 185, 129, 0.08);
-            transform: translateY(-4px);
-            box-shadow: 0 16px 35px rgba(16, 185, 129, 0.2);
-        }
-
-        .choice-card-btn.defect:hover:not(:disabled) {
-            border-color: var(--defect-color);
-            background: rgba(244, 63, 94, 0.08);
-            transform: translateY(-4px);
-            box-shadow: 0 16px 35px rgba(244, 63, 94, 0.2);
-        }
-
-        .choice-card-btn:hover:not(:disabled) .choice-icon {
-            transform: scale(1.08);
-        }
-
-        .choice-card-btn.selected.cooperate {
-            border-color: var(--coop-color);
-            background: rgba(16, 185, 129, 0.16);
-            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.25);
-        }
-
-        .choice-card-btn.selected.defect {
-            border-color: var(--defect-color);
-            background: rgba(244, 63, 94, 0.16);
-            box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.25);
-        }
-
-        .choice-card-btn:disabled {
-            cursor: not-allowed;
-            opacity: 0.6;
-        }
-
-        .choice-card-btn.selected:disabled {
-            opacity: 1;
-        }
+        .choice-card-btn:disabled { cursor: not-allowed; opacity: 0.65; }
 
         .blind-status-prompt {
-            text-align: center;
-            font-size: 0.92rem;
-            font-weight: 600;
-            color: var(--text-muted);
-            min-height: 24px;
+            text-align: center; font-size: 0.9rem; color: var(--text-muted);
+            padding: 10px 16px; border-radius: var(--radius-sm); background: rgba(255, 255, 255, 0.03);
         }
 
-        /* Dynamic Round Result Banner */
+        /* Result Notification Banner */
         .round-result-banner {
-            display: none;
-            padding: 18px 22px;
-            border-radius: var(--radius-md);
-            border: 1px solid var(--border-glass);
-            background: rgba(17, 24, 39, 0.95);
-            align-items: center;
-            justify-content: space-between;
-            gap: 16px;
-            animation: popIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+            display: none; padding: 14px 18px; border-radius: var(--radius-md);
+            align-items: center; justify-content: space-between; gap: 14px;
+            background: rgba(99, 102, 241, 0.14); border: 1px solid rgba(99, 102, 241, 0.4);
+            animation: popIn 0.32s ease;
         }
-
-        .round-result-banner.show {
-            display: flex;
-        }
-
+        .round-result-banner.show { display: flex; }
         @keyframes popIn {
-            0% { opacity: 0; transform: scale(0.94) translateY(8px); }
+            0% { opacity: 0; transform: scale(0.95) translateY(6px); }
             100% { opacity: 1; transform: scale(1) translateY(0); }
         }
-
-        .banner-left {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-        }
-
-        .banner-emoji {
-            font-size: 1.9rem;
-        }
-
-        .banner-text h5 {
-            font-size: 1.05rem;
-            font-weight: 800;
-            margin-bottom: 2px;
-        }
-
-        .banner-text p {
-            font-size: 0.84rem;
-            color: var(--text-muted);
-        }
-
+        .banner-left { display: flex; align-items: center; gap: 12px; }
+        .banner-emoji { font-size: 1.65rem; }
+        .banner-text h5 { font-size: 0.95rem; font-weight: 800; margin-bottom: 2px; }
+        .banner-text p { font-size: 0.8rem; color: var(--text-muted); }
         .banner-delta {
-            font-family: 'JetBrains Mono', monospace;
-            font-weight: 800;
-            font-size: 0.95rem;
-            padding: 8px 14px;
-            border-radius: var(--radius-sm);
-            background: rgba(255, 255, 255, 0.06);
-            white-space: nowrap;
+            font-family: 'JetBrains Mono', monospace; font-weight: 800; font-size: 0.9rem;
+            padding: 6px 12px; border-radius: var(--radius-sm); background: rgba(9, 13, 22, 0.7); white-space: nowrap;
         }
 
-        /* History Table Card */
-        .history-card {
-            padding: 22px 24px;
-        }
-
+        /* History Card */
+        .history-card { padding: 20px 22px; }
         .card-section-title {
-            font-size: 0.92rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
-            color: var(--text-muted);
-            margin-bottom: 14px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
+            font-size: 0.92rem; font-weight: 800; display: flex; align-items: center;
+            justify-content: space-between; margin-bottom: 12px;
         }
-
-        .history-table-wrap {
-            max-height: 270px;
-            overflow-y: auto;
-            border-radius: var(--radius-sm);
-            border: 1px solid var(--border-glass);
-        }
-
-        table.history-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 0.85rem;
-            text-align: left;
-        }
-
+        .card-section-title span { color: var(--text-muted); font-size: 0.76rem; font-weight: 600; }
+        .history-table-wrap { max-height: 250px; overflow-y: auto; border-radius: var(--radius-sm); border: 1px solid var(--border-glass); }
+        .history-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; text-align: left; }
         .history-table th {
-            background: rgba(9, 13, 22, 0.85);
-            color: var(--text-muted);
-            font-weight: 700;
-            padding: 11px 14px;
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            position: sticky;
-            top: 0;
+            background: rgba(9, 13, 22, 0.9); color: var(--text-muted); font-weight: 700;
+            text-transform: uppercase; font-size: 0.7rem; padding: 10px 12px; position: sticky; top: 0;
         }
+        .history-table td { padding: 9px 12px; border-top: 1px solid var(--border-glass); font-weight: 600; }
+        .move-pill { display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px; border-radius: 999px; font-size: 0.73rem; font-weight: 700; }
+        .move-pill.coop { background: var(--coop-bg); color: #6ee7b7; border: 1px solid var(--coop-border); }
+        .move-pill.defect { background: var(--defect-bg); color: #fda4af; border: 1px solid var(--defect-border); }
 
-        .history-table td {
-            padding: 11px 14px;
-            border-top: 1px solid var(--border-glass);
-            font-weight: 600;
-        }
-
-        .move-pill {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 3px 10px;
-            border-radius: 999px;
-            font-size: 0.76rem;
-            font-weight: 700;
-        }
-
-        .move-pill.coop {
-            background: var(--coop-bg);
-            color: #34d399;
-            border: 1px solid var(--coop-border);
-        }
-
-        .move-pill.defect {
-            background: var(--defect-bg);
-            color: #fb7185;
-            border: 1px solid var(--defect-border);
-        }
-
-        /* Right Sidebar: Payoff Matrix Card */
-        .game-right-col {
-            display: flex;
-            flex-direction: column;
-            gap: 18px;
-        }
-
-        .matrix-card {
-            padding: 22px;
-        }
-
-        .matrix-desc {
-            font-size: 0.8rem;
-            color: var(--text-muted);
-            margin-bottom: 14px;
-            line-height: 1.5;
-        }
-
-        .matrix-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-        }
-
+        /* Right Sidebar Cards */
+        .matrix-card { padding: 20px; }
+        .matrix-desc { font-size: 0.78rem; color: var(--text-muted); margin-bottom: 12px; line-height: 1.45; }
+        .matrix-grid { display: flex; flex-direction: column; gap: 9px; }
         .matrix-cell {
-            padding: 12px;
-            border-radius: var(--radius-sm);
-            background: rgba(9, 13, 22, 0.65);
-            border: 1px solid var(--border-glass);
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
+            padding: 11px 13px; border-radius: var(--radius-sm); background: rgba(9, 13, 22, 0.65);
+            border: 1px solid var(--border-glass); display: flex; flex-direction: column; gap: 4px;
         }
+        .matrix-cell.both-coop { border-color: rgba(16, 185, 129, 0.35); background: rgba(16, 185, 129, 0.07); }
+        .matrix-cell.both-defect { border-color: rgba(244, 63, 94, 0.35); background: rgba(244, 63, 94, 0.07); }
+        .matrix-cell-pts { font-family: 'JetBrains Mono', monospace; font-weight: 800; font-size: 0.92rem; color: #fff; }
+        .theory-tip-box { padding: 16px 18px; font-size: 0.8rem; color: var(--text-muted); line-height: 1.5; }
+        .theory-tip-box strong { color: var(--text-main); display: block; margin-bottom: 4px; font-size: 0.85rem; }
 
-        .matrix-cell-moves {
-            font-size: 0.72rem;
-            font-weight: 700;
-            color: var(--text-muted);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .matrix-cell-pts {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.95rem;
-            font-weight: 800;
-            color: #fff;
-        }
-
-        .matrix-cell.both-coop {
-            border-color: rgba(16, 185, 129, 0.35);
-            background: rgba(16, 185, 129, 0.07);
-        }
-
-        .matrix-cell.both-defect {
-            border-color: rgba(244, 63, 94, 0.35);
-            background: rgba(244, 63, 94, 0.07);
-        }
-
-        .theory-tip-box {
-            padding: 18px 20px;
-            font-size: 0.82rem;
-            color: var(--text-muted);
-            line-height: 1.55;
-        }
-
-        .theory-tip-box strong {
-            color: var(--text-main);
-            display: block;
-            margin-bottom: 5px;
-            font-size: 0.86rem;
-        }
-
-        /* ================= MODALS ================= */
+        /* Modals */
         .modal-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(5, 8, 15, 0.82);
-            backdrop-filter: blur(10px);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-            z-index: 100;
+            position: fixed; inset: 0; background: rgba(5, 8, 15, 0.84);
+            backdrop-filter: blur(10px); display: none; align-items: center; justify-content: center;
+            padding: 20px; z-index: 100;
         }
-
-        .modal-overlay.open {
-            display: flex;
-        }
-
+        .modal-overlay.open { display: flex; }
         .modal-card {
-            width: 100%;
-            max-width: 480px;
-            padding: 32px 28px;
-            text-align: center;
-            display: flex;
-            flex-direction: column;
-            gap: 18px;
-            animation: popIn 0.3s ease;
+            width: 100%; max-width: 520px; padding: 28px 24px; text-align: center;
+            display: flex; flex-direction: column; gap: 16px; animation: popIn 0.3s ease;
         }
-
         .modal-trophy {
-            width: 72px;
-            height: 72px;
-            border-radius: 22px;
-            margin: 0 auto;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 2.1rem;
-            background: rgba(99, 102, 241, 0.16);
-            border: 1px solid rgba(99, 102, 241, 0.4);
-            color: #a5b4fc;
+            width: 68px; height: 68px; border-radius: 20px; margin: 0 auto;
+            display: flex; align-items: center; justify-content: center; font-size: 2rem;
+            background: rgba(99, 102, 241, 0.16); border: 1px solid rgba(99, 102, 241, 0.4); color: #a5b4fc;
         }
-
-        .modal-card h3 {
-            font-size: 1.65rem;
-            font-weight: 800;
-        }
-
         .final-scores-box {
-            display: grid;
-            grid-template-columns: 1fr auto 1fr;
-            align-items: center;
-            gap: 12px;
-            padding: 18px;
-            border-radius: var(--radius-md);
-            background: rgba(9, 13, 22, 0.75);
+            display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 12px;
+            padding: 16px; border-radius: var(--radius-md); background: rgba(9, 13, 22, 0.75); border: 1px solid var(--border-glass);
+        }
+        .final-score-col span { font-size: 0.78rem; color: var(--text-muted); display: block; margin-bottom: 4px; }
+        .final-score-col strong { font-family: 'JetBrains Mono', monospace; font-size: 1.85rem; font-weight: 800; }
+
+        /* 4-Player Podium Leaderboard in Modal */
+        .pgg-leaderboard-list {
+            display: flex; flex-direction: column; gap: 8px; text-align: left;
+        }
+        .pgg-lb-item {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 10px 14px; border-radius: 12px; background: rgba(9, 13, 22, 0.75);
             border: 1px solid var(--border-glass);
         }
-
-        .final-score-col span {
-            font-size: 0.78rem;
-            color: var(--text-muted);
-            display: block;
-            margin-bottom: 4px;
+        .pgg-lb-item.rank-1 {
+            border-color: rgba(251, 191, 36, 0.55); background: rgba(251, 191, 36, 0.1);
         }
-
-        .final-score-col strong {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 2rem;
-            font-weight: 800;
+        .pgg-lb-title-badge {
+            font-size: 0.72rem; padding: 3px 8px; border-radius: 999px;
+            background: rgba(99, 102, 241, 0.2); color: #c7d2fe; font-weight: 700;
         }
 
         .db-log-badge {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-            font-size: 0.76rem;
-            font-weight: 600;
-            color: #34d399;
-            background: rgba(16, 185, 129, 0.12);
-            border: 1px solid rgba(16, 185, 129, 0.3);
-            padding: 6px 12px;
-            border-radius: 999px;
-            margin: 0 auto;
+            display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+            font-size: 0.76rem; font-weight: 600; color: #34d399;
+            background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.3);
+            padding: 6px 12px; border-radius: 999px; margin: 0 auto;
         }
+        .modal-actions { display: flex; gap: 12px; margin-top: 4px; }
+        .modal-actions .btn { flex: 1; }
 
-        .modal-actions {
-            display: flex;
-            gap: 12px;
-            margin-top: 6px;
-        }
-
-        .modal-actions .btn {
-            flex: 1;
-        }
-
-        /* Toast */
-        .toast-wrap {
-            position: fixed;
-            bottom: 24px;
-            right: 24px;
-            z-index: 200;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
+        .toast-wrap { position: fixed; bottom: 24px; right: 24px; z-index: 200; display: flex; flex-direction: column; gap: 10px; }
         .toast-msg {
-            background: #1f2937;
-            border: 1px solid rgba(255, 255, 255, 0.14);
-            color: #fff;
-            padding: 12px 18px;
-            border-radius: var(--radius-sm);
-            font-size: 0.85rem;
-            font-weight: 600;
-            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
-            display: flex;
-            align-items: center;
-            gap: 9px;
-            animation: popIn 0.25s ease;
+            background: #1f2937; border: 1px solid rgba(255, 255, 255, 0.14); color: #fff;
+            padding: 12px 18px; border-radius: var(--radius-sm); font-size: 0.85rem; font-weight: 600;
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5); display: flex; align-items: center; gap: 9px; animation: popIn 0.25s ease;
         }
 
-        /* Responsive */
-        @media (max-width: 900px) {
-            .lobby-grid {
-                grid-template-columns: 1fr;
-            }
-            #gameScreen.active {
-                grid-template-columns: 1fr;
-            }
+        @media (max-width: 960px) {
+            .lobby-grid, #gameScreen.active { grid-template-columns: 1fr; }
+            .pgg-players-grid { grid-template-columns: repeat(2, 1fr); }
         }
-
         @media (max-width: 600px) {
-            .topbar {
-                padding: 12px 16px;
-            }
-            .Arena-header {
-                grid-template-columns: 1fr;
-                text-align: center;
-                gap: 12px;
-            }
-            .player-score-card, .player-score-card.opponent {
-                justify-content: center;
-                text-align: left;
-            }
-            .choices-grid {
-                grid-template-columns: 1fr;
-            }
-            .copy-actions-row {
-                grid-template-columns: 1fr;
-            }
+            .mode-switch-bar { flex-direction: column; }
+            .pgg-players-grid, .pgg-split-preview, .pgg-vault-box, .choices-grid, .copy-actions-row { grid-template-columns: 1fr; }
         }
     </style>
 </head>
@@ -1135,8 +568,8 @@
                 <i class="fas fa-chess-knight"></i>
             </div>
             <div class="brand-title">
-                <h1>Tutsak İkilemi <span style="color:#818cf8;">1v1 VS</span></h1>
-                <span>SDÜ Kültür ve Kitap Topluluğu • Oyun Teorisi</span>
+                <h1 id="topbarTitle">Kamu Malları Oyunu <span style="color:#34d399;">4 Kişilik Havuz</span></h1>
+                <span>SDÜ Kültür ve Kitap Topluluğu • Oyun Teorisi Laboratuvarı</span>
             </div>
         </div>
         <div class="topbar-right">
@@ -1155,12 +588,25 @@
 
         <!-- ================= 1. LOBBY SCREEN ================= -->
         <section id="lobbyScreen">
+            <!-- Mode Switcher -->
+            <div class="mode-switch-bar" id="modeSwitchBar">
+                <button type="button" class="mode-tab-btn active" id="tabMode4P" data-mode="4p">
+                    <i class="fas fa-users"></i>
+                    <span>4 Kişilik Kamu Malları (Ortak Havuz)</span>
+                    <span class="mode-pill-tag">ANA MOD</span>
+                </button>
+                <button type="button" class="mode-tab-btn" id="tabMode1v1" data-mode="1v1">
+                    <i class="fas fa-user-friends"></i>
+                    <span>2 Kişilik Tutsak İkilemi (1v1 VS)</span>
+                </button>
+            </div>
+
             <div class="lobby-hero">
-                <div class="lobby-badge">
-                    <i class="fas fa-bolt"></i> P2P Gerçek Zamanlı Oyun Teorisi
+                <div class="lobby-badge" id="lobbyBadgeText">
+                    <i class="fas fa-coins"></i> 4 Oyunculu Kamu Malları Deneyi • 1.6x Ortak Havuz & Kaos Kartları
                 </div>
-                <h2>Güvenecek misin, İhanet mi Edeceksin?</h2>
-                <p>Arkadaşınla 10 turluk <strong>Tutsak İkilemi (Prisoner's Dilemma)</strong> düellosuna gir. Karşılıklı iş birliği mi kazanacak, yoksa soğukkanlı strateji mi?</p>
+                <h2 id="lobbyHeroTitle">Ortak Havuza Katkı mı, Beleşçilik mi?</h2>
+                <p id="lobbyHeroDesc">4 kişi aynı masada! Her tur <strong>20 Altın</strong> bütçenden istediğin kadarını (0-20) ortak havuza yatır. Havuzdaki altınlar <strong>1.6x</strong> ile çarpılıp 4 kişiye eşit bölünür; üstelik her tur <em>Vergi Müfettişi</em> ve <em>Altın Çağ</em> gibi sürpriz olaylar dengeleri değiştirir!</p>
             </div>
 
             <!-- Player Nickname -->
@@ -1178,8 +624,8 @@
                                 <i class="fas fa-plus-circle"></i>
                             </div>
                             <div>
-                                <h3>Oda Oluştur (Host)</h3>
-                                <p>5 haneli özel bir oda kodu üret ve davet bağlantısını arkadaşına göndererek düelloyu başlat.</p>
+                                <h3 id="hostBoxTitle">4 Kişilik Masa Kur (Host)</h3>
+                                <p id="hostBoxDesc">5 haneli özel oda kodu üret. Arkadaşlarını davet et; eksik koltuk kalırsa tek tıkla <strong>Stratejik Botlarla</strong> doldurup hemen başlat!</p>
                             </div>
                         </div>
                     </div>
@@ -1195,7 +641,7 @@
                                 <span class="room-code-label">Oda Kodun</span>
                                 <span class="room-code-value" id="displayRoomCode">-----</span>
                             </div>
-                            <span class="status-badge ready">Aktif</span>
+                            <span class="status-badge ready" id="hostRoomModeBadge">4 Kişilik Havuz</span>
                         </div>
                         <div class="copy-actions-row">
                             <button type="button" class="btn-copy-sm" id="copyCodeBtn">
@@ -1205,9 +651,30 @@
                                 <i class="fas fa-link"></i> Davet Linkini Kopyala
                             </button>
                         </div>
-                        <div class="waiting-indicator">
+
+                        <!-- 4-Player Live Seats Grid -->
+                        <div id="host4PSeatsWrap">
+                            <div style="font-size:0.74rem; color:var(--text-muted); margin-bottom:4px; font-weight:700;">
+                                Masa Koltukları (<span id="seatedCountLabel">1/4</span>):
+                            </div>
+                            <div class="lobby-seats-grid" id="lobbySeatsGrid"></div>
+                            <div style="display:flex; flex-direction:column; gap:8px; margin-top:10px;">
+                                <button type="button" class="btn btn-bot-fill" id="fillBotsAndStartBtn">
+                                    <i class="fas fa-robot"></i> Eksik Koltukları Stratejik Botlarla Doldur & Başlat
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- 1v1 Quick Bot Option -->
+                        <div id="host1v1BotWrap" style="display:none; margin-top:6px;">
+                            <button type="button" class="btn btn-bot-fill" id="start1v1BotBtn" style="width:100%;">
+                                <i class="fas fa-robot"></i> Beklemeden Stratejik Bot (Prof. Nash) İle Oyna
+                            </button>
+                        </div>
+
+                        <div class="waiting-indicator" id="hostWaitingIndicator">
                             <i class="fas fa-circle-notch fa-spin"></i>
-                            <span>Rakibin odaya bağlanması bekleniyor...</span>
+                            <span id="hostWaitingText">Oyuncuların odaya bağlanması bekleniyor...</span>
                         </div>
                     </div>
                 </div>
@@ -1221,7 +688,7 @@
                             </div>
                             <div>
                                 <h3>Odaya Katıl (Guest)</h3>
-                                <p>Arkadaşının paylaştığı 5 haneli oda kodunu girerek doğrudan düello masasına bağlan.</p>
+                                <p>Arkadaşının paylaştığı 5 haneli oda kodunu girerek 4 kişilik ortak havuz masasına veya 1v1 düelloya bağlan.</p>
                             </div>
                         </div>
                     </div>
@@ -1232,6 +699,14 @@
                             <i class="fas fa-bolt"></i> Odaya Bağlan ve Başla
                         </button>
                     </div>
+
+                    <!-- Guest Waiting Seats Panel for 4P -->
+                    <div class="host-room-panel" id="guestLobbySeatsPanel">
+                        <div style="font-size:0.8rem; color:#6ee7b7; font-weight:700;">
+                            <i class="fas fa-check-circle"></i> Masaya Bağlandın! Diğer oyuncular bekleniyor...
+                        </div>
+                        <div class="lobby-seats-grid" id="guestSeatsGrid"></div>
+                    </div>
                 </div>
             </div>
         </section>
@@ -1240,164 +715,303 @@
         <section id="gameScreen">
             <div class="game-left-col">
 
-                <!-- Scoreboard & Round Counter -->
-                <div class="glass-card Arena-header">
-                    <div class="player-score-card">
-                        <div class="player-avatar you"><i class="fas fa-user-shield"></i></div>
-                        <div class="player-meta">
-                            <span class="player-tag">Sen</span>
-                            <span class="player-name" id="myNameDisplay">Oyuncu 1</span>
-                        </div>
-                        <span class="score-num you-score" id="myScoreEl">0</span>
+                <!-- ======== VIEW A: 4-PLAYER PUBLIC GOODS GAME ARENA ======== -->
+                <div id="pggArenaView" style="display:flex; flex-direction:column; gap:18px;">
+
+                    <!-- 4 Player Cards Row -->
+                    <div class="pgg-players-grid" id="pggPlayersGrid">
+                        <!-- Dynamically rendered for Seats 0, 1, 2, 3 -->
                     </div>
 
-                    <div class="round-center-badge">
-                        <span class="round-label">Mevcut Tur</span>
-                        <span class="round-number"><span id="currentRoundEl">1</span> / <span id="maxRoundsEl">10</span></span>
+                    <!-- Common Pool Vault & Active Chaos Event Card -->
+                    <div class="glass-card pgg-pool-card">
+                        <div class="pgg-pool-header">
+                            <div class="pgg-round-pill">
+                                <i class="fas fa-layer-group" style="color:#818cf8;"></i>
+                                <span>TUR <span id="pggCurrentRoundEl">1</span> / <span id="pggMaxRoundsEl">10</span></span>
+                            </div>
+
+                            <div class="pgg-event-banner event-standard" id="pggEventBanner">
+                                <div class="pgg-event-info">
+                                    <h4 id="pggEventTitle">⚖️ Standart Akademik Dönem</h4>
+                                    <p id="pggEventDesc">Ortak havuzdaki altınlar 1.6x ile çarpılıp 4 oyuncuya eşit bölünür.</p>
+                                </div>
+                                <div class="pgg-multiplier-tag" id="pggMultiplierBadge">1.6x Havuz</div>
+                            </div>
+                        </div>
+
+                        <div class="pgg-vault-box">
+                            <div class="vault-stat">
+                                <span>Karar Veren Oyuncu</span>
+                                <strong id="pggReadyCountEl">0 / 4</strong>
+                            </div>
+                            <div class="vault-stat">
+                                <span>Son Tur Ortak Havuz</span>
+                                <strong id="pggLastPoolEl" style="color:#34d399;">-</strong>
+                            </div>
+                            <div class="vault-stat">
+                                <span>Son Tur Kişi Başı Pay</span>
+                                <strong id="pggLastShareEl" style="color:#fbbf24;">-</strong>
+                            </div>
+                        </div>
                     </div>
 
-                    <div class="player-score-card opponent">
-                        <span class="score-num opp-score" id="oppScoreEl">0</span>
-                        <div class="player-meta">
-                            <span class="player-tag">Rakip</span>
-                            <span class="player-name" id="oppNameDisplay">Rakip</span>
+                    <!-- Interactive 0-20 Contribution Slider & Decision Controls -->
+                    <div class="glass-card pgg-decision-box">
+                        <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+                            <div style="font-size:0.95rem; font-weight:800;">
+                                <i class="fas fa-coins" style="color:var(--gold-color);"></i> Bu Tur Bütçen: <span style="color:var(--gold-color);">20 Altın</span>
+                            </div>
+                            <span class="status-badge waiting" id="pggMyDecisionBadge">Yatırım Seçimi Bekleniyor</span>
                         </div>
-                        <div class="player-avatar opp"><i class="fas fa-user-ninja"></i></div>
+
+                        <div class="pgg-split-preview">
+                            <div class="split-card pocket">
+                                <div>
+                                    <span>🏠 Cebinde Kalan (Garanti)</span>
+                                    <strong style="color:var(--gold-color);" id="pggPocketPreview">10 🪙</strong>
+                                </div>
+                                <i class="fas fa-wallet" style="font-size:1.4rem; color:rgba(251,191,36,0.5);"></i>
+                            </div>
+                            <div class="split-card pool">
+                                <div>
+                                    <span>🏛️ Ortak Havuza Yatırılan</span>
+                                    <strong style="color:#34d399;" id="pggContribPreview">10 🪙</strong>
+                                </div>
+                                <i class="fas fa-hand-holding-usd" style="font-size:1.4rem; color:rgba(16,185,129,0.6);"></i>
+                            </div>
+                        </div>
+
+                        <div class="slider-wrap">
+                            <input type="range" id="pggSlider" class="pgg-range-slider" min="0" max="20" step="1" value="10">
+                            <div class="pgg-presets-row" id="pggPresetsRow">
+                                <button type="button" class="preset-pill-btn" data-val="0">0 🪙 (Beleşçi)</button>
+                                <button type="button" class="preset-pill-btn" data-val="5">5 🪙 (Temkinli)</button>
+                                <button type="button" class="preset-pill-btn active" data-val="10">10 🪙 (Dengeli)</button>
+                                <button type="button" class="preset-pill-btn" data-val="15">15 🪙 (Cömert)</button>
+                                <button type="button" class="preset-pill-btn" data-val="20">20 🪙 (Tam Katkı)</button>
+                            </div>
+                        </div>
+
+                        <button type="button" class="btn btn-join" id="btnLockPggMove" style="width:100%; font-size:1rem;">
+                            <i class="fas fa-lock"></i> Yatırımı Kilitle: Havuza 10 Altın Gönder
+                        </button>
+
+                        <div class="blind-status-prompt" id="pggBlindPrompt">
+                            4 oyuncunun tamamı yatırımını kilitleyene kadar kimse diğerinin kaç altın yatırdığını göremez.
+                        </div>
+
+                        <!-- Live Table Bluff / Emote Buttons -->
+                        <div class="pgg-emote-bar">
+                            <span style="font-size:0.74rem; color:var(--text-muted); font-weight:700;"><i class="fas fa-comment-dots"></i> Masaya Mesaj At:</span>
+                            <button type="button" class="emote-btn" data-emote="🤝 Herkes 20 atsın!">🤝 Herkes 20 atsın!</button>
+                            <button type="button" class="emote-btn" data-emote="💸 Ben 20 bastım!">💸 Ben 20 bastım!</button>
+                            <button type="button" class="emote-btn" data-emote="🕵️ Aramızda beleşçi var!">🕵️ Beleşçi var!</button>
+                            <button type="button" class="emote-btn" data-emote="😈 Kimseye güvenmem!">😈 Güvenmem!</button>
+                            <button type="button" class="emote-btn" data-emote="😂 Havuz patladı!">😂 Havuz patladı!</button>
+                        </div>
+
+                        <!-- Round Resolution Banner for 4P -->
+                        <div class="round-result-banner" id="pggRoundBanner">
+                            <div class="banner-left">
+                                <span class="banner-emoji" id="pggBannerEmoji">🏛️</span>
+                                <div class="banner-text">
+                                    <h5 id="pggBannerTitle">Tur Sonucu</h5>
+                                    <p id="pggBannerSub">Detaylar</p>
+                                </div>
+                            </div>
+                            <div class="banner-delta" id="pggBannerDelta">+20 🪙</div>
+                        </div>
+                    </div>
+
+                    <!-- 4-Player Round History Table -->
+                    <div class="glass-card history-card">
+                        <div class="card-section-title">
+                            <span><i class="fas fa-history"></i> Ortak Havuz Tur Geçmişi</span>
+                            <span id="pggHistoryCountLabel">0 Tur Tamamlandı</span>
+                        </div>
+                        <div class="history-table-wrap">
+                            <table class="history-table">
+                                <thead>
+                                    <tr>
+                                        <th>Tur & Olay</th>
+                                        <th>Oyuncu Katkıları (🪙)</th>
+                                        <th>Havuz × Çarpan</th>
+                                        <th>Senin Net Kazancın</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="pggHistoryTableBody">
+                                    <tr>
+                                        <td colspan="4" style="text-align:center; color: var(--text-muted); padding: 20px;">
+                                            Henüz tamamlanan tur yok. İlk yatırımını seç ve kilitle!
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Blind Choice Decision Area -->
-                <div class="glass-card decision-arena">
-                    <div class="arena-status-bar">
-                        <div class="status-side">
-                            <span>Senin Durumun:</span>
-                            <span class="status-badge waiting" id="myStatusBadge">Karar Bekleniyor</span>
-                        </div>
-                        <div class="status-side">
-                            <span>Rakip Durumu:</span>
-                            <span class="status-badge waiting" id="oppStatusBadge">Karar Bekleniyor</span>
-                        </div>
-                    </div>
-
-                    <div class="choices-grid">
-                        <button type="button" class="choice-card-btn cooperate" id="btnCooperate">
-                            <div class="choice-icon">
-                                <i class="fas fa-handshake"></i>
+                <!-- ======== VIEW B: 1v1 PRISONER'S DILEMMA ARENA ======== -->
+                <div id="pd1v1ArenaView" style="display:none; flex-direction:column; gap:18px;">
+                    <div class="glass-card Arena-header">
+                        <div class="player-score-card">
+                            <div class="player-avatar you"><i class="fas fa-user-shield"></i></div>
+                            <div class="player-meta">
+                                <span class="player-tag">Sen</span>
+                                <span class="player-name" id="myNameDisplay">Oyuncu 1</span>
                             </div>
-                            <h4>İş Birliği Yap</h4>
-                            <p>Ortak kazanç için güvenmeyi seç. İkiniz de iş birliği yaparsanız <strong>+3 Puan</strong> alırsınız.</p>
-                        </button>
+                            <span class="score-num you-score" id="myScoreEl">0</span>
+                        </div>
 
-                        <button type="button" class="choice-card-btn defect" id="btnDefect">
-                            <div class="choice-icon">
-                                <i class="fas fa-dagger" style="font-style:normal;">🗡️</i>
+                        <div class="round-center-badge">
+                            <span class="round-label">Mevcut Tur</span>
+                            <span class="round-number"><span id="currentRoundEl">1</span> / <span id="maxRoundsEl">10</span></span>
+                        </div>
+
+                        <div class="player-score-card opponent">
+                            <span class="score-num opp-score" id="oppScoreEl">0</span>
+                            <div class="player-meta">
+                                <span class="player-tag">Rakip</span>
+                                <span class="player-name" id="oppNameDisplay">Rakip</span>
                             </div>
-                            <h4>İhanet Et</h4>
-                            <p>Kendi çıkarını koru. Rakibin iş birliği yaparken ihanet edersen <strong>+5 Puan</strong> kazanırsın.</p>
-                        </button>
+                            <div class="player-avatar opp"><i class="fas fa-user-ninja"></i></div>
+                        </div>
                     </div>
 
-                    <div class="blind-status-prompt" id="blindStatusPrompt">
-                        Bu tur için hamleni seç. İki taraf da seçim yapana kadar kararlar gizli kalır.
-                    </div>
-
-                    <!-- Dynamic Notification Banner after Round Resolves -->
-                    <div class="round-result-banner" id="roundResultBanner">
-                        <div class="banner-left">
-                            <span class="banner-emoji" id="bannerEmoji">🤝</span>
-                            <div class="banner-text">
-                                <h5 id="bannerTitle">Karşılıklı İş Birliği!</h5>
-                                <p id="bannerSub">İkiniz de birbirinize güvendiniz.</p>
+                    <div class="glass-card decision-arena">
+                        <div class="arena-status-bar">
+                            <div class="status-side">
+                                <span>Senin Durumun:</span>
+                                <span class="status-badge waiting" id="myStatusBadge">Karar Bekleniyor</span>
+                            </div>
+                            <div class="status-side">
+                                <span>Rakip Durumu:</span>
+                                <span class="status-badge waiting" id="oppStatusBadge">Karar Bekleniyor</span>
                             </div>
                         </div>
-                        <div class="banner-delta" id="bannerDelta">Sen +3 | Rakip +3</div>
-                    </div>
-                </div>
 
-                <!-- Round History Table -->
-                <div class="glass-card history-card">
-                    <div class="card-section-title">
-                        <span><i class="fas fa-history"></i> Tur Geçmişi</span>
-                        <span id="historyCountLabel">0 Tur Tamamlandı</span>
+                        <div class="choices-grid">
+                            <button type="button" class="choice-card-btn cooperate" id="btnCooperate">
+                                <div class="choice-icon"><i class="fas fa-handshake"></i></div>
+                                <h4>İş Birliği Yap</h4>
+                                <p>Ortak kazanç için güvenmeyi seç. İkiniz de iş birliği yaparsanız <strong>+3 Puan</strong> alırsınız.</p>
+                            </button>
+
+                            <button type="button" class="choice-card-btn defect" id="btnDefect">
+                                <div class="choice-icon">🗡️</div>
+                                <h4>İhanet Et</h4>
+                                <p>Kendi çıkarını koru. Rakibin iş birliği yaparken ihanet edersen <strong>+5 Puan</strong> kazanırsın.</p>
+                            </button>
+                        </div>
+
+                        <div class="blind-status-prompt" id="blindStatusPrompt">
+                            Bu tur için hamleni seç. İki taraf da seçim yapana kadar kararlar gizli kalır.
+                        </div>
+
+                        <div class="round-result-banner" id="roundResultBanner">
+                            <div class="banner-left">
+                                <span class="banner-emoji" id="bannerEmoji">🤝</span>
+                                <div class="banner-text">
+                                    <h5 id="bannerTitle">Karşılıklı İş Birliği!</h5>
+                                    <p id="bannerSub">İkiniz de birbirinize güvendiniz.</p>
+                                </div>
+                            </div>
+                            <div class="banner-delta" id="bannerDelta">Sen +3 | Rakip +3</div>
+                        </div>
                     </div>
-                    <div class="history-table-wrap">
-                        <table class="history-table">
-                            <thead>
-                                <tr>
-                                    <th>Tur</th>
-                                    <th>Senin Seçimin</th>
-                                    <th>Rakibin Seçimi</th>
-                                    <th>Bu Tur Puanı</th>
-                                </tr>
-                            </thead>
-                            <tbody id="historyTableBody">
-                                <tr>
-                                    <td colspan="4" style="text-align:center; color: var(--text-muted); padding: 20px;">
-                                        Henüz tamamlanan tur yok. İlk hamleni yap!
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
+
+                    <div class="glass-card history-card">
+                        <div class="card-section-title">
+                            <span><i class="fas fa-history"></i> Tur Geçmişi</span>
+                            <span id="historyCountLabel">0 Tur Tamamlandı</span>
+                        </div>
+                        <div class="history-table-wrap">
+                            <table class="history-table">
+                                <thead>
+                                    <tr>
+                                        <th>Tur</th>
+                                        <th>Senin Seçimin</th>
+                                        <th>Rakibin Seçimi</th>
+                                        <th>Bu Tur Puanı</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="historyTableBody">
+                                    <tr>
+                                        <td colspan="4" style="text-align:center; color: var(--text-muted); padding: 20px;">
+                                            Henüz tamamlanan tur yok. İlk hamleni yap!
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
 
             </div>
 
-            <!-- Right Column: Payoff Matrix & Game Theory Info -->
+            <!-- Right Column: Dynamic Rules & Payoff Matrix -->
             <aside class="game-right-col">
-                <div class="glass-card matrix-card">
-                    <div class="card-section-title">
-                        <span><i class="fas fa-border-all"></i> Puan Matrisi</span>
-                        <span style="font-size: 0.72rem; color: #818cf8;">Sen / Rakip</span>
+                <!-- Sidebar for 4-Player Public Goods -->
+                <div id="sidebar4P" style="display:flex; flex-direction:column; gap:16px;">
+                    <div class="glass-card matrix-card">
+                        <div class="card-section-title">
+                            <span><i class="fas fa-balance-scale"></i> Kamu Malları Matematiği</span>
+                            <span style="font-size: 0.72rem; color: #34d399;">1.6x Havuz</span>
+                        </div>
+                        <p class="matrix-desc">Her tur <strong>20 Altın</strong> alırsın. Havuza yatırdığın miktar <strong>1.6x</strong> ile çarpılıp 4 kişiye eşit bölünür:</p>
+                        <div class="matrix-grid">
+                            <div class="matrix-cell both-coop">
+                                <div style="font-size:0.76rem; color:#6ee7b7; font-weight:700;">🏛️ Tam Dayanışma (Herkes 20 Yatırırsa)</div>
+                                <div class="matrix-cell-pts">Herkese +32 🪙</div>
+                                <small style="color:var(--text-muted); font-size:0.72rem;">Havuz: 80 × 1.6 = 128 🪙 (4'e bölünür)</small>
+                            </div>
+                            <div class="matrix-cell">
+                                <div style="font-size:0.76rem; color:#fda4af; font-weight:700;">🦊 Beleşçi Vurgunu (3 Kişi 20, Sen 0)</div>
+                                <div class="matrix-cell-pts">Sen +44 🪙 / Diğerleri +24 🪙</div>
+                                <small style="color:var(--text-muted); font-size:0.72rem;">Cebindeki 20 + Havuz Payı (60×1.6÷4 = 24)</small>
+                            </div>
+                            <div class="matrix-cell both-defect">
+                                <div style="font-size:0.76rem; color:#fcd34d; font-weight:700;">💥 Ortak Malların Trajedisi (Herkes 0)</div>
+                                <div class="matrix-cell-pts">Herkese +20 🪙</div>
+                                <small style="color:var(--text-muted); font-size:0.72rem;">Kimse havuza güvenmezse ekstra kazanç 0 olur!</small>
+                            </div>
+                        </div>
                     </div>
-                    <p class="matrix-desc">Her turun sonunda seçimler açılır ve aşağıdaki matrise göre puanlar eklenir:</p>
 
-                    <div class="matrix-grid">
-                        <div class="matrix-cell both-coop">
-                            <div class="matrix-cell-moves">
-                                <span style="color:#34d399;">İş Birliği</span>
-                                <span>×</span>
-                                <span style="color:#34d399;">İş Birliği</span>
-                            </div>
-                            <div class="matrix-cell-pts">+3 / +3 Puan</div>
-                            <small style="color:var(--text-muted); font-size:0.72rem;">Pareto Optimal (Ortak Kazanç)</small>
-                        </div>
-
-                        <div class="matrix-cell">
-                            <div class="matrix-cell-moves">
-                                <span style="color:#fb7185;">İhanet</span>
-                                <span>×</span>
-                                <span style="color:#34d399;">İş Birliği</span>
-                            </div>
-                            <div class="matrix-cell-pts">+5 / 0 Puan</div>
-                            <small style="color:var(--text-muted); font-size:0.72rem;">Ters Köşe (İhanet Ödülü)</small>
-                        </div>
-
-                        <div class="matrix-cell">
-                            <div class="matrix-cell-moves">
-                                <span style="color:#34d399;">İş Birliği</span>
-                                <span>×</span>
-                                <span style="color:#fb7185;">İhanet</span>
-                            </div>
-                            <div class="matrix-cell-pts">0 / +5 Puan</div>
-                            <small style="color:var(--text-muted); font-size:0.72rem;">Saf İyi Niyet Bedeli</small>
-                        </div>
-
-                        <div class="matrix-cell both-defect">
-                            <div class="matrix-cell-moves">
-                                <span style="color:#fb7185;">İhanet</span>
-                                <span>×</span>
-                                <span style="color:#fb7185;">İhanet</span>
-                            </div>
-                            <div class="matrix-cell-pts">+1 / +1 Puan</div>
-                            <small style="color:var(--text-muted); font-size:0.72rem;">Nash Dengesi (Kayıp Döngüsü)</small>
-                        </div>
+                    <div class="glass-card theory-tip-box">
+                        <strong><i class="fas fa-dice" style="color:#f59e0b;"></i> Kaos & Tur Olayları:</strong>
+                        Sıradan beleşçilik her zaman işe yaramaz! <em>🕵️ Vergi Müfettişi</em> turlarında 5 altından az yatıranlar <strong>-8 🪙 ceza</strong> yer; <em>🌟 Altın Çağ</em> turlarında çarpan <strong>2.4x</strong> olur; <em>🦸 Robin Hood</em> turunda en cömert oyuncu <strong>+6 🪙 ödül</strong> kapar!
                     </div>
                 </div>
 
-                <div class="glass-card theory-tip-box">
-                    <strong><i class="fas fa-lightbulb" style="color:#f59e0b;"></i> Oyun Teorisi Notu:</strong>
-                    Tek turda ihanet etmek rasyonel görünse de, tekrarlı Tutsak İkilemi'nde Robert Axelrod'un turnuvalarını kazanan en güçlü strateji <em>"Kısasa Kısas" (Tit-for-Tat)</em> olmuştur: İş birliği ile başla, sonra rakibinin bir önceki hamlesini kopyala!
+                <!-- Sidebar for 1v1 Prisoner's Dilemma -->
+                <div id="sidebar1v1" style="display:none; flex-direction:column; gap:16px;">
+                    <div class="glass-card matrix-card">
+                        <div class="card-section-title">
+                            <span><i class="fas fa-border-all"></i> Puan Matrisi</span>
+                            <span style="font-size: 0.72rem; color: #818cf8;">Sen / Rakip</span>
+                        </div>
+                        <p class="matrix-desc">Her turun sonunda seçimler açılır ve aşağıdaki matrise göre puanlar eklenir:</p>
+                        <div class="matrix-grid">
+                            <div class="matrix-cell both-coop">
+                                <div style="font-size:0.76rem; color:#34d399; font-weight:700;">İş Birliği × İş Birliği</div>
+                                <div class="matrix-cell-pts">+3 / +3 Puan</div>
+                            </div>
+                            <div class="matrix-cell">
+                                <div style="font-size:0.76rem; color:#fb7185; font-weight:700;">İhanet × İş Birliği</div>
+                                <div class="matrix-cell-pts">+5 / 0 Puan</div>
+                            </div>
+                            <div class="matrix-cell">
+                                <div style="font-size:0.76rem; color:#cbd5e1; font-weight:700;">İş Birliği × İhanet</div>
+                                <div class="matrix-cell-pts">0 / +5 Puan</div>
+                            </div>
+                            <div class="matrix-cell both-defect">
+                                <div style="font-size:0.76rem; color:#fb7185; font-weight:700;">İhanet × İhanet</div>
+                                <div class="matrix-cell-pts">+1 / +1 Puan</div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </aside>
         </section>
@@ -1410,10 +1024,11 @@
             <div class="modal-trophy" id="modalTrophyIcon">🏆</div>
             <div>
                 <h3 id="modalWinnerTitle">Oyun Bitti!</h3>
-                <p id="modalWinnerDesc" style="color: var(--text-muted); font-size: 0.92rem; margin-top: 4px;"></p>
+                <p id="modalWinnerDesc" style="color: var(--text-muted); font-size: 0.9rem; margin-top: 4px;"></p>
             </div>
 
-            <div class="final-scores-box">
+            <!-- 1v1 Final Score Box -->
+            <div class="final-scores-box" id="final1v1ScoresBox" style="display:none;">
                 <div class="final-score-col">
                     <span id="finalMyName">Sen</span>
                     <strong style="color:#818cf8;" id="finalMyScore">0</strong>
@@ -1424,6 +1039,9 @@
                     <strong style="color:#fb7185;" id="finalOppScore">0</strong>
                 </div>
             </div>
+
+            <!-- 4-Player Final Podium Leaderboard -->
+            <div class="pgg-leaderboard-list" id="finalPggLeaderboard" style="display:none;"></div>
 
             <div id="modalStatsLine" style="font-size: 0.82rem; color: var(--text-muted);"></div>
             <div class="db-log-badge" id="dbLogBadge">
@@ -1449,7 +1067,7 @@
             </div>
             <div>
                 <h3>Bağlantı Kesildi</h3>
-                <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 6px;">Rakip oyundan ayrıldı veya ağ bağlantısı koptu.</p>
+                <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 6px;">Oda bağlantısı koptu veya ev sahibi masadan ayrıldı.</p>
             </div>
             <div class="modal-actions">
                 <button type="button" class="btn btn-host" onclick="window.location.href = window.location.pathname">
@@ -1463,22 +1081,81 @@
     <div class="toast-wrap" id="toastWrap"></div>
 
     <script type="module">
-        // Import Firebase DB logging if running inside the community site, with graceful standalone fallback
         let fbSaveGameResult = null;
-        try {
-            const mod = await import('./firebase-service.js');
-            if (mod && typeof mod.saveGameResult === 'function') {
-                fbSaveGameResult = mod.saveGameResult;
-            }
-        } catch (e) {
-            console.warn('Standalone mode (firebase-service not imported):', e);
-        }
+        import('./firebase-service.js')
+            .then(mod => {
+                if (mod && typeof mod.saveGameResult === 'function') {
+                    fbSaveGameResult = mod.saveGameResult;
+                }
+            })
+            .catch(e => {
+                console.warn('Standalone mode (firebase-service not imported):', e);
+            });
 
-        const PEER_PREFIX = 'sdu-pd-v3-';
-        const MQTT_TOPIC_PREFIX = 'sdu/kulturkitap/pd/v3/';
+        const PEER_PREFIX = 'sdu-gt-v4-';
+        const MQTT_TOPIC_PREFIX = 'sdu/kulturkitap/gt/v4/';
         const MAX_ROUNDS = 10;
+        const ROUND_ENDOWMENT = 20;
+        const BASE_MULTIPLIER = 1.6;
 
-        // ICE configuration with STUN + free OpenRelay TURN servers
+        // Round Chaos / Event Card Definitions for 4-Player Public Goods Game
+        const PGG_EVENT_CATALOG = {
+            STANDARD: {
+                id: 'STANDARD',
+                title: '⚖️ Standart Akademik Dönem',
+                desc: 'Ortak havuzdaki altınlar 1.6x ile çarpılıp 4 oyuncuya eşit bölünür.',
+                badge: '1.6x Havuz',
+                cls: 'event-standard',
+                multiplier: 1.6
+            },
+            GOLDEN_AGE: {
+                id: 'GOLDEN_AGE',
+                title: '🌟 Altın Çağ (Bereket Teşviği!)',
+                desc: 'Hazine coştu! Bu tur ortak havuza yatırılan altınlar 1.6x yerine tam 2.4x ile çarpılır!',
+                badge: '2.4x Havuz!',
+                cls: 'event-golden',
+                multiplier: 2.4
+            },
+            TAX_AUDIT: {
+                id: 'TAX_AUDIT',
+                title: '🕵️ Vergi Müfettişi Baskını!',
+                desc: 'Dikkat! Bu tur ortak havuza 5 Altından az yatıran "Beleşçiler" denetime yakalanır ve -8 🪙 ceza yer!',
+                badge: 'Denetim (-8 🪙)',
+                cls: 'event-audit',
+                multiplier: 1.6
+            },
+            ROBIN_HOOD: {
+                id: 'ROBIN_HOOD',
+                title: '🦸 Robin Hood Dayanışma Fonu',
+                desc: 'Bu tur havuza en yüksek katkıyı yapan oyuncu(lar) (en az 12 🪙 yatırmak şartıyla) ekstra +6 🪙 ödül alır!',
+                badge: '+6 🪙 Ödül',
+                cls: 'event-golden',
+                multiplier: 1.6
+            },
+            CRISIS_THRESHOLD: {
+                id: 'CRISIS_THRESHOLD',
+                title: '🌪️ Ekonomik Kriz Barajı (Hedef: 40 🪙)',
+                desc: 'Toplam havuz 40 Altına ulaşırsa çarpan 2.0x olur! Ulaşamazsa kriz çıkar ve çarpan 0.8x\'e düşer!',
+                badge: 'Baraj: 40 🪙',
+                cls: 'event-audit',
+                multiplier: 2.0
+            },
+            LOYALTY_BONUS: {
+                id: 'LOYALTY_BONUS',
+                title: '💎 Sadakat İkramiyesi Turu',
+                desc: 'Bu tur ortak havuza 15 veya daha fazla Altın yatıran her cömert oyuncuya hazineden ekstra +5 🪙 ikramiye!',
+                badge: '+5 🪙 Bonus',
+                cls: 'event-golden',
+                multiplier: 1.6
+            }
+        };
+
+        const BOT_PERSONAS = [
+            { name: 'Prof. Nash (Bot)', persona: 'tit_for_tat' },
+            { name: 'Bencil Baron (Bot)', persona: 'free_rider' },
+            { name: 'Robin Hood (Bot)', persona: 'altruist' }
+        ];
+
         const PEER_CONFIG = {
             config: {
                 iceServers: [
@@ -1494,55 +1171,80 @@
                         urls: 'turn:openrelay.metered.ca:443',
                         username: 'openrelayproject',
                         credential: 'openrelayproject'
-                    },
-                    {
-                        urls: 'turn:openrelay.metered.ca:443?transport=tcp',
-                        username: 'openrelayproject',
-                        credential: 'openrelayproject'
                     }
                 ]
             }
         };
 
-        // Unique ID for this browser tab
         const myClientId = 'p_' + Math.random().toString(36).substring(2, 10) + '_' + Date.now().toString(36);
 
-        // Network State (Quadruple Transport: PeerJS WebRTC + 2x WSS MQTT Brokers + BroadcastChannel)
+        // Network Transports
         let hostPeer = null;
         let guestPeer = null;
-        let activeConn = null;
+        let hostConnections = []; // For 4-player host to send to all connected PeerJS guests
+        let activeConn = null;    // For guest
         let mqttClients = [];
         let bcChannel = null;
 
+        // Mode & Room State
+        let currentGameMode = '4p'; // '4p' (Public Goods) or '1v1' (Prisoner's Dilemma)
         let isHost = false;
         let currentRoomCode = '';
         let isMatched = false;
-        let oppClientId = null;
         let handshakeInterval = null;
         let stateSyncInterval = null;
+        let lobbyBroadcastInterval = null;
         let joinTimeout = null;
 
-        // Lockstep Game State
+        // Shared Lockstep State
         let matchEpoch = 1;
         let myName = 'Oyuncu 1';
-        let oppName = 'Rakip';
         let currentRound = 1;
-        let myScore = 0;
-        let oppScore = 0;
-
-        // Per-round maps guarantee no move is ever lost even if one player clicks faster during round transitions!
-        let myMoves = {};        // { 1: 'C', 2: 'D', ... }
-        let oppMoves = {};       // { 1: 'D', 2: 'C', ... }
-        let resolvedRounds = {}; // { 1: true, 2: true, ... }
+        let resolvedRounds = {};
         let roundTransitionTimer = null;
-        let history = [];
         let matchLogged = false;
 
+        // 4-Player Specific State
+        let mySeatIndex = 0; // 0..3
+        let roomSeats = [null, null, null, null]; // [{ seat, clientId, name, isBot, persona }]
+        let roundEvents = {}; // { 1: 'STANDARD', 2: 'GOLDEN_AGE', ... }
+        let pggMoves = {};    // { [round]: { 0: num, 1: num, 2: num, 3: num } }
+        let pggScores = [0, 0, 0, 0];
+        let pggHistory = [];
+
+        // 1v1 Specific State
+        let oppClientId = null;
+        let oppName = 'Rakip';
+        let is1v1BotMatch = false;
+        let myScore = 0;
+        let oppScore = 0;
+        let myMoves = {};
+        let oppMoves = {};
+        let history = [];
+
         // DOM Elements
+        const topbarTitle = document.getElementById('topbarTitle');
         const lobbyScreen = document.getElementById('lobbyScreen');
         const gameScreen = document.getElementById('gameScreen');
         const connStatusPill = document.getElementById('connStatusPill');
         const connStatusText = document.getElementById('connStatusText');
+
+        const tabMode4P = document.getElementById('tabMode4P');
+        const tabMode1v1 = document.getElementById('tabMode1v1');
+        const lobbyBadgeText = document.getElementById('lobbyBadgeText');
+        const lobbyHeroTitle = document.getElementById('lobbyHeroTitle');
+        const lobbyHeroDesc = document.getElementById('lobbyHeroDesc');
+        const hostBoxTitle = document.getElementById('hostBoxTitle');
+        const hostBoxDesc = document.getElementById('hostBoxDesc');
+        const hostRoomModeBadge = document.getElementById('hostRoomModeBadge');
+        const host4PSeatsWrap = document.getElementById('host4PSeatsWrap');
+        const host1v1BotWrap = document.getElementById('host1v1BotWrap');
+        const seatedCountLabel = document.getElementById('seatedCountLabel');
+        const lobbySeatsGrid = document.getElementById('lobbySeatsGrid');
+        const fillBotsAndStartBtn = document.getElementById('fillBotsAndStartBtn');
+        const start1v1BotBtn = document.getElementById('start1v1BotBtn');
+        const guestLobbySeatsPanel = document.getElementById('guestLobbySeatsPanel');
+        const guestSeatsGrid = document.getElementById('guestSeatsGrid');
 
         const playerNameInput = document.getElementById('playerNameInput');
         const createRoomBtn = document.getElementById('createRoomBtn');
@@ -1550,36 +1252,68 @@
         const displayRoomCode = document.getElementById('displayRoomCode');
         const copyCodeBtn = document.getElementById('copyCodeBtn');
         const copyLinkBtn = document.getElementById('copyLinkBtn');
-
         const joinRoomInput = document.getElementById('joinRoomInput');
         const joinRoomBtn = document.getElementById('joinRoomBtn');
 
+        // Views & Sidebars
+        const pggArenaView = document.getElementById('pggArenaView');
+        const pd1v1ArenaView = document.getElementById('pd1v1ArenaView');
+        const sidebar4P = document.getElementById('sidebar4P');
+        const sidebar1v1 = document.getElementById('sidebar1v1');
+
+        // 4P DOM
+        const pggPlayersGrid = document.getElementById('pggPlayersGrid');
+        const pggCurrentRoundEl = document.getElementById('pggCurrentRoundEl');
+        const pggMaxRoundsEl = document.getElementById('pggMaxRoundsEl');
+        const pggEventBanner = document.getElementById('pggEventBanner');
+        const pggEventTitle = document.getElementById('pggEventTitle');
+        const pggEventDesc = document.getElementById('pggEventDesc');
+        const pggMultiplierBadge = document.getElementById('pggMultiplierBadge');
+        const pggReadyCountEl = document.getElementById('pggReadyCountEl');
+        const pggLastPoolEl = document.getElementById('pggLastPoolEl');
+        const pggLastShareEl = document.getElementById('pggLastShareEl');
+        const pggMyDecisionBadge = document.getElementById('pggMyDecisionBadge');
+        const pggPocketPreview = document.getElementById('pggPocketPreview');
+        const pggContribPreview = document.getElementById('pggContribPreview');
+        const pggSlider = document.getElementById('pggSlider');
+        const pggPresetsRow = document.getElementById('pggPresetsRow');
+        const btnLockPggMove = document.getElementById('btnLockPggMove');
+        const pggBlindPrompt = document.getElementById('pggBlindPrompt');
+        const pggRoundBanner = document.getElementById('pggRoundBanner');
+        const pggBannerEmoji = document.getElementById('pggBannerEmoji');
+        const pggBannerTitle = document.getElementById('pggBannerTitle');
+        const pggBannerSub = document.getElementById('pggBannerSub');
+        const pggBannerDelta = document.getElementById('pggBannerDelta');
+        const pggHistoryCountLabel = document.getElementById('pggHistoryCountLabel');
+        const pggHistoryTableBody = document.getElementById('pggHistoryTableBody');
+
+        // 1v1 DOM
         const myNameDisplay = document.getElementById('myNameDisplay');
         const oppNameDisplay = document.getElementById('oppNameDisplay');
         const myScoreEl = document.getElementById('myScoreEl');
         const oppScoreEl = document.getElementById('oppScoreEl');
         const currentRoundEl = document.getElementById('currentRoundEl');
         const maxRoundsEl = document.getElementById('maxRoundsEl');
-
         const myStatusBadge = document.getElementById('myStatusBadge');
         const oppStatusBadge = document.getElementById('oppStatusBadge');
         const btnCooperate = document.getElementById('btnCooperate');
         const btnDefect = document.getElementById('btnDefect');
         const blindStatusPrompt = document.getElementById('blindStatusPrompt');
-
         const roundResultBanner = document.getElementById('roundResultBanner');
         const bannerEmoji = document.getElementById('bannerEmoji');
         const bannerTitle = document.getElementById('bannerTitle');
         const bannerSub = document.getElementById('bannerSub');
         const bannerDelta = document.getElementById('bannerDelta');
-
         const historyCountLabel = document.getElementById('historyCountLabel');
         const historyTableBody = document.getElementById('historyTableBody');
 
+        // Modal DOM
         const gameOverModal = document.getElementById('gameOverModal');
         const modalTrophyIcon = document.getElementById('modalTrophyIcon');
         const modalWinnerTitle = document.getElementById('modalWinnerTitle');
         const modalWinnerDesc = document.getElementById('modalWinnerDesc');
+        const final1v1ScoresBox = document.getElementById('final1v1ScoresBox');
+        const finalPggLeaderboard = document.getElementById('finalPggLeaderboard');
         const finalMyName = document.getElementById('finalMyName');
         const finalOppName = document.getElementById('finalOppName');
         const finalMyScore = document.getElementById('finalMyScore');
@@ -1590,7 +1324,13 @@
         const backToLobbyBtn = document.getElementById('backToLobbyBtn');
         const disconnectModal = document.getElementById('disconnectModal');
 
+        pggMaxRoundsEl.textContent = MAX_ROUNDS;
         maxRoundsEl.textContent = MAX_ROUNDS;
+
+        function fmtNum(n) {
+            const rounded = Math.round(Number(n) * 10) / 10;
+            return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(1);
+        }
 
         function showToast(msg, icon = 'fa-info-circle') {
             const wrap = document.getElementById('toastWrap');
@@ -1609,9 +1349,7 @@
         function generateShortCode() {
             const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
             let code = '';
-            for (let i = 0; i < 5; i++) {
-                code += chars.charAt(Math.floor(Math.random() * chars.length));
-            }
+            for (let i = 0; i < 5; i++) code += chars.charAt(Math.floor(Math.random() * chars.length));
             return code;
         }
 
@@ -1621,7 +1359,7 @@
         }
 
         function getInviteUrl(code) {
-            return `${window.location.origin}${window.location.pathname}?room=${encodeURIComponent(code)}`;
+            return `${window.location.origin}${window.location.pathname}?room=${encodeURIComponent(code)}&mode=${currentGameMode}`;
         }
 
         async function copyText(text, successMsg) {
@@ -1642,6 +1380,52 @@
             }
         }
 
+        // ================= MODE SWITCHING =================
+        function selectGameMode(mode) {
+            currentGameMode = (mode === '1v1') ? '1v1' : '4p';
+            tabMode4P.classList.toggle('active', currentGameMode === '4p');
+            tabMode1v1.classList.toggle('active', currentGameMode === '1v1');
+
+            if (currentGameMode === '4p') {
+                topbarTitle.innerHTML = `Kamu Malları Oyunu <span style="color:#34d399;">4 Kişilik Havuz</span>`;
+                lobbyBadgeText.innerHTML = `<i class="fas fa-coins"></i> 4 Oyunculu Kamu Malları Deneyi • 1.6x Ortak Havuz & Kaos Kartları`;
+                lobbyHeroTitle.textContent = 'Ortak Havuza Katkı mı, Beleşçilik mi?';
+                lobbyHeroDesc.innerHTML = `4 kişi aynı masada! Her tur <strong>20 Altın</strong> bütçenden istediğin kadarını (0-20) ortak havuza yatır. Havuzdaki altınlar <strong>1.6x</strong> ile çarpılıp 4 kişiye eşit bölünür; üstelik her tur <em>Vergi Müfettişi</em> ve <em>Altın Çağ</em> gibi sürpriz olaylar dengeleri değiştirir!`;
+                hostBoxTitle.textContent = '4 Kişilik Masa Kur (Host)';
+                hostBoxDesc.innerHTML = `5 haneli özel oda kodu üret. Arkadaşlarını davet et; eksik koltuk kalırsa tek tıkla <strong>Stratejik Botlarla</strong> doldurup hemen başlat!`;
+                hostRoomModeBadge.textContent = '4 Kişilik Havuz';
+                host4PSeatsWrap.style.display = 'block';
+                host1v1BotWrap.style.display = 'none';
+            } else {
+                topbarTitle.innerHTML = `Tutsak İkilemi <span style="color:#818cf8;">1v1 VS</span>`;
+                lobbyBadgeText.innerHTML = `<i class="fas fa-bolt"></i> P2P Gerçek Zamanlı 1v1 Oyun Teorisi Düellosu`;
+                lobbyHeroTitle.textContent = 'Güvenecek misin, İhanet mi Edeceksin?';
+                lobbyHeroDesc.innerHTML = `Arkadaşınla 10 turluk <strong>Tutsak İkilemi (Prisoner's Dilemma)</strong> düellosuna gir. Karşılıklı iş birliği mi kazanacak, yoksa soğukkanlı strateji mi?`;
+                hostBoxTitle.textContent = '1v1 Düello Odası Kur (Host)';
+                hostBoxDesc.innerHTML = `5 haneli özel bir oda kodu üret ve davet bağlantısını arkadaşına göndererek 2 kişilik düelloyu başlat.`;
+                hostRoomModeBadge.textContent = '1v1 Düello';
+                host4PSeatsWrap.style.display = 'none';
+                host1v1BotWrap.style.display = 'block';
+            }
+        }
+
+        tabMode4P.addEventListener('click', () => selectGameMode('4p'));
+        tabMode1v1.addEventListener('click', () => selectGameMode('1v1'));
+
+        // ================= GENERATE 10-ROUND CHAOS SCHEDULE =================
+        function generateRoundEventsSchedule() {
+            const pool = [
+                'GOLDEN_AGE', 'TAX_AUDIT', 'ROBIN_HOOD', 'CRISIS_THRESHOLD',
+                'LOYALTY_BONUS', 'STANDARD', 'TAX_AUDIT', 'GOLDEN_AGE', 'ROBIN_HOOD'
+            ];
+            const schedule = { 1: 'STANDARD' };
+            for (let r = 2; r <= MAX_ROUNDS; r++) {
+                const pickIdx = (r * 3 + Math.floor(Math.random() * pool.length)) % pool.length;
+                schedule[r] = pool[pickIdx];
+            }
+            return schedule;
+        }
+
         // ================= UNIFIED MULTI-TRANSPORT MESSAGING =================
         function sendPacket(payload) {
             const packet = {
@@ -1651,12 +1435,18 @@
                 ts: Date.now()
             };
 
-            // 1. PeerJS WebRTC DataChannel
-            if (activeConn && activeConn.open) {
+            // 1. PeerJS WebRTC DataChannels
+            if (isHost) {
+                for (const c of hostConnections) {
+                    if (c && c.open) {
+                        try { c.send(packet); } catch (e) {}
+                    }
+                }
+            } else if (activeConn && activeConn.open) {
                 try { activeConn.send(packet); } catch (e) {}
             }
 
-            // 2. Dual WSS MQTT Brokers (EMQX + HiveMQ) for 100% mobile & firewall reliability
+            // 2. Dual WSS MQTT Brokers
             const serialized = JSON.stringify(packet);
             for (const client of mqttClients) {
                 if (client && client.connected && currentRoomCode) {
@@ -1672,17 +1462,72 @@
             }
         }
 
-        function broadcastLockstepState() {
-            if (!isMatched) return;
+        function renderLobbySeatsUI(gridEl, seatsArr) {
+            if (!gridEl) return;
+            gridEl.innerHTML = '';
+            let filled = 0;
+            for (let i = 0; i < 4; i++) {
+                const s = seatsArr[i];
+                if (s) filled++;
+                const div = document.createElement('div');
+                div.className = 'lobby-seat-chip ' + (s ? (s.isBot ? 'bot' : 'filled') : '');
+                if (s) {
+                    const tag = s.clientId === myClientId ? ' (Sen)' : (s.isBot ? ' 🤖' : ' ✓');
+                    div.innerHTML = `<span>#${i + 1} ${s.name}${tag}</span> <span style="font-size:0.7rem;">Hazır</span>`;
+                } else {
+                    div.innerHTML = `<span style="color:var(--text-muted);">#${i + 1} Boş Koltuk</span> <i class="fas fa-hourglass-half" style="color:var(--text-muted);"></i>`;
+                }
+                gridEl.appendChild(div);
+            }
+            if (seatedCountLabel) seatedCountLabel.textContent = `${filled}/4`;
+        }
+
+        function broadcastRoomState4P() {
+            if (!isHost || currentGameMode !== '4p') return;
             sendPacket({
-                type: 'STATE_SYNC',
-                name: myName,
+                type: 'ROOM_STATE',
+                gameMode: '4p',
+                roomSeats: roomSeats,
+                matchStarted: isMatched,
                 matchEpoch: matchEpoch,
-                currentRound: currentRound,
-                moves: myMoves
+                roundEvents: roundEvents
             });
         }
 
+        function broadcastLockstepState() {
+            if (!isMatched) return;
+            if (currentGameMode === '4p') {
+                const mySeatMoves = {};
+                for (let r = 1; r <= MAX_ROUNDS; r++) {
+                    if (pggMoves[r] && pggMoves[r][mySeatIndex] !== undefined) {
+                        mySeatMoves[r] = pggMoves[r][mySeatIndex];
+                    }
+                }
+                sendPacket({
+                    type: 'PGG_STATE_SYNC',
+                    gameMode: '4p',
+                    seatIndex: mySeatIndex,
+                    name: myName,
+                    matchEpoch: matchEpoch,
+                    currentRound: currentRound,
+                    mySeatMoves: mySeatMoves,
+                    allMoves: isHost ? pggMoves : undefined,
+                    roomSeats: isHost ? roomSeats : undefined,
+                    roundEvents: isHost ? roundEvents : undefined
+                });
+            } else {
+                sendPacket({
+                    type: 'STATE_SYNC',
+                    gameMode: '1v1',
+                    name: myName,
+                    matchEpoch: matchEpoch,
+                    currentRound: currentRound,
+                    moves: myMoves
+                });
+            }
+        }
+
+        // ================= PACKET HANDLER =================
         function handleIncomingPacket(packet) {
             if (!packet || typeof packet !== 'object') return;
             if (packet.senderId === myClientId) return;
@@ -1690,19 +1535,56 @@
 
             switch (packet.type) {
                 case 'JOIN_REQ':
-                    if (isHost) {
+                    if (!isHost) return;
+                    if (currentGameMode === '4p') {
+                        // Check if this client already has a seat
+                        let existingSeat = roomSeats.find(s => s && s.clientId === packet.senderId);
+                        if (!existingSeat) {
+                            // Find first empty seat (or replace a bot if match hasn't started yet)
+                            let targetIdx = roomSeats.findIndex(s => s === null);
+                            if (targetIdx === -1 && !isMatched) {
+                                targetIdx = roomSeats.findIndex(s => s && s.isBot);
+                            }
+                            if (targetIdx !== -1) {
+                                roomSeats[targetIdx] = {
+                                    seat: targetIdx,
+                                    clientId: packet.senderId,
+                                    name: packet.name || `Oyuncu ${targetIdx + 1}`,
+                                    isBot: false
+                                };
+                                existingSeat = roomSeats[targetIdx];
+                                showToast(`${existingSeat.name} masaya katıldı! (Koltuk #${targetIdx + 1})`, 'fa-user-plus');
+                            }
+                        } else if (packet.name) {
+                            existingSeat.name = packet.name;
+                        }
+
+                        renderLobbySeatsUI(lobbySeatsGrid, roomSeats);
+                        broadcastRoomState4P();
+
+                        // Auto-start when all 4 seats are filled with human players!
+                        if (!isMatched && roomSeats.every(s => s !== null)) {
+                            isMatched = true;
+                            broadcastRoomState4P();
+                            startPggArena();
+                        } else if (isMatched) {
+                            broadcastLockstepState();
+                        }
+                    } else {
+                        // 1v1 Host Join Handling
                         if (!isMatched || oppClientId === packet.senderId) {
                             oppClientId = packet.senderId;
                             oppName = packet.name || 'Misafir Oyuncu';
                             sendPacket({
                                 type: 'JOIN_ACK',
+                                gameMode: '1v1',
                                 name: myName,
                                 targetId: packet.senderId,
                                 matchEpoch: matchEpoch
                             });
                             if (!isMatched) {
                                 isMatched = true;
-                                startArena();
+                                start1v1Arena();
                             } else {
                                 oppNameDisplay.textContent = oppName;
                                 broadcastLockstepState();
@@ -1711,27 +1593,128 @@
                     }
                     break;
 
-                case 'JOIN_ACK':
-                    if (!isHost && (!packet.targetId || packet.targetId === myClientId)) {
-                        oppClientId = packet.senderId;
-                        oppName = packet.name || 'Ev Sahibi';
-                        if (packet.matchEpoch) matchEpoch = packet.matchEpoch;
-                        if (handshakeInterval) {
-                            clearInterval(handshakeInterval);
-                            handshakeInterval = null;
-                        }
-                        if (joinTimeout) {
-                            clearTimeout(joinTimeout);
-                            joinTimeout = null;
-                        }
-                        if (!isMatched) {
-                            isMatched = true;
-                            startArena();
+                case 'ROOM_STATE':
+                    if (!isHost && Array.isArray(packet.roomSeats)) {
+                        const mySeatObj = packet.roomSeats.find(s => s && s.clientId === myClientId);
+                        if (mySeatObj) {
+                            currentGameMode = '4p';
+                            mySeatIndex = mySeatObj.seat;
+                            roomSeats = packet.roomSeats;
+                            if (packet.roundEvents) roundEvents = packet.roundEvents;
+                            if (packet.matchEpoch) matchEpoch = packet.matchEpoch;
+
+                            if (handshakeInterval) { clearInterval(handshakeInterval); handshakeInterval = null; }
+                            if (joinTimeout) { clearTimeout(joinTimeout); joinTimeout = null; }
+
+                            if (!isMatched) {
+                                guestLobbySeatsPanel.classList.add('active');
+                                renderLobbySeatsUI(guestSeatsGrid, roomSeats);
+                                const filledCount = roomSeats.filter(Boolean).length;
+                                setConnStatus('connected', `Koltuk #${mySeatIndex + 1} (${filledCount}/4 Hazır)`);
+                            } else {
+                                renderPggPlayerCards();
+                            }
+
+                            if (packet.matchStarted && !isMatched) {
+                                isMatched = true;
+                                startPggArena();
+                            }
                         }
                     }
                     break;
 
+                case 'JOIN_ACK':
+                    if (!isHost && (!packet.targetId || packet.targetId === myClientId)) {
+                        currentGameMode = packet.gameMode || '1v1';
+                        oppClientId = packet.senderId;
+                        oppName = packet.name || 'Ev Sahibi';
+                        if (packet.matchEpoch) matchEpoch = packet.matchEpoch;
+                        if (handshakeInterval) { clearInterval(handshakeInterval); handshakeInterval = null; }
+                        if (joinTimeout) { clearTimeout(joinTimeout); joinTimeout = null; }
+                        if (!isMatched) {
+                            isMatched = true;
+                            start1v1Arena();
+                        }
+                    }
+                    break;
+
+                case 'PGG_STATE_SYNC':
+                    if (currentGameMode !== '4p' && !isHost && Array.isArray(packet.roomSeats)) {
+                        const mySeatObj = packet.roomSeats.find(s => s && s.clientId === myClientId);
+                        if (mySeatObj) {
+                            currentGameMode = '4p';
+                            mySeatIndex = mySeatObj.seat;
+                        }
+                    }
+                    if (currentGameMode !== '4p') return;
+
+                    if (!isHost && Array.isArray(packet.roomSeats)) {
+                        roomSeats = packet.roomSeats;
+                        const mySeatObj = roomSeats.find(s => s && s.clientId === myClientId);
+                        if (mySeatObj) {
+                            mySeatIndex = mySeatObj.seat;
+                            if (!isMatched) {
+                                if (handshakeInterval) { clearInterval(handshakeInterval); handshakeInterval = null; }
+                                if (joinTimeout) { clearTimeout(joinTimeout); joinTimeout = null; }
+                                isMatched = true;
+                                startPggArena();
+                            }
+                        }
+                    }
+                    if (packet.roundEvents) roundEvents = packet.roundEvents;
+
+                    if (packet.matchEpoch && packet.matchEpoch > matchEpoch) {
+                        matchEpoch = packet.matchEpoch;
+                        showToast('Yeni 4 kişilik maç başlatıldı!', 'fa-redo');
+                        resetPggMatchState(false);
+                        return;
+                    }
+                    if (packet.matchEpoch && packet.matchEpoch < matchEpoch) return;
+
+                    let pggUpdated = false;
+                    // Merge sender's seat moves
+                    if (typeof packet.seatIndex === 'number' && packet.mySeatMoves) {
+                        for (const [rKey, val] of Object.entries(packet.mySeatMoves)) {
+                            const rNum = Number(rKey);
+                            const numVal = Number(val);
+                            if (!isNaN(numVal) && numVal >= 0 && numVal <= 20) {
+                                if (!pggMoves[rNum]) pggMoves[rNum] = {};
+                                if (pggMoves[rNum][packet.seatIndex] !== numVal) {
+                                    pggMoves[rNum][packet.seatIndex] = numVal;
+                                    pggUpdated = true;
+                                }
+                            }
+                        }
+                    }
+                    // Merge Host's authoritative allMoves (including Bot moves)
+                    if (packet.allMoves && typeof packet.allMoves === 'object') {
+                        for (const [rKey, seatMap] of Object.entries(packet.allMoves)) {
+                            const rNum = Number(rKey);
+                            if (seatMap && typeof seatMap === 'object') {
+                                if (!pggMoves[rNum]) pggMoves[rNum] = {};
+                                for (const [sIdx, val] of Object.entries(seatMap)) {
+                                    const numVal = Number(val);
+                                    if (!isNaN(numVal) && pggMoves[rNum][sIdx] !== numVal) {
+                                        pggMoves[rNum][sIdx] = numVal;
+                                        pggUpdated = true;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    if (pggUpdated) {
+                        syncPggProgress();
+                    }
+                    break;
+
+                case 'EMOTE':
+                    if (currentGameMode === '4p' && typeof packet.seatIndex === 'number' && packet.text) {
+                        showPlayerSpeechBubble(packet.seatIndex, packet.text);
+                    }
+                    break;
+
                 case 'STATE_SYNC':
+                    if (currentGameMode !== '1v1') return;
                     if (oppClientId && packet.senderId !== oppClientId) return;
                     if (!oppClientId) oppClientId = packet.senderId;
 
@@ -1739,20 +1722,14 @@
                         oppName = packet.name;
                         oppNameDisplay.textContent = oppName;
                     }
-
-                    // If opponent triggered a new rematch epoch
                     if (packet.matchEpoch && packet.matchEpoch > matchEpoch) {
                         matchEpoch = packet.matchEpoch;
                         showToast(`${oppName} yeni maç başlattı!`, 'fa-redo');
-                        resetMatchState(false);
+                        reset1v1MatchState(false);
                         return;
                     }
+                    if (packet.matchEpoch && packet.matchEpoch < matchEpoch) return;
 
-                    if (packet.matchEpoch && packet.matchEpoch < matchEpoch) {
-                        return; // Ignore stale epoch packets
-                    }
-
-                    // Merge opponent's moves per round
                     if (packet.moves && typeof packet.moves === 'object') {
                         let updated = false;
                         for (const [rKey, mv] of Object.entries(packet.moves)) {
@@ -1762,23 +1739,22 @@
                                 updated = true;
                             }
                         }
-                        if (updated) {
-                            syncGameProgress();
-                        }
+                        if (updated) sync1v1Progress();
                     }
                     break;
 
                 case 'REMATCH':
-                    if (oppClientId && packet.senderId !== oppClientId) return;
                     if (packet.matchEpoch && packet.matchEpoch > matchEpoch) {
                         matchEpoch = packet.matchEpoch;
-                        showToast(`${oppName} yeni maç başlattı!`, 'fa-redo');
-                        resetMatchState(false);
+                        if (packet.roundEvents) roundEvents = packet.roundEvents;
+                        showToast('Yeni maç başlatıldı!', 'fa-redo');
+                        if (currentGameMode === '4p') resetPggMatchState(false);
+                        else reset1v1MatchState(false);
                     }
                     break;
 
                 case 'BYE':
-                    if (oppClientId && packet.senderId === oppClientId && isMatched) {
+                    if (currentGameMode === '1v1' && oppClientId && packet.senderId === oppClientId && isMatched) {
                         handleDisconnect();
                     }
                     break;
@@ -1794,14 +1770,12 @@
                 }
             };
 
-            // 1. BroadcastChannel for instant local multi-tab testing
             try {
                 if (bcChannel) bcChannel.close();
-                bcChannel = new BroadcastChannel('sdu_pd_v3_' + roomCode);
+                bcChannel = new BroadcastChannel('sdu_gt_v4_' + roomCode);
                 bcChannel.onmessage = (ev) => handleIncomingPacket(ev.data);
             } catch (e) {}
 
-            // 2. Dual Public WSS MQTT Brokers (EMQX + HiveMQ)
             try {
                 for (const c of mqttClients) {
                     try { c.end(true); } catch (e) {}
@@ -1813,74 +1787,82 @@
                         'wss://broker.emqx.io:8084/mqtt',
                         'wss://broker.hivemq.com:8884/mqtt'
                     ];
-
                     brokers.forEach((brokerUrl, idx) => {
                         try {
                             const client = mqtt.connect(brokerUrl, {
-                                clientId: `sdu_${idx}_${myClientId}`,
+                                clientId: `sdu4_${idx}_${myClientId}`,
                                 clean: true,
                                 connectTimeout: 4000,
                                 reconnectPeriod: 2000
                             });
-
                             client.on('connect', () => {
-                                client.subscribe(MQTT_TOPIC_PREFIX + roomCode, { qos: 0 }, () => {
-                                    triggerReady();
-                                });
+                                client.subscribe(MQTT_TOPIC_PREFIX + roomCode, { qos: 0 }, () => triggerReady());
                             });
-
                             client.on('message', (topic, message) => {
-                                try {
-                                    handleIncomingPacket(JSON.parse(message.toString()));
-                                } catch (e) {}
+                                try { handleIncomingPacket(JSON.parse(message.toString())); } catch (e) {}
                             });
-
                             mqttClients.push(client);
                         } catch (e) {}
                     });
                 }
             } catch (e) {}
 
-            setTimeout(triggerReady, 450);
+            setTimeout(triggerReady, 400);
         }
 
         function bindPeerConnection(conn) {
-            activeConn = conn;
-
+            if (isHost) {
+                hostConnections.push(conn);
+            } else {
+                activeConn = conn;
+            }
             const onOpen = () => {
                 if (!isHost && !isMatched) {
                     sendPacket({ type: 'JOIN_REQ', name: myName });
+                } else if (isHost && currentGameMode === '4p') {
+                    broadcastRoomState4P();
                 } else if (isMatched) {
                     broadcastLockstepState();
                 }
             };
-
-            if (conn.open) {
-                onOpen();
-            } else {
-                conn.on('open', onOpen);
-            }
-
+            if (conn.open) onOpen();
+            else conn.on('open', onOpen);
             conn.on('data', (data) => handleIncomingPacket(data));
         }
 
-        // ================= HOST LOGIC =================
+        // ================= HOST ROOM CREATION =================
         createRoomBtn.addEventListener('click', () => {
             createRoomBtn.disabled = true;
-            createRoomBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Oda Açılıyor...';
+            createRoomBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Masa Açılıyor...';
 
             isHost = true;
             isMatched = false;
-            myName = getMyNickname('Ev Sahibi');
+            myName = getMyNickname('Oyuncu 1');
             currentRoomCode = generateShortCode();
             const fullPeerId = PEER_PREFIX + currentRoomCode;
+
+            if (currentGameMode === '4p') {
+                mySeatIndex = 0;
+                roomSeats = [
+                    { seat: 0, clientId: myClientId, name: myName, isBot: false },
+                    null, null, null
+                ];
+                roundEvents = generateRoundEventsSchedule();
+                renderLobbySeatsUI(lobbySeatsGrid, roomSeats);
+            }
 
             const onRoomCreated = () => {
                 createRoomBtn.style.display = 'none';
                 hostRoomPanel.classList.add('active');
                 displayRoomCode.textContent = currentRoomCode;
-                setConnStatus('', 'Rakip Bekleniyor (' + currentRoomCode + ')');
-                showToast('Oda oluşturuldu! Kodu veya linki arkadaşına gönder.', 'fa-satellite-dish');
+                setConnStatus('', `Oda Açık (${currentRoomCode})`);
+                showToast('Masa oluşturuldu! Arkadaşlarını davet et veya botlarla başlat.', 'fa-satellite-dish');
+
+                if (currentGameMode === '4p') {
+                    if (lobbyBroadcastInterval) clearInterval(lobbyBroadcastInterval);
+                    lobbyBroadcastInterval = setInterval(broadcastRoomState4P, 500);
+                    broadcastRoomState4P();
+                }
             };
 
             initTransports(currentRoomCode, onRoomCreated);
@@ -1893,6 +1875,39 @@
             } catch (e) {}
         });
 
+        // Fill empty seats with Strategic AI Bots and start 4-player Public Goods Game immediately
+        fillBotsAndStartBtn.addEventListener('click', () => {
+            if (!isHost || currentGameMode !== '4p') return;
+            let botIdx = 0;
+            for (let i = 0; i < 4; i++) {
+                if (!roomSeats[i]) {
+                    const bp = BOT_PERSONAS[botIdx % BOT_PERSONAS.length];
+                    botIdx++;
+                    roomSeats[i] = {
+                        seat: i,
+                        clientId: `bot_seat_${i}`,
+                        name: bp.name,
+                        isBot: true,
+                        persona: bp.persona
+                    };
+                }
+            }
+            renderLobbySeatsUI(lobbySeatsGrid, roomSeats);
+            isMatched = true;
+            broadcastRoomState4P();
+            startPggArena();
+        });
+
+        // 1v1 Quick Bot Match
+        start1v1BotBtn.addEventListener('click', () => {
+            if (!isHost || currentGameMode !== '1v1') return;
+            is1v1BotMatch = true;
+            oppClientId = 'bot_1v1_nash';
+            oppName = 'Prof. Nash (Bot)';
+            isMatched = true;
+            start1v1Arena();
+        });
+
         copyCodeBtn.addEventListener('click', () => {
             if (currentRoomCode) copyText(currentRoomCode, `Oda kodu (${currentRoomCode}) kopyalandı!`);
         });
@@ -1901,16 +1916,15 @@
             if (currentRoomCode) copyText(getInviteUrl(currentRoomCode), 'Davet bağlantısı panoya kopyalandı!');
         });
 
-        // ================= GUEST LOGIC =================
+        // ================= GUEST ROOM JOINING =================
         function joinRoomByCode(rawCode) {
             const cleanCode = (rawCode || '').trim().toUpperCase();
             if (!cleanCode) {
                 showToast('Lütfen 5 haneli bir oda kodu girin.', 'fa-exclamation-triangle');
                 return;
             }
-
             if (isHost && currentRoomCode === cleanCode) {
-                showToast('Bu sekmede zaten odayı kurdun! Karşılaşmak için davet linkini yeni bir sekmede veya arkadaşının cihazında aç.', 'fa-info-circle');
+                showToast('Bu sekmede zaten odayı kurdun! Yeni sekmede açarak katılabilirsin.', 'fa-info-circle');
                 return;
             }
 
@@ -1920,7 +1934,7 @@
 
             isHost = false;
             isMatched = false;
-            myName = getMyNickname('Misafir Oyuncu');
+            myName = getMyNickname('Oyuncu ' + Math.floor(10 + Math.random() * 89));
             currentRoomCode = cleanCode;
 
             const startHandshakeLoop = () => {
@@ -1933,7 +1947,7 @@
                     sendPacket({ type: 'JOIN_REQ', name: myName });
                 };
                 sendJoin();
-                handshakeInterval = setInterval(sendJoin, 450);
+                handshakeInterval = setInterval(sendJoin, 400);
             };
 
             initTransports(cleanCode, startHandshakeLoop);
@@ -1950,10 +1964,10 @@
 
             if (joinTimeout) clearTimeout(joinTimeout);
             joinTimeout = setTimeout(() => {
-                if (!isMatched) {
+                if (!isMatched && !guestLobbySeatsPanel.classList.contains('active')) {
                     if (handshakeInterval) clearInterval(handshakeInterval);
                     setConnStatus('error', 'Oda Bulunamadı');
-                    showToast('Bu kodla açık bir oda bulunamadı. Ev sahibinin odayı açık tuttuğundan emin olun.', 'fa-exclamation-triangle');
+                    showToast('Bu kodla açık bir masa bulunamadı.', 'fa-exclamation-triangle');
                     joinRoomBtn.disabled = false;
                     joinRoomBtn.innerHTML = '<i class="fas fa-bolt"></i> Odaya Bağlan ve Başla';
                 }
@@ -1977,31 +1991,576 @@
             disconnectModal.classList.add('open');
         }
 
-        // ================= ARENA & LOCKSTEP ROUND ENGINE =================
-        function startArena() {
-            setConnStatus('connected', 'Eşleşti • Oda: ' + currentRoomCode);
+        // =========================================================================
+        // 4-PLAYER PUBLIC GOODS GAME (KAMU MALLARI OYUNU) ENGINE
+        // =========================================================================
+        function startPggArena() {
+            if (lobbyBroadcastInterval) { clearInterval(lobbyBroadcastInterval); lobbyBroadcastInterval = null; }
+            setConnStatus('connected', `4 Kişilik Masa • Oda: ${currentRoomCode}`);
             lobbyScreen.style.display = 'none';
             gameScreen.classList.add('active');
-            myNameDisplay.textContent = myName;
-            oppNameDisplay.textContent = oppName;
+            pggArenaView.style.display = 'flex';
+            pd1v1ArenaView.style.display = 'none';
+            sidebar4P.style.display = 'flex';
+            sidebar1v1.style.display = 'none';
 
-            resetMatchState(false);
+            topbarTitle.innerHTML = `Kamu Malları Oyunu <span style="color:#34d399;">4 Kişilik Havuz</span>`;
 
-            // Continuous 400ms lockstep state heartbeat guarantees zero dropped moves
+            resetPggMatchState(false);
+
             if (stateSyncInterval) clearInterval(stateSyncInterval);
             stateSyncInterval = setInterval(broadcastLockstepState, 400);
             broadcastLockstepState();
 
-            showToast('Rakip bağlandı! Düello başlıyor.', 'fa-handshake');
+            showToast('4 kişilik Kamu Malları masası başladı!', 'fa-coins');
         }
 
-        function resetMatchState(incrementEpoch = false) {
-            if (incrementEpoch) matchEpoch++;
+        function resetPggMatchState(incrementEpoch = false) {
+            if (incrementEpoch) {
+                matchEpoch++;
+                if (isHost) roundEvents = generateRoundEventsSchedule();
+            }
             if (roundTransitionTimer) {
                 clearTimeout(roundTransitionTimer);
                 roundTransitionTimer = null;
             }
 
+            currentRound = 1;
+            pggScores = [0, 0, 0, 0];
+            pggMoves = {};
+            resolvedRounds = {};
+            pggHistory = [];
+            matchLogged = false;
+
+            gameOverModal.classList.remove('open');
+            pggRoundBanner.classList.remove('show');
+            pggLastPoolEl.textContent = '-';
+            pggLastShareEl.textContent = '-';
+
+            setSliderVal(10);
+            renderPggPlayerCards();
+            refreshPggRoundUI();
+            renderPggHistoryTable();
+        }
+
+        function setSliderVal(val) {
+            const num = Math.max(0, Math.min(20, Number(val) || 0));
+            pggSlider.value = num;
+            pggPocketPreview.textContent = `${ROUND_ENDOWMENT - num} 🪙`;
+            pggContribPreview.textContent = `${num} 🪙`;
+            btnLockPggMove.innerHTML = `<i class="fas fa-lock"></i> Yatırımı Kilitle: Havuza ${num} Altın Gönder`;
+
+            pggPresetsRow.querySelectorAll('.preset-pill-btn').forEach(btn => {
+                btn.classList.toggle('active', Number(btn.dataset.val) === num);
+            });
+        }
+
+        pggSlider.addEventListener('input', (e) => setSliderVal(e.target.value));
+        pggPresetsRow.querySelectorAll('.preset-pill-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                if (!pggSlider.disabled) setSliderVal(btn.dataset.val);
+            });
+        });
+
+        function renderPggPlayerCards() {
+            const avatars = ['👑', '🛡️', '⚡', '🦊'];
+            const alreadyBuilt = !!document.getElementById('pggCard_0');
+            if (!alreadyBuilt) {
+                pggPlayersGrid.innerHTML = '';
+            }
+            for (let i = 0; i < 4; i++) {
+                const seatObj = roomSeats[i] || { seat: i, name: `Oyuncu ${i + 1}`, isBot: false };
+                const isMe = (i === mySeatIndex);
+                const rMoves = pggMoves[currentRound] || {};
+                const hasMoved = rMoves[i] !== undefined;
+                const isResolved = !!resolvedRounds[currentRound];
+
+                let statusClass = 'pgg-status-pill';
+                let statusText = '⏳ Düşünüyor...';
+                if (isResolved && hasMoved) {
+                    statusClass = 'pgg-status-pill revealed';
+                    statusText = `Havuza: ${rMoves[i]} 🪙`;
+                } else if (hasMoved) {
+                    statusClass = 'pgg-status-pill ready';
+                    statusText = '🔒 Karar Kilitlendi (? 🪙)';
+                }
+
+                if (alreadyBuilt) {
+                    const card = document.getElementById(`pggCard_${i}`);
+                    if (card) {
+                        card.className = `pgg-player-card ${isMe ? 'is-me' : ''} ${hasMoved ? 'locked-in' : ''}`;
+                        const nameEl = card.querySelector('.pgg-player-name');
+                        if (nameEl) nameEl.textContent = seatObj.name;
+                        const tagEl = card.querySelector('.pgg-seat-tag');
+                        if (tagEl) tagEl.textContent = isMe ? 'SEN • KOLTUK #' + (i + 1) : (seatObj.isBot ? 'STRATEJİK BOT' : 'KOLTUK #' + (i + 1));
+                        const avEl = card.querySelector('.pgg-avatar');
+                        if (avEl) avEl.textContent = seatObj.isBot ? '🤖' : avatars[i];
+                    }
+                    const scEl = document.getElementById(`pggScoreVal_${i}`);
+                    if (scEl) scEl.textContent = `${fmtNum(pggScores[i])} 🪙`;
+                    const stEl = document.getElementById(`pggSeatStatus_${i}`);
+                    if (stEl) {
+                        stEl.className = statusClass;
+                        stEl.textContent = statusText;
+                    }
+                } else {
+                    const card = document.createElement('div');
+                    card.className = `pgg-player-card ${isMe ? 'is-me' : ''} ${hasMoved ? 'locked-in' : ''}`;
+                    card.id = `pggCard_${i}`;
+                    card.innerHTML = `
+                        <div class="pgg-speech-bubble" id="pggBubble_${i}"></div>
+                        <div class="pgg-card-top">
+                            <div class="pgg-avatar">${seatObj.isBot ? '🤖' : avatars[i]}</div>
+                            <div class="pgg-name-wrap">
+                                <span class="pgg-seat-tag">${isMe ? 'SEN • KOLTUK #' + (i + 1) : (seatObj.isBot ? 'STRATEJİK BOT' : 'KOLTUK #' + (i + 1))}</span>
+                                <span class="pgg-player-name">${seatObj.name}</span>
+                            </div>
+                        </div>
+                        <div class="pgg-score-row">
+                            <span style="font-size:0.72rem; color:var(--text-muted); font-weight:700;">Toplam Servet:</span>
+                            <span class="pgg-score-val" id="pggScoreVal_${i}">${fmtNum(pggScores[i])} 🪙</span>
+                        </div>
+                        <div class="${statusClass}" id="pggSeatStatus_${i}">${statusText}</div>
+                    `;
+                    pggPlayersGrid.appendChild(card);
+                }
+            }
+        }
+
+        function showPlayerSpeechBubble(seatIdx, text) {
+            const bubble = document.getElementById(`pggBubble_${seatIdx}`);
+            if (!bubble) return;
+            bubble.textContent = text;
+            bubble.classList.add('show');
+            setTimeout(() => bubble.classList.remove('show'), 3200);
+        }
+
+        document.querySelectorAll('.emote-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                if (!isMatched || currentGameMode !== '4p') return;
+                const text = btn.dataset.emote;
+                showPlayerSpeechBubble(mySeatIndex, text);
+                sendPacket({ type: 'EMOTE', seatIndex: mySeatIndex, text });
+            });
+        });
+
+        function getRoundEventObj(r) {
+            const evKey = (roundEvents && roundEvents[r]) ? roundEvents[r] : 'STANDARD';
+            return PGG_EVENT_CATALOG[evKey] || PGG_EVENT_CATALOG.STANDARD;
+        }
+
+        function refreshPggRoundUI() {
+            const r = Math.min(currentRound, MAX_ROUNDS);
+            pggCurrentRoundEl.textContent = r;
+
+            const ev = getRoundEventObj(r);
+            pggEventBanner.className = `pgg-event-banner ${ev.cls}`;
+            pggEventTitle.textContent = `${r}. Tur Olayı: ${ev.title}`;
+            pggEventDesc.textContent = ev.desc;
+            pggMultiplierBadge.textContent = ev.badge;
+
+            const rMoves = pggMoves[currentRound] || {};
+            const myMv = rMoves[mySeatIndex];
+            const isResolved = !!resolvedRounds[currentRound];
+
+            let readyCount = 0;
+            for (let i = 0; i < 4; i++) {
+                if (rMoves[i] !== undefined) readyCount++;
+            }
+            pggReadyCountEl.textContent = `${readyCount} / 4`;
+
+            const lockDisabled = (myMv !== undefined || isResolved || currentRound > MAX_ROUNDS);
+            pggSlider.disabled = lockDisabled;
+            btnLockPggMove.disabled = lockDisabled;
+            pggPresetsRow.querySelectorAll('.preset-pill-btn').forEach(b => b.disabled = lockDisabled);
+
+            if (myMv !== undefined) {
+                pggMyDecisionBadge.className = 'status-badge ready';
+                pggMyDecisionBadge.textContent = `Yatırım Kilitlendi (${myMv} 🪙) ✓`;
+            } else {
+                pggMyDecisionBadge.className = 'status-badge waiting';
+                pggMyDecisionBadge.textContent = 'Yatırım Seçimi Bekleniyor';
+            }
+
+            if (!isResolved) {
+                if (myMv !== undefined && readyCount < 4) {
+                    pggBlindPrompt.textContent = `⏳ Senin yatırımın (${myMv} 🪙) kilitlendi! Diğer oyuncuların kararı bekleniyor (${readyCount}/4)...`;
+                    pggBlindPrompt.style.color = '#fcd34d';
+                } else {
+                    pggBlindPrompt.textContent = `${r}. Tur: Kaydırıcı ile 0-20 arası yatırımını seç ve kilitle. 4 oyuncu da karar verene kadar seçimler gizlidir.`;
+                    pggBlindPrompt.style.color = 'var(--text-muted)';
+                }
+            }
+
+            renderPggPlayerCards();
+        }
+
+        function computeBotContributionForSeat(seatIdx, r) {
+            const seatObj = roomSeats[seatIdx];
+            const ev = getRoundEventObj(r);
+            const persona = seatObj?.persona || 'tit_for_tat';
+
+            if (persona === 'free_rider') {
+                // Bencil Baron avoids tax audit penalty when TAX_AUDIT is active!
+                if (ev.id === 'TAX_AUDIT') return 6;
+                if (ev.id === 'CRISIS_THRESHOLD') return 8;
+                return (r % 3 === 0) ? 4 : 0;
+            }
+            if (persona === 'altruist') {
+                // Robin Hood contributes high, especially on bonus rounds
+                if (ev.id === 'GOLDEN_AGE' || ev.id === 'ROBIN_HOOD' || ev.id === 'LOYALTY_BONUS') return 20;
+                return 16;
+            }
+            // Prof. Nash (Adaptive / Tit-for-Tat)
+            if (r === 1) return 14;
+            const prevMoves = pggMoves[r - 1];
+            if (prevMoves) {
+                const sum = (prevMoves[0] || 0) + (prevMoves[1] || 0) + (prevMoves[2] || 0) + (prevMoves[3] || 0);
+                const avg = Math.round(sum / 4);
+                if (ev.id === 'TAX_AUDIT' && avg < 6) return 7;
+                return Math.max(0, Math.min(20, avg));
+            }
+            return 12;
+        }
+
+        function lockMyPggContribution() {
+            if (!isMatched || currentGameMode !== '4p' || currentRound > MAX_ROUNDS) return;
+            if (!pggMoves[currentRound]) pggMoves[currentRound] = {};
+            if (pggMoves[currentRound][mySeatIndex] !== undefined || resolvedRounds[currentRound]) return;
+
+            const chosenAmount = Math.max(0, Math.min(20, Number(pggSlider.value) || 0));
+            pggMoves[currentRound][mySeatIndex] = chosenAmount;
+
+            // If Host and there are AI Bots, compute Bot moves for this round
+            if (isHost) {
+                ensureHostBotMovesForRound(currentRound);
+            }
+
+            broadcastLockstepState();
+            syncPggProgress();
+        }
+
+        function ensureHostBotMovesForRound(r) {
+            if (!isHost || currentGameMode !== '4p' || r > MAX_ROUNDS) return;
+            if (!pggMoves[r]) pggMoves[r] = {};
+            for (let i = 0; i < 4; i++) {
+                if (roomSeats[i] && roomSeats[i].isBot && pggMoves[r][i] === undefined) {
+                    pggMoves[r][i] = computeBotContributionForSeat(i, r);
+                }
+            }
+        }
+
+        btnLockPggMove.addEventListener('click', lockMyPggContribution);
+
+        function syncPggProgress() {
+            if (isHost) {
+                // Whenever any human submits a move for currentRound, make sure bots also lock in
+                const rMoves = pggMoves[currentRound] || {};
+                const anyHumanMoved = Object.keys(rMoves).length > 0;
+                if (anyHumanMoved) {
+                    ensureHostBotMovesForRound(currentRound);
+                }
+            }
+
+            refreshPggRoundUI();
+
+            const r = currentRound;
+            const rMoves = pggMoves[r] || {};
+            const allFourReady = (
+                rMoves[0] !== undefined &&
+                rMoves[1] !== undefined &&
+                rMoves[2] !== undefined &&
+                rMoves[3] !== undefined
+            );
+
+            if (r <= MAX_ROUNDS && allFourReady && !resolvedRounds[r]) {
+                resolvePggRoundNumber(r);
+            }
+        }
+
+        function resolvePggRoundNumber(r) {
+            resolvedRounds[r] = true;
+            const rMoves = pggMoves[r];
+            const ev = getRoundEventObj(r);
+
+            const c = [
+                Number(rMoves[0]) || 0,
+                Number(rMoves[1]) || 0,
+                Number(rMoves[2]) || 0,
+                Number(rMoves[3]) || 0
+            ];
+            const totalPool = c[0] + c[1] + c[2] + c[3];
+
+            let effectiveMultiplier = ev.multiplier || BASE_MULTIPLIER;
+            let eventNotes = [];
+
+            if (ev.id === 'CRISIS_THRESHOLD') {
+                if (totalPool >= 40) {
+                    effectiveMultiplier = 2.0;
+                    eventNotes.push('Baraj Aşıldı (2.0x)!');
+                } else {
+                    effectiveMultiplier = 0.8;
+                    eventNotes.push('Kriz Çıktı (0.8x)!');
+                }
+            }
+
+            const multipliedPool = totalPool * effectiveMultiplier;
+            const equalShare = multipliedPool / 4;
+
+            const roundGains = [0, 0, 0, 0];
+            const maxContrib = Math.max(...c);
+
+            for (let i = 0; i < 4; i++) {
+                let net = (ROUND_ENDOWMENT - c[i]) + equalShare;
+
+                if (ev.id === 'TAX_AUDIT' && c[i] < 5) {
+                    net -= 8;
+                    eventNotes.push(`${roomSeats[i]?.name || ('K' + (i + 1))} vergi cezası yedi (-8 🪙)`);
+                }
+                if (ev.id === 'ROBIN_HOOD' && maxContrib >= 12 && c[i] === maxContrib) {
+                    net += 6;
+                    eventNotes.push(`${roomSeats[i]?.name || ('K' + (i + 1))} Robin Hood ödülü aldı (+6 🪙)`);
+                }
+                if (ev.id === 'LOYALTY_BONUS' && c[i] >= 15) {
+                    net += 5;
+                }
+
+                roundGains[i] = Math.round(net * 10) / 10;
+                pggScores[i] = Math.round((pggScores[i] + roundGains[i]) * 10) / 10;
+            }
+
+            pggLastPoolEl.textContent = `${totalPool} 🪙 (×${effectiveMultiplier})`;
+            pggLastShareEl.textContent = `+${fmtNum(equalShare)} 🪙`;
+
+            pggHistory.unshift({
+                round: r,
+                eventTitle: ev.title,
+                contributions: [...c],
+                totalPool,
+                effectiveMultiplier,
+                equalShare,
+                roundGains: [...roundGains],
+                myGain: roundGains[mySeatIndex]
+            });
+
+            // Dynamic Notification Banner
+            const freeRiders = c.filter(x => x === 0).length;
+            let emoji = '🏛️';
+            let title = '';
+            let sub = '';
+
+            if (totalPool >= 65) {
+                emoji = '🌟';
+                title = `${r}. Tur: Muazzam Kamu Dayanışması!`;
+                sub = `Havuzda ${totalPool} 🪙 birikti! Herkese havuzdan +${fmtNum(equalShare)} 🪙 dağıtıldı.`;
+            } else if (freeRiders >= 1 && totalPool >= 30) {
+                emoji = '🦊';
+                title = `${r}. Tur: Masada Beleşçi Vurgunu Var!`;
+                sub = `Bazı oyuncular havuza 0 yatırıp ortak havuzdan (+${fmtNum(equalShare)} 🪙) geçindi!`;
+            } else if (totalPool <= 15) {
+                emoji = '💥';
+                title = `${r}. Tur: Ortak Malların Trajedisi!`;
+                sub = `Havuza neredeyse kimse güvenmedi (Toplam: ${totalPool} 🪙).`;
+            } else {
+                emoji = '⚖️';
+                title = `${r}. Tur Tamamlandı (Havuz: ${totalPool} 🪙)`;
+                sub = eventNotes.length > 0 ? eventNotes.join(' • ') : `Havuz ×${effectiveMultiplier} katlanıp kişi başı +${fmtNum(equalShare)} 🪙 verdi.`;
+            }
+
+            pggBannerEmoji.textContent = emoji;
+            pggBannerTitle.textContent = title;
+            pggBannerSub.textContent = sub;
+            pggBannerDelta.textContent = `Senin Kazancın: +${fmtNum(roundGains[mySeatIndex])} 🪙`;
+            pggRoundBanner.classList.remove('show');
+            void pggRoundBanner.offsetWidth;
+            pggRoundBanner.classList.add('show');
+
+            renderPggPlayerCards();
+            renderPggHistoryTable();
+            broadcastLockstepState();
+
+            if (r >= MAX_ROUNDS) {
+                roundTransitionTimer = setTimeout(() => finishPggMatch(), 750);
+            } else {
+                roundTransitionTimer = setTimeout(() => {
+                    currentRound = r + 1;
+                    syncPggProgress();
+                }, 900);
+            }
+        }
+
+        function renderPggHistoryTable() {
+            pggHistoryCountLabel.textContent = `${pggHistory.length} Tur Tamamlandı`;
+            if (pggHistory.length === 0) {
+                pggHistoryTableBody.innerHTML = `
+                    <tr>
+                        <td colspan="4" style="text-align:center; color: var(--text-muted); padding: 20px;">
+                            Henüz tamamlanan tur yok. İlk yatırımını seç ve kilitle!
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            pggHistoryTableBody.innerHTML = pggHistory.map(item => {
+                const pills = item.contributions.map((val, idx) => {
+                    const name = (roomSeats[idx]?.name || `K${idx + 1}`).split(' ')[0];
+                    const cls = val >= 10 ? 'coop' : (val === 0 ? 'defect' : '');
+                    return `<span class="move-pill ${cls}" style="margin:2px;">${name}: ${val}🪙</span>`;
+                }).join(' ');
+                return `
+                    <tr>
+                        <td><strong>#${item.round}</strong> <small style="color:var(--text-muted); display:block;">${item.eventTitle}</small></td>
+                        <td>${pills}</td>
+                        <td style="font-family:'JetBrains Mono', monospace;">${item.totalPool}🪙 × ${item.effectiveMultiplier} = <strong>+${fmtNum(item.equalShare)}🪙/kişi</strong></td>
+                        <td style="font-family:'JetBrains Mono', monospace; color:#34d399; font-weight:800;">+${fmtNum(item.myGain)} 🪙</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function getPlayerTitleBadge(avgContrib) {
+            if (avgContrib >= 15) return '🦸 Halk Kahramanı';
+            if (avgContrib >= 10) return '⚖️ Adil Vatandaş';
+            if (avgContrib >= 5) return '🦊 Kurnaz Pragmatist';
+            return '🎩 Sinsi Beleşçi';
+        }
+
+        async function finishPggMatch() {
+            final1v1ScoresBox.style.display = 'none';
+            finalPggLeaderboard.style.display = 'flex';
+
+            // Compute stats per player
+            const summaryPlayers = [];
+            let totalPoolContributed = 0;
+            let freeRideCount = 0;
+            let fullCoopCount = 0;
+
+            for (let i = 0; i < 4; i++) {
+                let sumC = 0;
+                for (let r = 1; r <= MAX_ROUNDS; r++) {
+                    const cVal = Number(pggMoves[r]?.[i]) || 0;
+                    sumC += cVal;
+                    totalPoolContributed += cVal;
+                    if (cVal === 0) freeRideCount++;
+                    if (cVal === 20) fullCoopCount++;
+                }
+                const avgC = sumC / MAX_ROUNDS;
+                summaryPlayers.push({
+                    seat: i,
+                    name: roomSeats[i]?.name || `Oyuncu ${i + 1}`,
+                    isBot: !!roomSeats[i]?.isBot,
+                    score: fmtNum(pggScores[i]),
+                    numericScore: pggScores[i],
+                    avgContrib: fmtNum(avgC),
+                    title: getPlayerTitleBadge(avgC)
+                });
+            }
+
+            summaryPlayers.sort((a, b) => b.numericScore - a.numericScore);
+            const winnerObj = summaryPlayers[0];
+
+            modalTrophyIcon.textContent = (winnerObj.seat === mySeatIndex) ? '🏆' : '🏛️';
+            modalWinnerTitle.textContent = `Şampiyon: ${winnerObj.name}!`;
+            modalWinnerDesc.textContent = `10 tur sonunda ortak havuzda toplam ${totalPoolContributed} Altın toplandı.`;
+
+            finalPggLeaderboard.innerHTML = summaryPlayers.map((p, idx) => {
+                const medal = idx === 0 ? '🥇' : (idx === 1 ? '🥈' : (idx === 2 ? '🥉' : '4.'));
+                return `
+                    <div class="pgg-lb-item ${idx === 0 ? 'rank-1' : ''}">
+                        <div>
+                            <strong>${medal} ${p.name} ${p.seat === mySeatIndex ? '(Sen)' : ''}</strong>
+                            <div style="font-size:0.74rem; color:var(--text-muted); margin-top:2px;">
+                                Ort. Havuz Katkısı: ${p.avgContrib} 🪙/tur
+                            </div>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <span class="pgg-lb-title-badge">${p.title}</span>
+                            <strong style="font-family:'JetBrains Mono', monospace; font-size:1.2rem; color:var(--gold-color);">${p.score} 🪙</strong>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            const avgContributionRate = Math.round((totalPoolContributed / (4 * MAX_ROUNDS * ROUND_ENDOWMENT)) * 100);
+            modalStatsLine.textContent = `Topluluk Dayanışma Oranı: %${avgContributionRate} • Tam Katkı (20🪙) Sayısı: ${fullCoopCount} • Beleşçilik (0🪙) Sayısı: ${freeRideCount}`;
+
+            gameOverModal.classList.add('open');
+
+            if (!matchLogged) {
+                matchLogged = true;
+                dbLogText.textContent = '4 kişilik maç sonucu veritabanına kaydediliyor...';
+                const matchId = `${currentRoomCode}_4p_e${matchEpoch}_s${summaryPlayers.map(p => p.score).join('-')}`;
+
+                if (fbSaveGameResult && (isHost || mySeatIndex === 0)) {
+                    const savedId = await fbSaveGameResult({
+                        matchId,
+                        gameMode: '4p',
+                        roomCode: currentRoomCode,
+                        players: summaryPlayers.map(p => ({ name: p.name, score: p.score, avgContrib: p.avgContrib, title: p.title })),
+                        winner: winnerObj.name,
+                        totalRounds: MAX_ROUNDS,
+                        totalPoolContributed,
+                        avgContributionRate,
+                        freeRideCount,
+                        fullCoopCount,
+                        createdAt: new Date().toISOString()
+                    });
+                    dbLogText.textContent = savedId
+                        ? 'Maç sonucu veritabanına kaydedildi ✓'
+                        : 'Maç sonucu yerel veritabanına kaydedildi ✓';
+                } else {
+                    try {
+                        const localLogs = JSON.parse(localStorage.getItem('sdu_game_logs') || '[]');
+                        if (!localLogs.some(l => l.matchId === matchId)) {
+                            localLogs.unshift({
+                                matchId,
+                                gameMode: '4p',
+                                roomCode: currentRoomCode,
+                                players: summaryPlayers.map(p => ({ name: p.name, score: p.score, avgContrib: p.avgContrib, title: p.title })),
+                                winner: winnerObj.name,
+                                totalRounds: MAX_ROUNDS,
+                                totalPoolContributed,
+                                avgContributionRate,
+                                createdAt: new Date().toISOString()
+                            });
+                            localStorage.setItem('sdu_game_logs', JSON.stringify(localLogs.slice(0, 100)));
+                        }
+                    } catch (e) {}
+                    dbLogText.textContent = 'Maç sonucu senkronize edildi ve kaydedildi ✓';
+                }
+            }
+        }
+
+        // =========================================================================
+        // 1v1 PRISONER'S DILEMMA (TUTSAK İKİLEMİ) ENGINE
+        // =========================================================================
+        function start1v1Arena() {
+            setConnStatus('connected', '1v1 Eşleşti • Oda: ' + currentRoomCode);
+            lobbyScreen.style.display = 'none';
+            gameScreen.classList.add('active');
+            pggArenaView.style.display = 'none';
+            pd1v1ArenaView.style.display = 'flex';
+            sidebar4P.style.display = 'none';
+            sidebar1v1.style.display = 'flex';
+
+            myNameDisplay.textContent = myName;
+            oppNameDisplay.textContent = oppName;
+
+            reset1v1MatchState(false);
+
+            if (stateSyncInterval) clearInterval(stateSyncInterval);
+            stateSyncInterval = setInterval(broadcastLockstepState, 400);
+            broadcastLockstepState();
+
+            showToast('Rakip bağlandı! 1v1 Düello başlıyor.', 'fa-handshake');
+        }
+
+        function reset1v1MatchState(incrementEpoch = false) {
+            if (incrementEpoch) matchEpoch++;
+            if (roundTransitionTimer) {
+                clearTimeout(roundTransitionTimer);
+                roundTransitionTimer = null;
+            }
             currentRound = 1;
             myScore = 0;
             oppScore = 0;
@@ -2014,18 +2573,14 @@
             gameOverModal.classList.remove('open');
             roundResultBanner.classList.remove('show');
 
-            updateScoreboardUI();
-            refreshCurrentRoundUI();
-            renderHistoryTable();
-        }
-
-        function updateScoreboardUI() {
             myScoreEl.textContent = myScore;
             oppScoreEl.textContent = oppScore;
-            currentRoundEl.textContent = Math.min(currentRound, MAX_ROUNDS);
+            currentRoundEl.textContent = 1;
+            refresh1v1RoundUI();
+            render1v1HistoryTable();
         }
 
-        function refreshCurrentRoundUI() {
+        function refresh1v1RoundUI() {
             const myMv = myMoves[currentRound] || null;
             const oppMv = oppMoves[currentRound] || null;
             const isResolved = !!resolvedRounds[currentRound];
@@ -2035,283 +2590,187 @@
             btnCooperate.classList.toggle('selected', myMv === 'C');
             btnDefect.classList.toggle('selected', myMv === 'D');
 
-            if (myMv !== null) {
-                myStatusBadge.className = 'status-badge ready';
-                myStatusBadge.textContent = 'Seçim Kilitlendi ✓';
-            } else {
-                myStatusBadge.className = 'status-badge waiting';
-                myStatusBadge.textContent = 'Karar Bekleniyor';
-            }
+            myStatusBadge.className = myMv !== null ? 'status-badge ready' : 'status-badge waiting';
+            myStatusBadge.textContent = myMv !== null ? 'Seçim Kilitlendi ✓' : 'Karar Bekleniyor';
 
-            if (oppMv !== null) {
-                oppStatusBadge.className = 'status-badge ready';
-                oppStatusBadge.textContent = 'Seçimini Yaptı ✓';
-            } else {
-                oppStatusBadge.className = 'status-badge waiting';
-                oppStatusBadge.textContent = 'Karar Bekleniyor';
-            }
+            oppStatusBadge.className = oppMv !== null ? 'status-badge ready' : 'status-badge waiting';
+            oppStatusBadge.textContent = oppMv !== null ? 'Seçimini Yaptı ✓' : 'Karar Bekleniyor';
 
             if (!isResolved) {
                 if (myMv !== null && oppMv === null) {
                     blindStatusPrompt.textContent = '⏳ Rakibin hamlesi bekleniyor...';
-                    blindStatusPrompt.style.color = '#fcd34d';
                 } else if (myMv === null && oppMv !== null) {
                     blindStatusPrompt.textContent = '⚡ Rakip seçimini yaptı, senin kararın bekleniyor!';
-                    blindStatusPrompt.style.color = '#34d399';
                 } else {
                     blindStatusPrompt.textContent = `${currentRound}. Tur: Hamleni seç. İki taraf da karar verene kadar seçimler gizlidir.`;
-                    blindStatusPrompt.style.color = 'var(--text-muted)';
                 }
             }
         }
 
-        function makeMove(choice) {
-            if (!isMatched || currentRound > MAX_ROUNDS) return;
+        function make1v1Move(choice) {
+            if (!isMatched || currentGameMode !== '1v1' || currentRound > MAX_ROUNDS) return;
             if (myMoves[currentRound] || resolvedRounds[currentRound]) return;
 
-            myMoves[currentRound] = choice; // 'C' or 'D'
+            myMoves[currentRound] = choice;
+            if (is1v1BotMatch) {
+                // Tit-for-Tat Bot logic
+                oppMoves[currentRound] = (currentRound === 1) ? 'C' : (myMoves[currentRound - 1] || 'C');
+            }
             broadcastLockstepState();
-            syncGameProgress();
+            sync1v1Progress();
         }
 
-        btnCooperate.addEventListener('click', () => makeMove('C'));
-        btnDefect.addEventListener('click', () => makeMove('D'));
+        btnCooperate.addEventListener('click', () => make1v1Move('C'));
+        btnDefect.addEventListener('click', () => make1v1Move('D'));
 
-        function syncGameProgress() {
-            refreshCurrentRoundUI();
-
-            // Check if currentRound has both moves and is not yet resolved
+        function sync1v1Progress() {
+            refresh1v1RoundUI();
             const r = currentRound;
             if (r <= MAX_ROUNDS && myMoves[r] && oppMoves[r] && !resolvedRounds[r]) {
-                resolveRoundNumber(r);
+                resolve1v1RoundNumber(r);
             }
         }
 
-        function resolveRoundNumber(r) {
+        function resolve1v1RoundNumber(r) {
             resolvedRounds[r] = true;
             const myMv = myMoves[r];
             const oppMv = oppMoves[r];
 
-            let myPts = 0;
-            let oppPts = 0;
-            let emoji = '🤝';
-            let title = '';
-            let sub = '';
-
+            let myPts = 0, oppPts = 0, emoji = '🤝', title = '', sub = '';
             if (myMv === 'C' && oppMv === 'C') {
-                myPts = 3;
-                oppPts = 3;
-                emoji = '🤝';
-                title = 'Karşılıklı İş Birliği!';
-                sub = 'İkiniz de güvenmeyi seçtiniz ve kazandınız.';
+                myPts = 3; oppPts = 3; emoji = '🤝'; title = 'Karşılıklı İş Birliği!'; sub = 'İkiniz de güvenmeyi seçtiniz.';
             } else if (myMv === 'D' && oppMv === 'C') {
-                myPts = 5;
-                oppPts = 0;
-                emoji = '🗡️';
-                title = 'Ters Köşe! İhanet Kazandı';
-                sub = `${oppName} iş birliği yaparken sen ihanet ettin!`;
+                myPts = 5; oppPts = 0; emoji = '🗡️'; title = 'Ters Köşe! İhanet Kazandı'; sub = `${oppName} iş birliği yaparken sen ihanet ettin!`;
             } else if (myMv === 'C' && oppMv === 'D') {
-                myPts = 0;
-                oppPts = 5;
-                emoji = '🛡️';
-                title = 'Ters Köşe! Rakip İhanet Etti';
-                sub = `Sen iş birliği yaptın ama ${oppName} ihanet etti.`;
+                myPts = 0; oppPts = 5; emoji = '🛡️'; title = 'Ters Köşe! Rakip İhanet Etti'; sub = `Sen iş birliği yaptın ama ${oppName} ihanet etti.`;
             } else {
-                myPts = 1;
-                oppPts = 1;
-                emoji = '💥';
-                title = 'Karşılıklı İhanet!';
-                sub = 'İkiniz de birbirinize güvenmediniz (Nash Dengesi).';
+                myPts = 1; oppPts = 1; emoji = '💥'; title = 'Karşılıklı İhanet!'; sub = 'İkiniz de birbirinize güvenmediniz.';
             }
 
             myScore += myPts;
             oppScore += oppPts;
-
-            history.unshift({
-                round: r,
-                myMove: myMv,
-                oppMove: oppMv,
-                myPts,
-                oppPts
-            });
+            history.unshift({ round: r, myMove: myMv, oppMove: oppMv, myPts, oppPts });
 
             bannerEmoji.textContent = emoji;
             bannerTitle.textContent = `${r}. Tur Sonucu: ${title}`;
             bannerSub.textContent = sub;
             bannerDelta.textContent = `Sen +${myPts} | ${oppName} +${oppPts}`;
-            roundResultBanner.classList.remove('show');
-            void roundResultBanner.offsetWidth;
             roundResultBanner.classList.add('show');
 
-            updateScoreboardUI();
-            renderHistoryTable();
+            myScoreEl.textContent = myScore;
+            oppScoreEl.textContent = oppScore;
+            currentRoundEl.textContent = Math.min(r, MAX_ROUNDS);
+            render1v1HistoryTable();
             broadcastLockstepState();
 
             if (r >= MAX_ROUNDS) {
-                blindStatusPrompt.textContent = '🏁 10. Tur tamamlandı! Sonuçlar hesaplanıyor...';
-                roundTransitionTimer = setTimeout(() => {
-                    showGameOverModal();
-                }, 900);
+                roundTransitionTimer = setTimeout(() => finish1v1Match(), 700);
             } else {
-                blindStatusPrompt.textContent = `✨ ${r}. Tur çözüldü! Sonraki tura geçiliyor...`;
                 roundTransitionTimer = setTimeout(() => {
                     currentRound = r + 1;
-                    updateScoreboardUI();
-                    syncGameProgress();
-                }, 1100);
+                    currentRoundEl.textContent = currentRound;
+                    sync1v1Progress();
+                }, 900);
             }
         }
 
-        function renderHistoryTable() {
-            historyCountLabel.textContent = `${history.length} / ${MAX_ROUNDS} Tur Tamamlandı`;
-
+        function render1v1HistoryTable() {
+            historyCountLabel.textContent = `${history.length} Tur Tamamlandı`;
             if (history.length === 0) {
-                historyTableBody.innerHTML = `
-                    <tr>
-                        <td colspan="4" style="text-align:center; color: var(--text-muted); padding: 20px;">
-                            Henüz tamamlanan tur yok. İlk hamleni yap!
-                        </td>
-                    </tr>
-                `;
+                historyTableBody.innerHTML = `<tr><td colspan="4" style="text-align:center; color: var(--text-muted); padding: 20px;">Henüz tamamlanan tur yok.</td></tr>`;
                 return;
             }
-
-            historyTableBody.innerHTML = history.map(item => {
-                const myPill = item.myMove === 'C'
-                    ? `<span class="move-pill coop"><i class="fas fa-handshake"></i> İş Birliği</span>`
-                    : `<span class="move-pill defect">🗡️ İhanet</span>`;
-
-                const oppPill = item.oppMove === 'C'
-                    ? `<span class="move-pill coop"><i class="fas fa-handshake"></i> İş Birliği</span>`
-                    : `<span class="move-pill defect">🗡️ İhanet</span>`;
-
-                return `
-                    <tr>
-                        <td><strong>#${item.round}</strong></td>
-                        <td>${myPill}</td>
-                        <td>${oppPill}</td>
-                        <td style="font-family:'JetBrains Mono',monospace;">
-                            <span style="color:#818cf8;">+${item.myPts}</span> / <span style="color:#fb7185;">+${item.oppPts}</span>
-                        </td>
-                    </tr>
-                `;
-            }).join('');
+            historyTableBody.innerHTML = history.map(item => `
+                <tr>
+                    <td>#${item.round}</td>
+                    <td><span class="move-pill ${item.myMove === 'C' ? 'coop' : 'defect'}">${item.myMove === 'C' ? '🤝 İş Birliği' : '🗡️ İhanet'}</span></td>
+                    <td><span class="move-pill ${item.oppMove === 'C' ? 'coop' : 'defect'}">${item.oppMove === 'C' ? '🤝 İş Birliği' : '🗡️ İhanet'}</span></td>
+                    <td>Sen +${item.myPts} / Rakip +${item.oppPts}</td>
+                </tr>
+            `).join('');
         }
 
-        async function logCompletedMatch() {
-            if (matchLogged) return;
-            matchLogged = true;
+        async function finish1v1Match() {
+            finalPggLeaderboard.style.display = 'none';
+            final1v1ScoresBox.style.display = 'grid';
 
-            const hostNameVal = isHost ? myName : oppName;
-            const guestNameVal = isHost ? oppName : myName;
-            const hostScoreVal = isHost ? myScore : oppScore;
-            const guestScoreVal = isHost ? oppScore : myScore;
-
-            const myCoopCount = history.filter(h => h.myMove === 'C').length;
-            const oppCoopCount = history.filter(h => h.oppMove === 'C').length;
-            const hostCoopCount = isHost ? myCoopCount : oppCoopCount;
-            const guestCoopCount = isHost ? oppCoopCount : myCoopCount;
-
-            const mutualCoopCount = history.filter(h => h.myMove === 'C' && h.oppMove === 'C').length;
-            const mutualDefectCount = history.filter(h => h.myMove === 'D' && h.oppMove === 'D').length;
-            const betrayalCount = history.length - mutualCoopCount - mutualDefectCount;
-
-            let winnerVal = 'Berabere';
-            if (hostScoreVal > guestScoreVal) winnerVal = hostNameVal;
-            else if (guestScoreVal > hostScoreVal) winnerVal = guestNameVal;
-
-            const matchRecord = {
-                matchId: `${currentRoomCode}_ep${matchEpoch}`,
-                roomCode: currentRoomCode,
-                hostName: hostNameVal,
-                guestName: guestNameVal,
-                hostScore: hostScoreVal,
-                guestScore: guestScoreVal,
-                winner: winnerVal,
-                totalRounds: MAX_ROUNDS,
-                hostCoopCount,
-                guestCoopCount,
-                mutualCoopCount,
-                mutualDefectCount,
-                betrayalCount,
-                createdAt: new Date().toISOString()
-            };
-
-            // Save locally on both devices, and let Host (or fallback) push to Firestore
-            try {
-                const localLogs = JSON.parse(localStorage.getItem('sdu_game_logs') || '[]');
-                if (!localLogs.some(l => l.matchId === matchRecord.matchId)) {
-                    localLogs.unshift(matchRecord);
-                    localStorage.setItem('sdu_game_logs', JSON.stringify(localLogs.slice(0, 100)));
-                }
-            } catch (e) {}
-
-            if (fbSaveGameResult && isHost) {
-                try {
-                    const docId = await fbSaveGameResult(matchRecord);
-                    if (dbLogText) {
-                        dbLogText.textContent = docId
-                            ? 'Maç sonucu veritabanına kaydedildi ✓'
-                            : 'Maç sonucu kaydedildi ✓';
-                    }
-                } catch (e) {
-                    if (dbLogText) dbLogText.textContent = 'Maç sonucu kaydedildi ✓';
-                }
-            } else {
-                if (dbLogText) dbLogText.textContent = 'Maç sonucu veritabanına kaydedildi ✓';
-            }
-        }
-
-        function showGameOverModal() {
             finalMyName.textContent = myName;
             finalOppName.textContent = oppName;
             finalMyScore.textContent = myScore;
             finalOppScore.textContent = oppScore;
 
-            const myCoopCount = history.filter(h => h.myMove === 'C').length;
-            const oppCoopCount = history.filter(h => h.oppMove === 'C').length;
-
+            let winnerLabel = 'Berabere';
             if (myScore > oppScore) {
                 modalTrophyIcon.textContent = '🏆';
-                modalWinnerTitle.textContent = 'Tebrikler, Düelloyu Kazandın!';
-                modalWinnerDesc.textContent = `Stratejinle ${oppName} karşısında üstünlük kurdun.`;
+                modalWinnerTitle.textContent = 'Tebrikler, Kazandın!';
+                winnerLabel = myName;
             } else if (myScore < oppScore) {
                 modalTrophyIcon.textContent = '🎭';
                 modalWinnerTitle.textContent = `${oppName} Kazandı!`;
-                modalWinnerDesc.textContent = 'Rakibin bu kez oyun teorisi matrisini kendi lehine çevirdi.';
+                winnerLabel = oppName;
             } else {
                 modalTrophyIcon.textContent = '⚖️';
-                modalWinnerTitle.textContent = 'Kusursuz Beraberlik!';
-                modalWinnerDesc.textContent = '10 tur sonunda ikiniz de tam olarak aynı puanı topladınız.';
+                modalWinnerTitle.textContent = 'Dostluk Kazandı (Berabere)!';
             }
 
-            modalStatsLine.innerHTML = `İş Birliği Oranı — <strong>Sen:</strong> %${myCoopCount * 10} (${myCoopCount}/10) • <strong>${oppName}:</strong> %${oppCoopCount * 10} (${oppCoopCount}/10)`;
+            const myCoops = Object.values(myMoves).filter(m => m === 'C').length;
+            const oppCoops = Object.values(oppMoves).filter(m => m === 'C').length;
+            modalStatsLine.textContent = `İş Birliği Oranı: Sen %${myCoops * 10} • ${oppName} %${oppCoops * 10}`;
             gameOverModal.classList.add('open');
 
-            logCompletedMatch();
+            if (!matchLogged && fbSaveGameResult && isHost) {
+                matchLogged = true;
+                await fbSaveGameResult({
+                    matchId: `${currentRoomCode}_1v1_e${matchEpoch}_${myScore}_${oppScore}`,
+                    gameMode: '1v1',
+                    roomCode: currentRoomCode,
+                    hostName: myName,
+                    guestName: oppName,
+                    hostScore: myScore,
+                    guestScore: oppScore,
+                    winner: winnerLabel,
+                    totalRounds: MAX_ROUNDS,
+                    hostCoopCount: myCoops,
+                    guestCoopCount: oppCoops,
+                    createdAt: new Date().toISOString()
+                });
+                dbLogText.textContent = 'Maç sonucu kaydedildi ✓';
+            }
         }
 
+        // ================= REMATCH & LOBBY BUTTONS =================
         rematchBtn.addEventListener('click', () => {
-            resetMatchState(true);
-            sendPacket({ type: 'REMATCH', matchEpoch: matchEpoch });
-            broadcastLockstepState();
+            if (currentGameMode === '4p') {
+                resetPggMatchState(true);
+                sendPacket({ type: 'REMATCH', matchEpoch, roundEvents });
+                broadcastLockstepState();
+            } else {
+                reset1v1MatchState(true);
+                sendPacket({ type: 'REMATCH', matchEpoch });
+                broadcastLockstepState();
+            }
+            showToast('Yeni maç başlatıldı!', 'fa-redo');
         });
 
         backToLobbyBtn.addEventListener('click', () => {
+            sendPacket({ type: 'BYE' });
             window.location.href = window.location.pathname;
         });
 
-        // Auto-join if ?room=XXXXX is in URL
-        window.addEventListener('DOMContentLoaded', () => {
+        // ================= AUTO-JOIN FROM URL (?room=XXXXX) =================
+        (function checkUrlParamsOnLoad() {
             const params = new URLSearchParams(window.location.search);
-            const roomParam = params.get('room');
-            if (roomParam) {
-                const clean = roomParam.trim().toUpperCase();
-                joinRoomInput.value = clean;
-                showToast(`Davet algılandı (${clean}), odaya bağlanılıyor...`, 'fa-bolt');
-                setTimeout(() => joinRoomByCode(clean), 300);
+            const modeParam = params.get('mode');
+            if (modeParam === '1v1' || modeParam === '4p') {
+                selectGameMode(modeParam);
             }
-        });
+            const roomParam = params.get('room');
+            if (roomParam && roomParam.trim()) {
+                const code = roomParam.trim().toUpperCase();
+                joinRoomInput.value = code;
+                setTimeout(() => joinRoomByCode(code), 300);
+            }
+        })();
     </script>
 </body>
 </html>

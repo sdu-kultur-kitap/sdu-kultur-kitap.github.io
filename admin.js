@@ -1685,15 +1685,29 @@ import { getMembers, deleteMember as fbDeleteMember, registerAdmin, loginAdmin, 
                         const tr = document.createElement('tr');
                         const d = new Date(g.createdAt || Date.now());
                         const dateStr = `${d.toLocaleDateString('tr-TR')} ${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
-                        tr.innerHTML = `
-                            <td>${dateStr}</td>
-                            <td><code>${g.roomCode || '-'}</code></td>
-                            <td><strong>${g.hostName || 'Oyuncu 1'}</strong></td>
-                            <td><strong>${g.guestName || 'Oyuncu 2'}</strong></td>
-                            <td><span class="status-badge" style="background:#312e81;color:#fff">${g.hostScore ?? 0} - ${g.guestScore ?? 0}</span></td>
-                            <td><span class="status-badge" style="background:var(--primary-color);color:#fff">${g.winner || 'Berabere'}</span></td>
-                            <td>%${(g.hostCoopCount || 0) * 10} / %${(g.guestCoopCount || 0) * 10}</td>
-                        `;
+                        if (g.gameMode === '4p' && Array.isArray(g.players)) {
+                            const pNames = g.players.map(p => p.name).join(', ');
+                            const pScores = g.players.map(p => `${p.name}: ${p.score}`).join(' | ');
+                            const avgRate = g.avgContributionRate !== undefined ? `%${g.avgContributionRate}` : '-';
+                            tr.innerHTML = `
+                                <td>${dateStr}</td>
+                                <td><code>${g.roomCode || '-'}</code> <span class="status-badge" style="background:#059669;color:#fff;font-size:0.7rem;">4P Havuz</span></td>
+                                <td colspan="2"><strong>${pNames}</strong></td>
+                                <td><span class="status-badge" style="background:#312e81;color:#fff">${pScores}</span></td>
+                                <td><span class="status-badge" style="background:var(--primary-color);color:#fff">${g.winner || '-'}</span></td>
+                                <td>Ort. Katkı: ${avgRate}</td>
+                            `;
+                        } else {
+                            tr.innerHTML = `
+                                <td>${dateStr}</td>
+                                <td><code>${g.roomCode || '-'}</code> <span class="status-badge" style="background:#4f46e5;color:#fff;font-size:0.7rem;">1v1 VS</span></td>
+                                <td><strong>${g.hostName || 'Oyuncu 1'}</strong></td>
+                                <td><strong>${g.guestName || 'Oyuncu 2'}</strong></td>
+                                <td><span class="status-badge" style="background:#312e81;color:#fff">${g.hostScore ?? 0} - ${g.guestScore ?? 0}</span></td>
+                                <td><span class="status-badge" style="background:var(--primary-color);color:#fff">${g.winner || 'Berabere'}</span></td>
+                                <td>%${(g.hostCoopCount || 0) * 10} / %${(g.guestCoopCount || 0) * 10}</td>
+                            `;
+                        }
                         tbodyGame.appendChild(tr);
                     });
                 }
