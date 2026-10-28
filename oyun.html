@@ -8,7 +8,9 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- PeerJS P2P WebRTC + MQTT WebSocket Fallback for 100% NAT/Mobile Compatibility -->
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <script src="https://unpkg.com/mqtt@5.3.4/dist/mqtt.min.js"></script>
     <style>
         :root {
             --bg-main: #090d16;
@@ -1429,7 +1431,7 @@
             </div>
             <div>
                 <h3>Bağlantı Kesildi</h3>
-                <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 6px;">Rakip oyundan ayrıldı veya P2P ağ bağlantısı koptu.</p>
+                <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 6px;">Rakip oyundan ayrıldı veya ağ bağlantısı koptu.</p>
             </div>
             <div class="modal-actions">
                 <button type="button" class="btn btn-host" onclick="window.location.href = window.location.pathname">
@@ -1446,23 +1448,63 @@
         (() => {
             'use strict';
 
-            const PEER_PREFIX = 'sdu-pd-room-';
+            const PEER_PREFIX = 'sdu-pd-v2-';
+            const MQTT_TOPIC_PREFIX = 'sdu/kulturkitap/pd/v2/';
             const MAX_ROUNDS = 10;
 
-            // State
-            let peer = null;
-            let conn = null;
+            // ICE configuration with STUN + free OpenRelay TURN servers so mobile 4.5G & strict NATs connect
+            const PEER_CONFIG = {
+                config: {
+                    iceServers: [
+                        { urls: 'stun:stun.l.google.com:19302' },
+                        { urls: 'stun:stun1.l.google.com:19302' },
+                        { urls: 'stun:stun.cloudflare.com:3478' },
+                        {
+                            urls: 'turn:openrelay.metered.ca:80',
+                            username: 'openrelayproject',
+                            credential: 'openrelayproject'
+                        },
+                        {
+                            urls: 'turn:openrelay.metered.ca:443',
+                            username: 'openrelayproject',
+                            credential: 'openrelayproject'
+                        },
+                        {
+                            urls: 'turn:openrelay.metered.ca:443?transport=tcp',
+                            username: 'openrelayproject',
+                            credential: 'openrelayproject'
+                        }
+                    ]
+                }
+            };
+
+            // Unique ID for this browser tab
+            const myClientId = 'p_' + Math.random().toString(36).substring(2, 10) + '_' + Date.now().toString(36);
+
+            // Network State (Dual Engine: PeerJS WebRTC + WSS MQTT + BroadcastChannel)
+            let hostPeer = null;
+            let guestPeer = null;
+            let activeConn = null;
+            let mqttClient = null;
+            let bcChannel = null;
+
             let isHost = false;
             let currentRoomCode = '';
+            let isMatched = false;
+            let oppClientId = null;
+            let handshakeInterval = null;
+            let joinTimeout = null;
+            const processedMsgIds = new Set();
+
+            // Game State
             let myName = 'Oyuncu 1';
             let oppName = 'Rakip';
-
             let currentRound = 1;
             let myScore = 0;
             let oppScore = 0;
             let myMove = null;       // 'C' or 'D'
             let oppMove = null;      // 'C' or 'D'
-            let roundLocked = false; // true while transitioning between rounds
+            let roundLocked = false;
             let history = [];
 
             // DOM Elements
@@ -1524,7 +1566,7 @@
                 el.className = 'toast-msg';
                 el.innerHTML = `<i class="fas ${icon}" style="color:#818cf8;"></i> <span>${msg}</span>`;
                 wrap.appendChild(el);
-                setTimeout(() => el.remove(), 3200);
+                setTimeout(() => el.remove(), 3400);
             }
 
             function setConnStatus(state, text) {
@@ -1568,49 +1610,232 @@
                 }
             }
 
+            // ================= UNIFIED MULTI-TRANSPORT MESSAGING =================
+            function sendPacket(payload) {
+                const packet = {
+                    ...payload,
+                    senderId: myClientId,
+                    roomCode: currentRoomCode,
+                    msgId: payload.msgId || (myClientId + '_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7))
+                };
+
+                // 1. Send via PeerJS WebRTC if open
+                if (activeConn && activeConn.open) {
+                    try { activeConn.send(packet); } catch (e) {}
+                }
+
+                // 2. Send via WSS MQTT Relay (bypasses strict mobile CGNAT / eduroam firewalls)
+                if (mqttClient && mqttClient.connected && currentRoomCode) {
+                    try {
+                        mqttClient.publish(MQTT_TOPIC_PREFIX + currentRoomCode, JSON.stringify(packet), { qos: 0 });
+                    } catch (e) {}
+                }
+
+                // 3. Send via BroadcastChannel (instant same-browser multi-tab support)
+                if (bcChannel) {
+                    try { bcChannel.postMessage(packet); } catch (e) {}
+                }
+            }
+
+            function handleIncomingPacket(packet) {
+                if (!packet || typeof packet !== 'object') return;
+                if (packet.senderId === myClientId) return; // Ignore own messages
+                if (packet.roomCode && packet.roomCode !== currentRoomCode) return;
+
+                // Deduplicate packets received across multiple transports simultaneously
+                if (packet.msgId) {
+                    if (processedMsgIds.has(packet.msgId)) return;
+                    processedMsgIds.add(packet.msgId);
+                }
+
+                switch (packet.type) {
+                    case 'JOIN_REQ':
+                        if (isHost) {
+                            if (!isMatched || oppClientId === packet.senderId) {
+                                oppClientId = packet.senderId;
+                                oppName = packet.name || 'Misafir Oyuncu';
+                                sendPacket({
+                                    type: 'JOIN_ACK',
+                                    name: myName,
+                                    targetId: packet.senderId
+                                });
+                                if (!isMatched) {
+                                    isMatched = true;
+                                    startArena();
+                                } else {
+                                    oppNameDisplay.textContent = oppName;
+                                }
+                            }
+                        }
+                        break;
+
+                    case 'JOIN_ACK':
+                        if (!isHost && (!packet.targetId || packet.targetId === myClientId)) {
+                            oppClientId = packet.senderId;
+                            oppName = packet.name || 'Ev Sahibi';
+                            if (handshakeInterval) {
+                                clearInterval(handshakeInterval);
+                                handshakeInterval = null;
+                            }
+                            if (joinTimeout) {
+                                clearTimeout(joinTimeout);
+                                joinTimeout = null;
+                            }
+                            if (!isMatched) {
+                                isMatched = true;
+                                startArena();
+                            }
+                        }
+                        break;
+
+                    case 'MOVE_COMMIT':
+                        if (oppClientId && packet.senderId !== oppClientId) return;
+                        if (packet.round === currentRound && oppMove === null) {
+                            oppMove = packet.move;
+                            updateBlindStatusUI();
+                            checkAndResolveRound();
+                        }
+                        // Send ACK so opponent knows we got their move
+                        sendPacket({
+                            type: 'MOVE_ACK',
+                            round: packet.round
+                        });
+                        break;
+
+                    case 'REMATCH':
+                        if (oppClientId && packet.senderId !== oppClientId) return;
+                        showToast(`${oppName} yeni maç başlattı!`, 'fa-redo');
+                        resetMatchState();
+                        break;
+
+                    case 'BYE':
+                        if (oppClientId && packet.senderId === oppClientId && isMatched) {
+                            handleDisconnect();
+                        }
+                        break;
+                }
+            }
+
+            function initBackupTransports(roomCode, onReadyCallback) {
+                let readyFired = false;
+                const triggerReady = () => {
+                    if (!readyFired) {
+                        readyFired = true;
+                        if (typeof onReadyCallback === 'function') onReadyCallback();
+                    }
+                };
+
+                // 1. BroadcastChannel for instant same-browser multi-tab testing
+                try {
+                    if (bcChannel) bcChannel.close();
+                    bcChannel = new BroadcastChannel('sdu_pd_' + roomCode);
+                    bcChannel.onmessage = (ev) => handleIncomingPacket(ev.data);
+                } catch (e) {}
+
+                // 2. Public WSS MQTT Broker for 100% firewall/NAT bypass
+                try {
+                    if (typeof mqtt !== 'undefined') {
+                        if (mqttClient) {
+                            try { mqttClient.end(true); } catch (e) {}
+                        }
+                        mqttClient = mqtt.connect('wss://broker.emqx.io:8084/mqtt', {
+                            clientId: 'sdu_pd_' + myClientId,
+                            clean: true,
+                            connectTimeout: 4000,
+                            reconnectPeriod: 2000
+                        });
+
+                        mqttClient.on('connect', () => {
+                            mqttClient.subscribe(MQTT_TOPIC_PREFIX + roomCode, { qos: 0 }, () => {
+                                triggerReady();
+                            });
+                        });
+
+                        mqttClient.on('message', (topic, message) => {
+                            try {
+                                const data = JSON.parse(message.toString());
+                                handleIncomingPacket(data);
+                            } catch (e) {}
+                        });
+                    }
+                } catch (e) {
+                    console.warn('MQTT fallback error:', e);
+                }
+
+                // Fallback timer so UI never hangs waiting for transport init
+                setTimeout(triggerReady, 600);
+            }
+
+            function bindPeerConnection(conn) {
+                activeConn = conn;
+
+                const onOpen = () => {
+                    if (!isHost && !isMatched) {
+                        sendPacket({
+                            type: 'JOIN_REQ',
+                            name: myName
+                        });
+                    }
+                };
+
+                if (conn.open) {
+                    onOpen();
+                } else {
+                    conn.on('open', onOpen);
+                }
+
+                conn.on('data', (data) => {
+                    handleIncomingPacket(data);
+                });
+
+                conn.on('close', () => {
+                    if (isMatched && (!mqttClient || !mqttClient.connected)) {
+                        handleDisconnect();
+                    }
+                });
+            }
+
             // ================= HOST LOGIC =================
             createRoomBtn.addEventListener('click', () => {
                 createRoomBtn.disabled = true;
                 createRoomBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Oda Açılıyor...';
 
                 isHost = true;
+                isMatched = false;
                 myName = getMyNickname('Ev Sahibi');
                 currentRoomCode = generateShortCode();
                 const fullPeerId = PEER_PREFIX + currentRoomCode;
 
-                if (peer) peer.destroy();
-                peer = new Peer(fullPeerId);
-
-                peer.on('open', () => {
+                const onRoomCreated = () => {
                     createRoomBtn.style.display = 'none';
                     hostRoomPanel.classList.add('active');
                     displayRoomCode.textContent = currentRoomCode;
                     setConnStatus('', 'Rakip Bekleniyor (' + currentRoomCode + ')');
-                    showToast('Oda oluşturuldu! Arkadaşını davet et.', 'fa-satellite-dish');
-                });
+                    showToast('Oda oluşturuldu! Kodu veya linki arkadaşına gönder.', 'fa-satellite-dish');
+                };
 
-                peer.on('connection', (incomingConn) => {
-                    if (conn && conn.open) {
-                        incomingConn.close();
-                        return;
-                    }
-                    conn = incomingConn;
-                    setupConnectionHandlers();
-                });
+                // Start fast backup transports immediately
+                initBackupTransports(currentRoomCode, onRoomCreated);
 
-                peer.on('error', (err) => {
-                    console.error('Peer error:', err);
-                    if (err.type === 'unavailable-id') {
-                        // Retry with another code
-                        createRoomBtn.disabled = false;
-                        createRoomBtn.click();
-                        return;
-                    }
-                    setConnStatus('error', 'Bağlantı Hatası');
-                    showToast('Ağ hatası: ' + err.type, 'fa-exclamation-circle');
-                    createRoomBtn.disabled = false;
-                    createRoomBtn.innerHTML = '<i class="fas fa-satellite-dish"></i> Yeni Oda Oluştur';
-                });
+                // Start PeerJS WebRTC Host
+                try {
+                    if (hostPeer) hostPeer.destroy();
+                    hostPeer = new Peer(fullPeerId, PEER_CONFIG);
+
+                    hostPeer.on('open', () => {
+                        onRoomCreated();
+                    });
+
+                    hostPeer.on('connection', (incomingConn) => {
+                        bindPeerConnection(incomingConn);
+                    });
+
+                    hostPeer.on('error', (err) => {
+                        console.warn('Host PeerJS info:', err.type);
+                    });
+                } catch (e) {
+                    console.warn('PeerJS init warning:', e);
+                }
             });
 
             copyCodeBtn.addEventListener('click', () => {
@@ -1625,35 +1850,73 @@
             function joinRoomByCode(rawCode) {
                 const cleanCode = (rawCode || '').trim().toUpperCase();
                 if (!cleanCode) {
-                    showToast('Lütfen geçerli bir oda kodu girin.', 'fa-exclamation-triangle');
+                    showToast('Lütfen 5 haneli bir oda kodu girin.', 'fa-exclamation-triangle');
+                    return;
+                }
+
+                // Prevent user from accidentally joining their own hosted room inside the SAME tab
+                if (isHost && currentRoomCode === cleanCode) {
+                    showToast('Bu sekmede zaten odayı kurdun! Karşılaşmak için davet linkini yeni bir sekmede veya arkadaşının cihazında aç.', 'fa-info-circle');
                     return;
                 }
 
                 joinRoomBtn.disabled = true;
                 joinRoomBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Bağlanılıyor...';
-                setConnStatus('', 'Odaya Bağlanılıyor...');
+                setConnStatus('', 'Odaya Bağlanılıyor (' + cleanCode + ')...');
 
                 isHost = false;
+                isMatched = false;
                 myName = getMyNickname('Misafir Oyuncu');
                 currentRoomCode = cleanCode;
 
-                const targetPeerId = cleanCode.startsWith(PEER_PREFIX) ? cleanCode : (PEER_PREFIX + cleanCode);
+                const startHandshakeLoop = () => {
+                    if (handshakeInterval) clearInterval(handshakeInterval);
+                    const sendJoin = () => {
+                        if (isMatched) {
+                            clearInterval(handshakeInterval);
+                            return;
+                        }
+                        sendPacket({
+                            type: 'JOIN_REQ',
+                            name: myName
+                        });
+                    };
+                    sendJoin();
+                    handshakeInterval = setInterval(sendJoin, 500);
+                };
 
-                if (peer) peer.destroy();
-                peer = new Peer();
+                // 1. Connect via fast backup transports (WSS MQTT + BroadcastChannel)
+                initBackupTransports(cleanCode, startHandshakeLoop);
 
-                peer.on('open', () => {
-                    conn = peer.connect(targetPeerId, { reliable: true });
-                    setupConnectionHandlers();
-                });
+                // 2. Connect via PeerJS WebRTC in parallel
+                try {
+                    const targetPeerId = cleanCode.startsWith(PEER_PREFIX) ? cleanCode : (PEER_PREFIX + cleanCode);
+                    if (guestPeer) guestPeer.destroy();
+                    guestPeer = new Peer(PEER_CONFIG);
 
-                peer.on('error', (err) => {
-                    console.error('Guest peer error:', err);
-                    setConnStatus('error', 'Oda Bulunamadı');
-                    showToast('Odaya bağlanılamadı. Kodu kontrol edin.', 'fa-exclamation-triangle');
-                    joinRoomBtn.disabled = false;
-                    joinRoomBtn.innerHTML = '<i class="fas fa-bolt"></i> Odaya Bağlan ve Başla';
-                });
+                    guestPeer.on('open', () => {
+                        const c = guestPeer.connect(targetPeerId, { reliable: true, serialization: 'json' });
+                        bindPeerConnection(c);
+                    });
+
+                    guestPeer.on('error', (err) => {
+                        console.warn('Guest PeerJS info:', err.type);
+                    });
+                } catch (e) {
+                    console.warn('Guest PeerJS warning:', e);
+                }
+
+                // Timeout after 12 seconds if no Host responds on any channel
+                if (joinTimeout) clearTimeout(joinTimeout);
+                joinTimeout = setTimeout(() => {
+                    if (!isMatched) {
+                        if (handshakeInterval) clearInterval(handshakeInterval);
+                        setConnStatus('error', 'Oda Bulunamadı');
+                        showToast('Bu kodla açık bir oda bulunamadı. Ev sahibinin odayı açık tuttuğundan emin olun.', 'fa-exclamation-triangle');
+                        joinRoomBtn.disabled = false;
+                        joinRoomBtn.innerHTML = '<i class="fas fa-bolt"></i> Odaya Bağlan ve Başla';
+                    }
+                }, 12000);
             }
 
             joinRoomBtn.addEventListener('click', () => {
@@ -1664,57 +1927,21 @@
                 if (e.key === 'Enter') joinRoomByCode(joinRoomInput.value);
             });
 
-            // ================= P2P CONNECTION & GAME SYNC =================
-            function setupConnectionHandlers() {
-                conn.on('open', () => {
-                    setConnStatus('connected', 'Eşleşti • Oda: ' + currentRoomCode);
-                    // Exchange hello message
-                    conn.send({
-                        type: 'HELLO',
-                        name: myName
-                    });
-                    startArena();
-                });
-
-                conn.on('data', (data) => {
-                    if (!data || typeof data !== 'object') return;
-
-                    switch (data.type) {
-                        case 'HELLO':
-                            oppName = data.name || 'Rakip';
-                            oppNameDisplay.textContent = oppName;
-                            break;
-
-                        case 'MOVE_COMMIT':
-                            // Opponent made their blind choice
-                            oppMove = data.move;
-                            updateBlindStatusUI();
-                            checkAndResolveRound();
-                            break;
-
-                        case 'REMATCH':
-                            showToast(`${oppName} yeni maç başlattı!`, 'fa-redo');
-                            resetMatchState();
-                            break;
-                    }
-                });
-
-                conn.on('close', () => {
-                    handleDisconnect();
-                });
-
-                conn.on('error', () => {
-                    handleDisconnect();
-                });
-            }
+            window.addEventListener('beforeunload', () => {
+                if (isMatched) {
+                    sendPacket({ type: 'BYE' });
+                }
+            });
 
             function handleDisconnect() {
+                isMatched = false;
                 setConnStatus('error', 'Bağlantı Koptu');
                 gameOverModal.classList.remove('open');
                 disconnectModal.classList.add('open');
             }
 
             function startArena() {
+                setConnStatus('connected', 'Eşleşti • Oda: ' + currentRoomCode);
                 lobbyScreen.style.display = 'none';
                 gameScreen.classList.add('active');
                 myNameDisplay.textContent = myName;
@@ -1763,7 +1990,7 @@
             }
 
             function makeMove(choice) {
-                if (roundLocked || myMove !== null || !conn || !conn.open) return;
+                if (roundLocked || myMove !== null || !isMatched) return;
 
                 myMove = choice; // 'C' or 'D'
                 btnCooperate.disabled = true;
@@ -1775,7 +2002,7 @@
                     btnDefect.classList.add('selected');
                 }
 
-                conn.send({
+                sendPacket({
                     type: 'MOVE_COMMIT',
                     move: choice,
                     round: currentRound
@@ -1950,9 +2177,7 @@
             }
 
             rematchBtn.addEventListener('click', () => {
-                if (conn && conn.open) {
-                    conn.send({ type: 'REMATCH' });
-                }
+                sendPacket({ type: 'REMATCH' });
                 resetMatchState();
             });
 
@@ -1968,7 +2193,7 @@
                     const clean = roomParam.trim().toUpperCase();
                     joinRoomInput.value = clean;
                     showToast(`Davet algılandı (${clean}), odaya bağlanılıyor...`, 'fa-bolt');
-                    setTimeout(() => joinRoomByCode(clean), 350);
+                    setTimeout(() => joinRoomByCode(clean), 300);
                 }
             });
         })();
