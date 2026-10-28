@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <!-- PeerJS P2P WebRTC + MQTT WebSocket Fallback for 100% NAT/Mobile Compatibility -->
+    <!-- PeerJS P2P WebRTC + Dual WSS MQTT Brokers for 100% Real-Time Lockstep Sync -->
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <script src="https://unpkg.com/mqtt@5.3.4/dist/mqtt.min.js"></script>
     <style>
@@ -1043,6 +1043,21 @@
             font-weight: 800;
         }
 
+        .db-log-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            font-size: 0.76rem;
+            font-weight: 600;
+            color: #34d399;
+            background: rgba(16, 185, 129, 0.12);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            padding: 6px 12px;
+            border-radius: 999px;
+            margin: 0 auto;
+        }
+
         .modal-actions {
             display: flex;
             gap: 12px;
@@ -1411,6 +1426,9 @@
             </div>
 
             <div id="modalStatsLine" style="font-size: 0.82rem; color: var(--text-muted);"></div>
+            <div class="db-log-badge" id="dbLogBadge">
+                <i class="fas fa-database"></i> <span id="dbLogText">Sonuçlar veritabanına kaydediliyor...</span>
+            </div>
 
             <div class="modal-actions">
                 <button type="button" class="btn btn-host" id="rematchBtn">
@@ -1444,759 +1462,856 @@
     <!-- Toast Notifications -->
     <div class="toast-wrap" id="toastWrap"></div>
 
-    <script>
-        (() => {
-            'use strict';
+    <script type="module">
+        // Import Firebase DB logging if running inside the community site, with graceful standalone fallback
+        let fbSaveGameResult = null;
+        try {
+            const mod = await import('./firebase-service.js');
+            if (mod && typeof mod.saveGameResult === 'function') {
+                fbSaveGameResult = mod.saveGameResult;
+            }
+        } catch (e) {
+            console.warn('Standalone mode (firebase-service not imported):', e);
+        }
 
-            const PEER_PREFIX = 'sdu-pd-v2-';
-            const MQTT_TOPIC_PREFIX = 'sdu/kulturkitap/pd/v2/';
-            const MAX_ROUNDS = 10;
+        const PEER_PREFIX = 'sdu-pd-v3-';
+        const MQTT_TOPIC_PREFIX = 'sdu/kulturkitap/pd/v3/';
+        const MAX_ROUNDS = 10;
 
-            // ICE configuration with STUN + free OpenRelay TURN servers so mobile 4.5G & strict NATs connect
-            const PEER_CONFIG = {
-                config: {
-                    iceServers: [
-                        { urls: 'stun:stun.l.google.com:19302' },
-                        { urls: 'stun:stun1.l.google.com:19302' },
-                        { urls: 'stun:stun.cloudflare.com:3478' },
-                        {
-                            urls: 'turn:openrelay.metered.ca:80',
-                            username: 'openrelayproject',
-                            credential: 'openrelayproject'
-                        },
-                        {
-                            urls: 'turn:openrelay.metered.ca:443',
-                            username: 'openrelayproject',
-                            credential: 'openrelayproject'
-                        },
-                        {
-                            urls: 'turn:openrelay.metered.ca:443?transport=tcp',
-                            username: 'openrelayproject',
-                            credential: 'openrelayproject'
-                        }
-                    ]
+        // ICE configuration with STUN + free OpenRelay TURN servers
+        const PEER_CONFIG = {
+            config: {
+                iceServers: [
+                    { urls: 'stun:stun.l.google.com:19302' },
+                    { urls: 'stun:stun1.l.google.com:19302' },
+                    { urls: 'stun:stun.cloudflare.com:3478' },
+                    {
+                        urls: 'turn:openrelay.metered.ca:80',
+                        username: 'openrelayproject',
+                        credential: 'openrelayproject'
+                    },
+                    {
+                        urls: 'turn:openrelay.metered.ca:443',
+                        username: 'openrelayproject',
+                        credential: 'openrelayproject'
+                    },
+                    {
+                        urls: 'turn:openrelay.metered.ca:443?transport=tcp',
+                        username: 'openrelayproject',
+                        credential: 'openrelayproject'
+                    }
+                ]
+            }
+        };
+
+        // Unique ID for this browser tab
+        const myClientId = 'p_' + Math.random().toString(36).substring(2, 10) + '_' + Date.now().toString(36);
+
+        // Network State (Quadruple Transport: PeerJS WebRTC + 2x WSS MQTT Brokers + BroadcastChannel)
+        let hostPeer = null;
+        let guestPeer = null;
+        let activeConn = null;
+        let mqttClients = [];
+        let bcChannel = null;
+
+        let isHost = false;
+        let currentRoomCode = '';
+        let isMatched = false;
+        let oppClientId = null;
+        let handshakeInterval = null;
+        let stateSyncInterval = null;
+        let joinTimeout = null;
+
+        // Lockstep Game State
+        let matchEpoch = 1;
+        let myName = 'Oyuncu 1';
+        let oppName = 'Rakip';
+        let currentRound = 1;
+        let myScore = 0;
+        let oppScore = 0;
+
+        // Per-round maps guarantee no move is ever lost even if one player clicks faster during round transitions!
+        let myMoves = {};        // { 1: 'C', 2: 'D', ... }
+        let oppMoves = {};       // { 1: 'D', 2: 'C', ... }
+        let resolvedRounds = {}; // { 1: true, 2: true, ... }
+        let roundTransitionTimer = null;
+        let history = [];
+        let matchLogged = false;
+
+        // DOM Elements
+        const lobbyScreen = document.getElementById('lobbyScreen');
+        const gameScreen = document.getElementById('gameScreen');
+        const connStatusPill = document.getElementById('connStatusPill');
+        const connStatusText = document.getElementById('connStatusText');
+
+        const playerNameInput = document.getElementById('playerNameInput');
+        const createRoomBtn = document.getElementById('createRoomBtn');
+        const hostRoomPanel = document.getElementById('hostRoomPanel');
+        const displayRoomCode = document.getElementById('displayRoomCode');
+        const copyCodeBtn = document.getElementById('copyCodeBtn');
+        const copyLinkBtn = document.getElementById('copyLinkBtn');
+
+        const joinRoomInput = document.getElementById('joinRoomInput');
+        const joinRoomBtn = document.getElementById('joinRoomBtn');
+
+        const myNameDisplay = document.getElementById('myNameDisplay');
+        const oppNameDisplay = document.getElementById('oppNameDisplay');
+        const myScoreEl = document.getElementById('myScoreEl');
+        const oppScoreEl = document.getElementById('oppScoreEl');
+        const currentRoundEl = document.getElementById('currentRoundEl');
+        const maxRoundsEl = document.getElementById('maxRoundsEl');
+
+        const myStatusBadge = document.getElementById('myStatusBadge');
+        const oppStatusBadge = document.getElementById('oppStatusBadge');
+        const btnCooperate = document.getElementById('btnCooperate');
+        const btnDefect = document.getElementById('btnDefect');
+        const blindStatusPrompt = document.getElementById('blindStatusPrompt');
+
+        const roundResultBanner = document.getElementById('roundResultBanner');
+        const bannerEmoji = document.getElementById('bannerEmoji');
+        const bannerTitle = document.getElementById('bannerTitle');
+        const bannerSub = document.getElementById('bannerSub');
+        const bannerDelta = document.getElementById('bannerDelta');
+
+        const historyCountLabel = document.getElementById('historyCountLabel');
+        const historyTableBody = document.getElementById('historyTableBody');
+
+        const gameOverModal = document.getElementById('gameOverModal');
+        const modalTrophyIcon = document.getElementById('modalTrophyIcon');
+        const modalWinnerTitle = document.getElementById('modalWinnerTitle');
+        const modalWinnerDesc = document.getElementById('modalWinnerDesc');
+        const finalMyName = document.getElementById('finalMyName');
+        const finalOppName = document.getElementById('finalOppName');
+        const finalMyScore = document.getElementById('finalMyScore');
+        const finalOppScore = document.getElementById('finalOppScore');
+        const modalStatsLine = document.getElementById('modalStatsLine');
+        const dbLogText = document.getElementById('dbLogText');
+        const rematchBtn = document.getElementById('rematchBtn');
+        const backToLobbyBtn = document.getElementById('backToLobbyBtn');
+        const disconnectModal = document.getElementById('disconnectModal');
+
+        maxRoundsEl.textContent = MAX_ROUNDS;
+
+        function showToast(msg, icon = 'fa-info-circle') {
+            const wrap = document.getElementById('toastWrap');
+            const el = document.createElement('div');
+            el.className = 'toast-msg';
+            el.innerHTML = `<i class="fas ${icon}" style="color:#818cf8;"></i> <span>${msg}</span>`;
+            wrap.appendChild(el);
+            setTimeout(() => el.remove(), 3400);
+        }
+
+        function setConnStatus(state, text) {
+            connStatusPill.className = 'conn-pill ' + (state || '');
+            connStatusText.textContent = text;
+        }
+
+        function generateShortCode() {
+            const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+            let code = '';
+            for (let i = 0; i < 5; i++) {
+                code += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return code;
+        }
+
+        function getMyNickname(fallback) {
+            const val = playerNameInput.value.trim();
+            return val ? val : fallback;
+        }
+
+        function getInviteUrl(code) {
+            return `${window.location.origin}${window.location.pathname}?room=${encodeURIComponent(code)}`;
+        }
+
+        async function copyText(text, successMsg) {
+            try {
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    await navigator.clipboard.writeText(text);
+                } else {
+                    const ta = document.createElement('textarea');
+                    ta.value = text;
+                    document.body.appendChild(ta);
+                    ta.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(ta);
                 }
+                showToast(successMsg, 'fa-check-circle');
+            } catch (err) {
+                showToast('Kopyalama başarısız oldu.', 'fa-exclamation-triangle');
+            }
+        }
+
+        // ================= UNIFIED MULTI-TRANSPORT MESSAGING =================
+        function sendPacket(payload) {
+            const packet = {
+                ...payload,
+                senderId: myClientId,
+                roomCode: currentRoomCode,
+                ts: Date.now()
             };
 
-            // Unique ID for this browser tab
-            const myClientId = 'p_' + Math.random().toString(36).substring(2, 10) + '_' + Date.now().toString(36);
-
-            // Network State (Dual Engine: PeerJS WebRTC + WSS MQTT + BroadcastChannel)
-            let hostPeer = null;
-            let guestPeer = null;
-            let activeConn = null;
-            let mqttClient = null;
-            let bcChannel = null;
-
-            let isHost = false;
-            let currentRoomCode = '';
-            let isMatched = false;
-            let oppClientId = null;
-            let handshakeInterval = null;
-            let joinTimeout = null;
-            const processedMsgIds = new Set();
-
-            // Game State
-            let myName = 'Oyuncu 1';
-            let oppName = 'Rakip';
-            let currentRound = 1;
-            let myScore = 0;
-            let oppScore = 0;
-            let myMove = null;       // 'C' or 'D'
-            let oppMove = null;      // 'C' or 'D'
-            let roundLocked = false;
-            let history = [];
-
-            // DOM Elements
-            const lobbyScreen = document.getElementById('lobbyScreen');
-            const gameScreen = document.getElementById('gameScreen');
-            const connStatusPill = document.getElementById('connStatusPill');
-            const connStatusText = document.getElementById('connStatusText');
-
-            const playerNameInput = document.getElementById('playerNameInput');
-            const createRoomBtn = document.getElementById('createRoomBtn');
-            const hostRoomPanel = document.getElementById('hostRoomPanel');
-            const displayRoomCode = document.getElementById('displayRoomCode');
-            const copyCodeBtn = document.getElementById('copyCodeBtn');
-            const copyLinkBtn = document.getElementById('copyLinkBtn');
-
-            const joinRoomInput = document.getElementById('joinRoomInput');
-            const joinRoomBtn = document.getElementById('joinRoomBtn');
-
-            const myNameDisplay = document.getElementById('myNameDisplay');
-            const oppNameDisplay = document.getElementById('oppNameDisplay');
-            const myScoreEl = document.getElementById('myScoreEl');
-            const oppScoreEl = document.getElementById('oppScoreEl');
-            const currentRoundEl = document.getElementById('currentRoundEl');
-            const maxRoundsEl = document.getElementById('maxRoundsEl');
-
-            const myStatusBadge = document.getElementById('myStatusBadge');
-            const oppStatusBadge = document.getElementById('oppStatusBadge');
-            const btnCooperate = document.getElementById('btnCooperate');
-            const btnDefect = document.getElementById('btnDefect');
-            const blindStatusPrompt = document.getElementById('blindStatusPrompt');
-
-            const roundResultBanner = document.getElementById('roundResultBanner');
-            const bannerEmoji = document.getElementById('bannerEmoji');
-            const bannerTitle = document.getElementById('bannerTitle');
-            const bannerSub = document.getElementById('bannerSub');
-            const bannerDelta = document.getElementById('bannerDelta');
-
-            const historyCountLabel = document.getElementById('historyCountLabel');
-            const historyTableBody = document.getElementById('historyTableBody');
-
-            const gameOverModal = document.getElementById('gameOverModal');
-            const modalTrophyIcon = document.getElementById('modalTrophyIcon');
-            const modalWinnerTitle = document.getElementById('modalWinnerTitle');
-            const modalWinnerDesc = document.getElementById('modalWinnerDesc');
-            const finalMyName = document.getElementById('finalMyName');
-            const finalOppName = document.getElementById('finalOppName');
-            const finalMyScore = document.getElementById('finalMyScore');
-            const finalOppScore = document.getElementById('finalOppScore');
-            const modalStatsLine = document.getElementById('modalStatsLine');
-            const rematchBtn = document.getElementById('rematchBtn');
-            const backToLobbyBtn = document.getElementById('backToLobbyBtn');
-            const disconnectModal = document.getElementById('disconnectModal');
-
-            maxRoundsEl.textContent = MAX_ROUNDS;
-
-            function showToast(msg, icon = 'fa-info-circle') {
-                const wrap = document.getElementById('toastWrap');
-                const el = document.createElement('div');
-                el.className = 'toast-msg';
-                el.innerHTML = `<i class="fas ${icon}" style="color:#818cf8;"></i> <span>${msg}</span>`;
-                wrap.appendChild(el);
-                setTimeout(() => el.remove(), 3400);
+            // 1. PeerJS WebRTC DataChannel
+            if (activeConn && activeConn.open) {
+                try { activeConn.send(packet); } catch (e) {}
             }
 
-            function setConnStatus(state, text) {
-                connStatusPill.className = 'conn-pill ' + (state || '');
-                connStatusText.textContent = text;
-            }
-
-            function generateShortCode() {
-                const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-                let code = '';
-                for (let i = 0; i < 5; i++) {
-                    code += chars.charAt(Math.floor(Math.random() * chars.length));
-                }
-                return code;
-            }
-
-            function getMyNickname(fallback) {
-                const val = playerNameInput.value.trim();
-                return val ? val : fallback;
-            }
-
-            function getInviteUrl(code) {
-                return `${window.location.origin}${window.location.pathname}?room=${encodeURIComponent(code)}`;
-            }
-
-            async function copyText(text, successMsg) {
-                try {
-                    if (navigator.clipboard && navigator.clipboard.writeText) {
-                        await navigator.clipboard.writeText(text);
-                    } else {
-                        const ta = document.createElement('textarea');
-                        ta.value = text;
-                        document.body.appendChild(ta);
-                        ta.select();
-                        document.execCommand('copy');
-                        document.body.removeChild(ta);
-                    }
-                    showToast(successMsg, 'fa-check-circle');
-                } catch (err) {
-                    showToast('Kopyalama başarısız oldu.', 'fa-exclamation-triangle');
-                }
-            }
-
-            // ================= UNIFIED MULTI-TRANSPORT MESSAGING =================
-            function sendPacket(payload) {
-                const packet = {
-                    ...payload,
-                    senderId: myClientId,
-                    roomCode: currentRoomCode,
-                    msgId: payload.msgId || (myClientId + '_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7))
-                };
-
-                // 1. Send via PeerJS WebRTC if open
-                if (activeConn && activeConn.open) {
-                    try { activeConn.send(packet); } catch (e) {}
-                }
-
-                // 2. Send via WSS MQTT Relay (bypasses strict mobile CGNAT / eduroam firewalls)
-                if (mqttClient && mqttClient.connected && currentRoomCode) {
+            // 2. Dual WSS MQTT Brokers (EMQX + HiveMQ) for 100% mobile & firewall reliability
+            const serialized = JSON.stringify(packet);
+            for (const client of mqttClients) {
+                if (client && client.connected && currentRoomCode) {
                     try {
-                        mqttClient.publish(MQTT_TOPIC_PREFIX + currentRoomCode, JSON.stringify(packet), { qos: 0 });
+                        client.publish(MQTT_TOPIC_PREFIX + currentRoomCode, serialized, { qos: 0 });
                     } catch (e) {}
                 }
-
-                // 3. Send via BroadcastChannel (instant same-browser multi-tab support)
-                if (bcChannel) {
-                    try { bcChannel.postMessage(packet); } catch (e) {}
-                }
             }
 
-            function handleIncomingPacket(packet) {
-                if (!packet || typeof packet !== 'object') return;
-                if (packet.senderId === myClientId) return; // Ignore own messages
-                if (packet.roomCode && packet.roomCode !== currentRoomCode) return;
+            // 3. BroadcastChannel (instant same-browser multi-tab sync)
+            if (bcChannel) {
+                try { bcChannel.postMessage(packet); } catch (e) {}
+            }
+        }
 
-                // Deduplicate packets received across multiple transports simultaneously
-                if (packet.msgId) {
-                    if (processedMsgIds.has(packet.msgId)) return;
-                    processedMsgIds.add(packet.msgId);
-                }
+        function broadcastLockstepState() {
+            if (!isMatched) return;
+            sendPacket({
+                type: 'STATE_SYNC',
+                name: myName,
+                matchEpoch: matchEpoch,
+                currentRound: currentRound,
+                moves: myMoves
+            });
+        }
 
-                switch (packet.type) {
-                    case 'JOIN_REQ':
-                        if (isHost) {
-                            if (!isMatched || oppClientId === packet.senderId) {
-                                oppClientId = packet.senderId;
-                                oppName = packet.name || 'Misafir Oyuncu';
-                                sendPacket({
-                                    type: 'JOIN_ACK',
-                                    name: myName,
-                                    targetId: packet.senderId
-                                });
-                                if (!isMatched) {
-                                    isMatched = true;
-                                    startArena();
-                                } else {
-                                    oppNameDisplay.textContent = oppName;
-                                }
-                            }
-                        }
-                        break;
+        function handleIncomingPacket(packet) {
+            if (!packet || typeof packet !== 'object') return;
+            if (packet.senderId === myClientId) return;
+            if (packet.roomCode && packet.roomCode !== currentRoomCode) return;
 
-                    case 'JOIN_ACK':
-                        if (!isHost && (!packet.targetId || packet.targetId === myClientId)) {
+            switch (packet.type) {
+                case 'JOIN_REQ':
+                    if (isHost) {
+                        if (!isMatched || oppClientId === packet.senderId) {
                             oppClientId = packet.senderId;
-                            oppName = packet.name || 'Ev Sahibi';
-                            if (handshakeInterval) {
-                                clearInterval(handshakeInterval);
-                                handshakeInterval = null;
-                            }
-                            if (joinTimeout) {
-                                clearTimeout(joinTimeout);
-                                joinTimeout = null;
-                            }
+                            oppName = packet.name || 'Misafir Oyuncu';
+                            sendPacket({
+                                type: 'JOIN_ACK',
+                                name: myName,
+                                targetId: packet.senderId,
+                                matchEpoch: matchEpoch
+                            });
                             if (!isMatched) {
                                 isMatched = true;
                                 startArena();
+                            } else {
+                                oppNameDisplay.textContent = oppName;
+                                broadcastLockstepState();
                             }
                         }
-                        break;
+                    }
+                    break;
 
-                    case 'MOVE_COMMIT':
-                        if (oppClientId && packet.senderId !== oppClientId) return;
-                        if (packet.round === currentRound && oppMove === null) {
-                            oppMove = packet.move;
-                            updateBlindStatusUI();
-                            checkAndResolveRound();
+                case 'JOIN_ACK':
+                    if (!isHost && (!packet.targetId || packet.targetId === myClientId)) {
+                        oppClientId = packet.senderId;
+                        oppName = packet.name || 'Ev Sahibi';
+                        if (packet.matchEpoch) matchEpoch = packet.matchEpoch;
+                        if (handshakeInterval) {
+                            clearInterval(handshakeInterval);
+                            handshakeInterval = null;
                         }
-                        // Send ACK so opponent knows we got their move
-                        sendPacket({
-                            type: 'MOVE_ACK',
-                            round: packet.round
-                        });
-                        break;
+                        if (joinTimeout) {
+                            clearTimeout(joinTimeout);
+                            joinTimeout = null;
+                        }
+                        if (!isMatched) {
+                            isMatched = true;
+                            startArena();
+                        }
+                    }
+                    break;
 
-                    case 'REMATCH':
-                        if (oppClientId && packet.senderId !== oppClientId) return;
+                case 'STATE_SYNC':
+                    if (oppClientId && packet.senderId !== oppClientId) return;
+                    if (!oppClientId) oppClientId = packet.senderId;
+
+                    if (packet.name && packet.name !== oppName) {
+                        oppName = packet.name;
+                        oppNameDisplay.textContent = oppName;
+                    }
+
+                    // If opponent triggered a new rematch epoch
+                    if (packet.matchEpoch && packet.matchEpoch > matchEpoch) {
+                        matchEpoch = packet.matchEpoch;
                         showToast(`${oppName} yeni maç başlattı!`, 'fa-redo');
-                        resetMatchState();
-                        break;
+                        resetMatchState(false);
+                        return;
+                    }
 
-                    case 'BYE':
-                        if (oppClientId && packet.senderId === oppClientId && isMatched) {
-                            handleDisconnect();
+                    if (packet.matchEpoch && packet.matchEpoch < matchEpoch) {
+                        return; // Ignore stale epoch packets
+                    }
+
+                    // Merge opponent's moves per round
+                    if (packet.moves && typeof packet.moves === 'object') {
+                        let updated = false;
+                        for (const [rKey, mv] of Object.entries(packet.moves)) {
+                            const rNum = Number(rKey);
+                            if ((mv === 'C' || mv === 'D') && oppMoves[rNum] !== mv) {
+                                oppMoves[rNum] = mv;
+                                updated = true;
+                            }
                         }
-                        break;
-                }
-            }
-
-            function initBackupTransports(roomCode, onReadyCallback) {
-                let readyFired = false;
-                const triggerReady = () => {
-                    if (!readyFired) {
-                        readyFired = true;
-                        if (typeof onReadyCallback === 'function') onReadyCallback();
-                    }
-                };
-
-                // 1. BroadcastChannel for instant same-browser multi-tab testing
-                try {
-                    if (bcChannel) bcChannel.close();
-                    bcChannel = new BroadcastChannel('sdu_pd_' + roomCode);
-                    bcChannel.onmessage = (ev) => handleIncomingPacket(ev.data);
-                } catch (e) {}
-
-                // 2. Public WSS MQTT Broker for 100% firewall/NAT bypass
-                try {
-                    if (typeof mqtt !== 'undefined') {
-                        if (mqttClient) {
-                            try { mqttClient.end(true); } catch (e) {}
+                        if (updated) {
+                            syncGameProgress();
                         }
-                        mqttClient = mqtt.connect('wss://broker.emqx.io:8084/mqtt', {
-                            clientId: 'sdu_pd_' + myClientId,
-                            clean: true,
-                            connectTimeout: 4000,
-                            reconnectPeriod: 2000
-                        });
-
-                        mqttClient.on('connect', () => {
-                            mqttClient.subscribe(MQTT_TOPIC_PREFIX + roomCode, { qos: 0 }, () => {
-                                triggerReady();
-                            });
-                        });
-
-                        mqttClient.on('message', (topic, message) => {
-                            try {
-                                const data = JSON.parse(message.toString());
-                                handleIncomingPacket(data);
-                            } catch (e) {}
-                        });
                     }
-                } catch (e) {
-                    console.warn('MQTT fallback error:', e);
-                }
+                    break;
 
-                // Fallback timer so UI never hangs waiting for transport init
-                setTimeout(triggerReady, 600);
-            }
-
-            function bindPeerConnection(conn) {
-                activeConn = conn;
-
-                const onOpen = () => {
-                    if (!isHost && !isMatched) {
-                        sendPacket({
-                            type: 'JOIN_REQ',
-                            name: myName
-                        });
+                case 'REMATCH':
+                    if (oppClientId && packet.senderId !== oppClientId) return;
+                    if (packet.matchEpoch && packet.matchEpoch > matchEpoch) {
+                        matchEpoch = packet.matchEpoch;
+                        showToast(`${oppName} yeni maç başlattı!`, 'fa-redo');
+                        resetMatchState(false);
                     }
-                };
+                    break;
 
-                if (conn.open) {
-                    onOpen();
-                } else {
-                    conn.on('open', onOpen);
-                }
-
-                conn.on('data', (data) => {
-                    handleIncomingPacket(data);
-                });
-
-                conn.on('close', () => {
-                    if (isMatched && (!mqttClient || !mqttClient.connected)) {
+                case 'BYE':
+                    if (oppClientId && packet.senderId === oppClientId && isMatched) {
                         handleDisconnect();
                     }
-                });
+                    break;
+            }
+        }
+
+        function initTransports(roomCode, onReadyCallback) {
+            let readyFired = false;
+            const triggerReady = () => {
+                if (!readyFired) {
+                    readyFired = true;
+                    if (typeof onReadyCallback === 'function') onReadyCallback();
+                }
+            };
+
+            // 1. BroadcastChannel for instant local multi-tab testing
+            try {
+                if (bcChannel) bcChannel.close();
+                bcChannel = new BroadcastChannel('sdu_pd_v3_' + roomCode);
+                bcChannel.onmessage = (ev) => handleIncomingPacket(ev.data);
+            } catch (e) {}
+
+            // 2. Dual Public WSS MQTT Brokers (EMQX + HiveMQ)
+            try {
+                for (const c of mqttClients) {
+                    try { c.end(true); } catch (e) {}
+                }
+                mqttClients = [];
+
+                if (typeof mqtt !== 'undefined') {
+                    const brokers = [
+                        'wss://broker.emqx.io:8084/mqtt',
+                        'wss://broker.hivemq.com:8884/mqtt'
+                    ];
+
+                    brokers.forEach((brokerUrl, idx) => {
+                        try {
+                            const client = mqtt.connect(brokerUrl, {
+                                clientId: `sdu_${idx}_${myClientId}`,
+                                clean: true,
+                                connectTimeout: 4000,
+                                reconnectPeriod: 2000
+                            });
+
+                            client.on('connect', () => {
+                                client.subscribe(MQTT_TOPIC_PREFIX + roomCode, { qos: 0 }, () => {
+                                    triggerReady();
+                                });
+                            });
+
+                            client.on('message', (topic, message) => {
+                                try {
+                                    handleIncomingPacket(JSON.parse(message.toString()));
+                                } catch (e) {}
+                            });
+
+                            mqttClients.push(client);
+                        } catch (e) {}
+                    });
+                }
+            } catch (e) {}
+
+            setTimeout(triggerReady, 450);
+        }
+
+        function bindPeerConnection(conn) {
+            activeConn = conn;
+
+            const onOpen = () => {
+                if (!isHost && !isMatched) {
+                    sendPacket({ type: 'JOIN_REQ', name: myName });
+                } else if (isMatched) {
+                    broadcastLockstepState();
+                }
+            };
+
+            if (conn.open) {
+                onOpen();
+            } else {
+                conn.on('open', onOpen);
             }
 
-            // ================= HOST LOGIC =================
-            createRoomBtn.addEventListener('click', () => {
-                createRoomBtn.disabled = true;
-                createRoomBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Oda Açılıyor...';
+            conn.on('data', (data) => handleIncomingPacket(data));
+        }
 
-                isHost = true;
-                isMatched = false;
-                myName = getMyNickname('Ev Sahibi');
-                currentRoomCode = generateShortCode();
-                const fullPeerId = PEER_PREFIX + currentRoomCode;
+        // ================= HOST LOGIC =================
+        createRoomBtn.addEventListener('click', () => {
+            createRoomBtn.disabled = true;
+            createRoomBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Oda Açılıyor...';
 
-                const onRoomCreated = () => {
-                    createRoomBtn.style.display = 'none';
-                    hostRoomPanel.classList.add('active');
-                    displayRoomCode.textContent = currentRoomCode;
-                    setConnStatus('', 'Rakip Bekleniyor (' + currentRoomCode + ')');
-                    showToast('Oda oluşturuldu! Kodu veya linki arkadaşına gönder.', 'fa-satellite-dish');
-                };
+            isHost = true;
+            isMatched = false;
+            myName = getMyNickname('Ev Sahibi');
+            currentRoomCode = generateShortCode();
+            const fullPeerId = PEER_PREFIX + currentRoomCode;
 
-                // Start fast backup transports immediately
-                initBackupTransports(currentRoomCode, onRoomCreated);
+            const onRoomCreated = () => {
+                createRoomBtn.style.display = 'none';
+                hostRoomPanel.classList.add('active');
+                displayRoomCode.textContent = currentRoomCode;
+                setConnStatus('', 'Rakip Bekleniyor (' + currentRoomCode + ')');
+                showToast('Oda oluşturuldu! Kodu veya linki arkadaşına gönder.', 'fa-satellite-dish');
+            };
 
-                // Start PeerJS WebRTC Host
-                try {
-                    if (hostPeer) hostPeer.destroy();
-                    hostPeer = new Peer(fullPeerId, PEER_CONFIG);
+            initTransports(currentRoomCode, onRoomCreated);
 
-                    hostPeer.on('open', () => {
-                        onRoomCreated();
-                    });
+            try {
+                if (hostPeer) hostPeer.destroy();
+                hostPeer = new Peer(fullPeerId, PEER_CONFIG);
+                hostPeer.on('open', onRoomCreated);
+                hostPeer.on('connection', (incomingConn) => bindPeerConnection(incomingConn));
+            } catch (e) {}
+        });
 
-                    hostPeer.on('connection', (incomingConn) => {
-                        bindPeerConnection(incomingConn);
-                    });
+        copyCodeBtn.addEventListener('click', () => {
+            if (currentRoomCode) copyText(currentRoomCode, `Oda kodu (${currentRoomCode}) kopyalandı!`);
+        });
 
-                    hostPeer.on('error', (err) => {
-                        console.warn('Host PeerJS info:', err.type);
-                    });
-                } catch (e) {
-                    console.warn('PeerJS init warning:', e);
-                }
-            });
+        copyLinkBtn.addEventListener('click', () => {
+            if (currentRoomCode) copyText(getInviteUrl(currentRoomCode), 'Davet bağlantısı panoya kopyalandı!');
+        });
 
-            copyCodeBtn.addEventListener('click', () => {
-                if (currentRoomCode) copyText(currentRoomCode, `Oda kodu (${currentRoomCode}) kopyalandı!`);
-            });
+        // ================= GUEST LOGIC =================
+        function joinRoomByCode(rawCode) {
+            const cleanCode = (rawCode || '').trim().toUpperCase();
+            if (!cleanCode) {
+                showToast('Lütfen 5 haneli bir oda kodu girin.', 'fa-exclamation-triangle');
+                return;
+            }
 
-            copyLinkBtn.addEventListener('click', () => {
-                if (currentRoomCode) copyText(getInviteUrl(currentRoomCode), 'Davet bağlantısı panoya kopyalandı!');
-            });
+            if (isHost && currentRoomCode === cleanCode) {
+                showToast('Bu sekmede zaten odayı kurdun! Karşılaşmak için davet linkini yeni bir sekmede veya arkadaşının cihazında aç.', 'fa-info-circle');
+                return;
+            }
 
-            // ================= GUEST LOGIC =================
-            function joinRoomByCode(rawCode) {
-                const cleanCode = (rawCode || '').trim().toUpperCase();
-                if (!cleanCode) {
-                    showToast('Lütfen 5 haneli bir oda kodu girin.', 'fa-exclamation-triangle');
-                    return;
-                }
+            joinRoomBtn.disabled = true;
+            joinRoomBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Bağlanılıyor...';
+            setConnStatus('', 'Odaya Bağlanılıyor (' + cleanCode + ')...');
 
-                // Prevent user from accidentally joining their own hosted room inside the SAME tab
-                if (isHost && currentRoomCode === cleanCode) {
-                    showToast('Bu sekmede zaten odayı kurdun! Karşılaşmak için davet linkini yeni bir sekmede veya arkadaşının cihazında aç.', 'fa-info-circle');
-                    return;
-                }
+            isHost = false;
+            isMatched = false;
+            myName = getMyNickname('Misafir Oyuncu');
+            currentRoomCode = cleanCode;
 
-                joinRoomBtn.disabled = true;
-                joinRoomBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Bağlanılıyor...';
-                setConnStatus('', 'Odaya Bağlanılıyor (' + cleanCode + ')...');
-
-                isHost = false;
-                isMatched = false;
-                myName = getMyNickname('Misafir Oyuncu');
-                currentRoomCode = cleanCode;
-
-                const startHandshakeLoop = () => {
-                    if (handshakeInterval) clearInterval(handshakeInterval);
-                    const sendJoin = () => {
-                        if (isMatched) {
-                            clearInterval(handshakeInterval);
-                            return;
-                        }
-                        sendPacket({
-                            type: 'JOIN_REQ',
-                            name: myName
-                        });
-                    };
-                    sendJoin();
-                    handshakeInterval = setInterval(sendJoin, 500);
-                };
-
-                // 1. Connect via fast backup transports (WSS MQTT + BroadcastChannel)
-                initBackupTransports(cleanCode, startHandshakeLoop);
-
-                // 2. Connect via PeerJS WebRTC in parallel
-                try {
-                    const targetPeerId = cleanCode.startsWith(PEER_PREFIX) ? cleanCode : (PEER_PREFIX + cleanCode);
-                    if (guestPeer) guestPeer.destroy();
-                    guestPeer = new Peer(PEER_CONFIG);
-
-                    guestPeer.on('open', () => {
-                        const c = guestPeer.connect(targetPeerId, { reliable: true, serialization: 'json' });
-                        bindPeerConnection(c);
-                    });
-
-                    guestPeer.on('error', (err) => {
-                        console.warn('Guest PeerJS info:', err.type);
-                    });
-                } catch (e) {
-                    console.warn('Guest PeerJS warning:', e);
-                }
-
-                // Timeout after 12 seconds if no Host responds on any channel
-                if (joinTimeout) clearTimeout(joinTimeout);
-                joinTimeout = setTimeout(() => {
-                    if (!isMatched) {
-                        if (handshakeInterval) clearInterval(handshakeInterval);
-                        setConnStatus('error', 'Oda Bulunamadı');
-                        showToast('Bu kodla açık bir oda bulunamadı. Ev sahibinin odayı açık tuttuğundan emin olun.', 'fa-exclamation-triangle');
-                        joinRoomBtn.disabled = false;
-                        joinRoomBtn.innerHTML = '<i class="fas fa-bolt"></i> Odaya Bağlan ve Başla';
+            const startHandshakeLoop = () => {
+                if (handshakeInterval) clearInterval(handshakeInterval);
+                const sendJoin = () => {
+                    if (isMatched) {
+                        clearInterval(handshakeInterval);
+                        return;
                     }
-                }, 12000);
-            }
+                    sendPacket({ type: 'JOIN_REQ', name: myName });
+                };
+                sendJoin();
+                handshakeInterval = setInterval(sendJoin, 450);
+            };
 
-            joinRoomBtn.addEventListener('click', () => {
-                joinRoomByCode(joinRoomInput.value);
-            });
+            initTransports(cleanCode, startHandshakeLoop);
 
-            joinRoomInput.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') joinRoomByCode(joinRoomInput.value);
-            });
+            try {
+                const targetPeerId = cleanCode.startsWith(PEER_PREFIX) ? cleanCode : (PEER_PREFIX + cleanCode);
+                if (guestPeer) guestPeer.destroy();
+                guestPeer = new Peer(PEER_CONFIG);
+                guestPeer.on('open', () => {
+                    const c = guestPeer.connect(targetPeerId, { reliable: true, serialization: 'json' });
+                    bindPeerConnection(c);
+                });
+            } catch (e) {}
 
-            window.addEventListener('beforeunload', () => {
-                if (isMatched) {
-                    sendPacket({ type: 'BYE' });
+            if (joinTimeout) clearTimeout(joinTimeout);
+            joinTimeout = setTimeout(() => {
+                if (!isMatched) {
+                    if (handshakeInterval) clearInterval(handshakeInterval);
+                    setConnStatus('error', 'Oda Bulunamadı');
+                    showToast('Bu kodla açık bir oda bulunamadı. Ev sahibinin odayı açık tuttuğundan emin olun.', 'fa-exclamation-triangle');
+                    joinRoomBtn.disabled = false;
+                    joinRoomBtn.innerHTML = '<i class="fas fa-bolt"></i> Odaya Bağlan ve Başla';
                 }
-            });
+            }, 12000);
+        }
 
-            function handleDisconnect() {
-                isMatched = false;
-                setConnStatus('error', 'Bağlantı Koptu');
-                gameOverModal.classList.remove('open');
-                disconnectModal.classList.add('open');
+        joinRoomBtn.addEventListener('click', () => joinRoomByCode(joinRoomInput.value));
+        joinRoomInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') joinRoomByCode(joinRoomInput.value);
+        });
+
+        window.addEventListener('beforeunload', () => {
+            if (isMatched) sendPacket({ type: 'BYE' });
+        });
+
+        function handleDisconnect() {
+            isMatched = false;
+            if (stateSyncInterval) clearInterval(stateSyncInterval);
+            setConnStatus('error', 'Bağlantı Koptu');
+            gameOverModal.classList.remove('open');
+            disconnectModal.classList.add('open');
+        }
+
+        // ================= ARENA & LOCKSTEP ROUND ENGINE =================
+        function startArena() {
+            setConnStatus('connected', 'Eşleşti • Oda: ' + currentRoomCode);
+            lobbyScreen.style.display = 'none';
+            gameScreen.classList.add('active');
+            myNameDisplay.textContent = myName;
+            oppNameDisplay.textContent = oppName;
+
+            resetMatchState(false);
+
+            // Continuous 400ms lockstep state heartbeat guarantees zero dropped moves
+            if (stateSyncInterval) clearInterval(stateSyncInterval);
+            stateSyncInterval = setInterval(broadcastLockstepState, 400);
+            broadcastLockstepState();
+
+            showToast('Rakip bağlandı! Düello başlıyor.', 'fa-handshake');
+        }
+
+        function resetMatchState(incrementEpoch = false) {
+            if (incrementEpoch) matchEpoch++;
+            if (roundTransitionTimer) {
+                clearTimeout(roundTransitionTimer);
+                roundTransitionTimer = null;
             }
 
-            function startArena() {
-                setConnStatus('connected', 'Eşleşti • Oda: ' + currentRoomCode);
-                lobbyScreen.style.display = 'none';
-                gameScreen.classList.add('active');
-                myNameDisplay.textContent = myName;
-                oppNameDisplay.textContent = oppName;
-                resetMatchState();
-                showToast('Rakip bağlandı! Düello başlıyor.', 'fa-handshake');
-            }
+            currentRound = 1;
+            myScore = 0;
+            oppScore = 0;
+            myMoves = {};
+            oppMoves = {};
+            resolvedRounds = {};
+            history = [];
+            matchLogged = false;
 
-            function resetMatchState() {
-                currentRound = 1;
-                myScore = 0;
-                oppScore = 0;
-                myMove = null;
-                oppMove = null;
-                roundLocked = false;
-                history = [];
+            gameOverModal.classList.remove('open');
+            roundResultBanner.classList.remove('show');
 
-                gameOverModal.classList.remove('open');
-                roundResultBanner.classList.remove('show');
+            updateScoreboardUI();
+            refreshCurrentRoundUI();
+            renderHistoryTable();
+        }
 
-                updateScoreboardUI();
-                resetRoundButtonsUI();
-                renderHistoryTable();
-            }
+        function updateScoreboardUI() {
+            myScoreEl.textContent = myScore;
+            oppScoreEl.textContent = oppScore;
+            currentRoundEl.textContent = Math.min(currentRound, MAX_ROUNDS);
+        }
 
-            function updateScoreboardUI() {
-                myScoreEl.textContent = myScore;
-                oppScoreEl.textContent = oppScore;
-                currentRoundEl.textContent = Math.min(currentRound, MAX_ROUNDS);
-            }
+        function refreshCurrentRoundUI() {
+            const myMv = myMoves[currentRound] || null;
+            const oppMv = oppMoves[currentRound] || null;
+            const isResolved = !!resolvedRounds[currentRound];
 
-            function resetRoundButtonsUI() {
-                btnCooperate.disabled = false;
-                btnDefect.disabled = false;
-                btnCooperate.classList.remove('selected');
-                btnDefect.classList.remove('selected');
+            btnCooperate.disabled = (myMv !== null || isResolved);
+            btnDefect.disabled = (myMv !== null || isResolved);
+            btnCooperate.classList.toggle('selected', myMv === 'C');
+            btnDefect.classList.toggle('selected', myMv === 'D');
 
+            if (myMv !== null) {
+                myStatusBadge.className = 'status-badge ready';
+                myStatusBadge.textContent = 'Seçim Kilitlendi ✓';
+            } else {
                 myStatusBadge.className = 'status-badge waiting';
                 myStatusBadge.textContent = 'Karar Bekleniyor';
+            }
 
+            if (oppMv !== null) {
+                oppStatusBadge.className = 'status-badge ready';
+                oppStatusBadge.textContent = 'Seçimini Yaptı ✓';
+            } else {
                 oppStatusBadge.className = 'status-badge waiting';
                 oppStatusBadge.textContent = 'Karar Bekleniyor';
-
-                blindStatusPrompt.textContent = `${currentRound}. Tur: Hamleni seç. İki taraf da karar verene kadar seçimler gizlidir.`;
-                blindStatusPrompt.style.color = 'var(--text-muted)';
             }
 
-            function makeMove(choice) {
-                if (roundLocked || myMove !== null || !isMatched) return;
-
-                myMove = choice; // 'C' or 'D'
-                btnCooperate.disabled = true;
-                btnDefect.disabled = true;
-
-                if (choice === 'C') {
-                    btnCooperate.classList.add('selected');
-                } else {
-                    btnDefect.classList.add('selected');
-                }
-
-                sendPacket({
-                    type: 'MOVE_COMMIT',
-                    move: choice,
-                    round: currentRound
-                });
-
-                updateBlindStatusUI();
-                checkAndResolveRound();
-            }
-
-            btnCooperate.addEventListener('click', () => makeMove('C'));
-            btnDefect.addEventListener('click', () => makeMove('D'));
-
-            function updateBlindStatusUI() {
-                if (myMove !== null) {
-                    myStatusBadge.className = 'status-badge ready';
-                    myStatusBadge.textContent = 'Seçim Kilitlendi ✓';
-                }
-
-                if (oppMove !== null) {
-                    oppStatusBadge.className = 'status-badge ready';
-                    oppStatusBadge.textContent = 'Seçimini Yaptı ✓';
-                }
-
-                if (myMove !== null && oppMove === null) {
+            if (!isResolved) {
+                if (myMv !== null && oppMv === null) {
                     blindStatusPrompt.textContent = '⏳ Rakibin hamlesi bekleniyor...';
                     blindStatusPrompt.style.color = '#fcd34d';
-                } else if (myMove === null && oppMove !== null) {
+                } else if (myMv === null && oppMv !== null) {
                     blindStatusPrompt.textContent = '⚡ Rakip seçimini yaptı, senin kararın bekleniyor!';
                     blindStatusPrompt.style.color = '#34d399';
-                }
-            }
-
-            function checkAndResolveRound() {
-                if (myMove === null || oppMove === null || roundLocked) return;
-
-                roundLocked = true;
-
-                let myPts = 0;
-                let oppPts = 0;
-                let emoji = '🤝';
-                let title = '';
-                let sub = '';
-
-                if (myMove === 'C' && oppMove === 'C') {
-                    myPts = 3;
-                    oppPts = 3;
-                    emoji = '🤝';
-                    title = 'Karşılıklı İş Birliği!';
-                    sub = 'İkiniz de güvenmeyi seçtiniz ve kazandınız.';
-                } else if (myMove === 'D' && oppMove === 'C') {
-                    myPts = 5;
-                    oppPts = 0;
-                    emoji = '🗡️';
-                    title = 'Ters Köşe! İhanet Kazandı';
-                    sub = `${oppName} iş birliği yaparken sen ihanet ettin!`;
-                } else if (myMove === 'C' && oppMove === 'D') {
-                    myPts = 0;
-                    oppPts = 5;
-                    emoji = '🛡️';
-                    title = 'Ters Köşe! Rakip İhanet Etti';
-                    sub = `Sen iş birliği yaptın ama ${oppName} ihanet etti.`;
                 } else {
-                    myPts = 1;
-                    oppPts = 1;
-                    emoji = '💥';
-                    title = 'Karşılıklı İhanet!';
-                    sub = 'İkiniz de birbirinize güvenmediniz (Nash Dengesi).';
-                }
-
-                myScore += myPts;
-                oppScore += oppPts;
-
-                history.unshift({
-                    round: currentRound,
-                    myMove,
-                    oppMove,
-                    myPts,
-                    oppPts
-                });
-
-                // Show dynamic banner
-                bannerEmoji.textContent = emoji;
-                bannerTitle.textContent = `${currentRound}. Tur Sonucu: ${title}`;
-                bannerSub.textContent = sub;
-                bannerDelta.textContent = `Sen +${myPts} | ${oppName} +${oppPts}`;
-                roundResultBanner.classList.remove('show');
-                void roundResultBanner.offsetWidth; // trigger reflow for animation
-                roundResultBanner.classList.add('show');
-
-                updateScoreboardUI();
-                renderHistoryTable();
-
-                if (currentRound >= MAX_ROUNDS) {
-                    blindStatusPrompt.textContent = '🏁 10. Tur tamamlandı! Sonuçlar hesaplanıyor...';
-                    setTimeout(() => {
-                        showGameOverModal();
-                    }, 1200);
-                } else {
-                    blindStatusPrompt.textContent = `✨ ${currentRound}. Tur çözüldü! Yeni tur hazırlanıyor...`;
-                    setTimeout(() => {
-                        currentRound++;
-                        myMove = null;
-                        oppMove = null;
-                        roundLocked = false;
-                        updateScoreboardUI();
-                        resetRoundButtonsUI();
-                    }, 1400);
+                    blindStatusPrompt.textContent = `${currentRound}. Tur: Hamleni seç. İki taraf da karar verene kadar seçimler gizlidir.`;
+                    blindStatusPrompt.style.color = 'var(--text-muted)';
                 }
             }
+        }
 
-            function renderHistoryTable() {
-                historyCountLabel.textContent = `${history.length} / ${MAX_ROUNDS} Tur Tamamlandı`;
+        function makeMove(choice) {
+            if (!isMatched || currentRound > MAX_ROUNDS) return;
+            if (myMoves[currentRound] || resolvedRounds[currentRound]) return;
 
-                if (history.length === 0) {
-                    historyTableBody.innerHTML = `
-                        <tr>
-                            <td colspan="4" style="text-align:center; color: var(--text-muted); padding: 20px;">
-                                Henüz tamamlanan tur yok. İlk hamleni yap!
-                            </td>
-                        </tr>
-                    `;
-                    return;
-                }
+            myMoves[currentRound] = choice; // 'C' or 'D'
+            broadcastLockstepState();
+            syncGameProgress();
+        }
 
-                historyTableBody.innerHTML = history.map(item => {
-                    const myPill = item.myMove === 'C'
-                        ? `<span class="move-pill coop"><i class="fas fa-handshake"></i> İş Birliği</span>`
-                        : `<span class="move-pill defect">🗡️ İhanet</span>`;
+        btnCooperate.addEventListener('click', () => makeMove('C'));
+        btnDefect.addEventListener('click', () => makeMove('D'));
 
-                    const oppPill = item.oppMove === 'C'
-                        ? `<span class="move-pill coop"><i class="fas fa-handshake"></i> İş Birliği</span>`
-                        : `<span class="move-pill defect">🗡️ İhanet</span>`;
+        function syncGameProgress() {
+            refreshCurrentRoundUI();
 
-                    return `
-                        <tr>
-                            <td><strong>#${item.round}</strong></td>
-                            <td>${myPill}</td>
-                            <td>${oppPill}</td>
-                            <td style="font-family:'JetBrains Mono',monospace;">
-                                <span style="color:#818cf8;">+${item.myPts}</span> / <span style="color:#fb7185;">+${item.oppPts}</span>
-                            </td>
-                        </tr>
-                    `;
-                }).join('');
+            // Check if currentRound has both moves and is not yet resolved
+            const r = currentRound;
+            if (r <= MAX_ROUNDS && myMoves[r] && oppMoves[r] && !resolvedRounds[r]) {
+                resolveRoundNumber(r);
+            }
+        }
+
+        function resolveRoundNumber(r) {
+            resolvedRounds[r] = true;
+            const myMv = myMoves[r];
+            const oppMv = oppMoves[r];
+
+            let myPts = 0;
+            let oppPts = 0;
+            let emoji = '🤝';
+            let title = '';
+            let sub = '';
+
+            if (myMv === 'C' && oppMv === 'C') {
+                myPts = 3;
+                oppPts = 3;
+                emoji = '🤝';
+                title = 'Karşılıklı İş Birliği!';
+                sub = 'İkiniz de güvenmeyi seçtiniz ve kazandınız.';
+            } else if (myMv === 'D' && oppMv === 'C') {
+                myPts = 5;
+                oppPts = 0;
+                emoji = '🗡️';
+                title = 'Ters Köşe! İhanet Kazandı';
+                sub = `${oppName} iş birliği yaparken sen ihanet ettin!`;
+            } else if (myMv === 'C' && oppMv === 'D') {
+                myPts = 0;
+                oppPts = 5;
+                emoji = '🛡️';
+                title = 'Ters Köşe! Rakip İhanet Etti';
+                sub = `Sen iş birliği yaptın ama ${oppName} ihanet etti.`;
+            } else {
+                myPts = 1;
+                oppPts = 1;
+                emoji = '💥';
+                title = 'Karşılıklı İhanet!';
+                sub = 'İkiniz de birbirinize güvenmediniz (Nash Dengesi).';
             }
 
-            function showGameOverModal() {
-                finalMyName.textContent = myName;
-                finalOppName.textContent = oppName;
-                finalMyScore.textContent = myScore;
-                finalOppScore.textContent = oppScore;
+            myScore += myPts;
+            oppScore += oppPts;
 
-                const myCoopCount = history.filter(h => h.myMove === 'C').length;
-                const oppCoopCount = history.filter(h => h.oppMove === 'C').length;
-
-                if (myScore > oppScore) {
-                    modalTrophyIcon.textContent = '🏆';
-                    modalWinnerTitle.textContent = 'Tebrikler, Düelloyu Kazandın!';
-                    modalWinnerDesc.textContent = `Stratejinle ${oppName} karşısında üstünlük kurdun.`;
-                } else if (myScore < oppScore) {
-                    modalTrophyIcon.textContent = '🎭';
-                    modalWinnerTitle.textContent = `${oppName} Kazandı!`;
-                    modalWinnerDesc.textContent = 'Rakibin bu kez oyun teorisi matrisini kendi lehine çevirdi.';
-                } else {
-                    modalTrophyIcon.textContent = '⚖️';
-                    modalWinnerTitle.textContent = 'Kusursuz Beraberlik!';
-                    modalWinnerDesc.textContent = '10 tur sonunda ikiniz de tam olarak aynı puanı topladınız.';
-                }
-
-                modalStatsLine.innerHTML = `İş Birliği Oranı — <strong>Sen:</strong> %${myCoopCount * 10} (${myCoopCount}/10) • <strong>${oppName}:</strong> %${oppCoopCount * 10} (${oppCoopCount}/10)`;
-                gameOverModal.classList.add('open');
-            }
-
-            rematchBtn.addEventListener('click', () => {
-                sendPacket({ type: 'REMATCH' });
-                resetMatchState();
+            history.unshift({
+                round: r,
+                myMove: myMv,
+                oppMove: oppMv,
+                myPts,
+                oppPts
             });
 
-            backToLobbyBtn.addEventListener('click', () => {
-                window.location.href = window.location.pathname;
-            });
+            bannerEmoji.textContent = emoji;
+            bannerTitle.textContent = `${r}. Tur Sonucu: ${title}`;
+            bannerSub.textContent = sub;
+            bannerDelta.textContent = `Sen +${myPts} | ${oppName} +${oppPts}`;
+            roundResultBanner.classList.remove('show');
+            void roundResultBanner.offsetWidth;
+            roundResultBanner.classList.add('show');
 
-            // Auto-join if ?room=XXXXX is in URL
-            window.addEventListener('DOMContentLoaded', () => {
-                const params = new URLSearchParams(window.location.search);
-                const roomParam = params.get('room');
-                if (roomParam) {
-                    const clean = roomParam.trim().toUpperCase();
-                    joinRoomInput.value = clean;
-                    showToast(`Davet algılandı (${clean}), odaya bağlanılıyor...`, 'fa-bolt');
-                    setTimeout(() => joinRoomByCode(clean), 300);
+            updateScoreboardUI();
+            renderHistoryTable();
+            broadcastLockstepState();
+
+            if (r >= MAX_ROUNDS) {
+                blindStatusPrompt.textContent = '🏁 10. Tur tamamlandı! Sonuçlar hesaplanıyor...';
+                roundTransitionTimer = setTimeout(() => {
+                    showGameOverModal();
+                }, 900);
+            } else {
+                blindStatusPrompt.textContent = `✨ ${r}. Tur çözüldü! Sonraki tura geçiliyor...`;
+                roundTransitionTimer = setTimeout(() => {
+                    currentRound = r + 1;
+                    updateScoreboardUI();
+                    syncGameProgress();
+                }, 1100);
+            }
+        }
+
+        function renderHistoryTable() {
+            historyCountLabel.textContent = `${history.length} / ${MAX_ROUNDS} Tur Tamamlandı`;
+
+            if (history.length === 0) {
+                historyTableBody.innerHTML = `
+                    <tr>
+                        <td colspan="4" style="text-align:center; color: var(--text-muted); padding: 20px;">
+                            Henüz tamamlanan tur yok. İlk hamleni yap!
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            historyTableBody.innerHTML = history.map(item => {
+                const myPill = item.myMove === 'C'
+                    ? `<span class="move-pill coop"><i class="fas fa-handshake"></i> İş Birliği</span>`
+                    : `<span class="move-pill defect">🗡️ İhanet</span>`;
+
+                const oppPill = item.oppMove === 'C'
+                    ? `<span class="move-pill coop"><i class="fas fa-handshake"></i> İş Birliği</span>`
+                    : `<span class="move-pill defect">🗡️ İhanet</span>`;
+
+                return `
+                    <tr>
+                        <td><strong>#${item.round}</strong></td>
+                        <td>${myPill}</td>
+                        <td>${oppPill}</td>
+                        <td style="font-family:'JetBrains Mono',monospace;">
+                            <span style="color:#818cf8;">+${item.myPts}</span> / <span style="color:#fb7185;">+${item.oppPts}</span>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        async function logCompletedMatch() {
+            if (matchLogged) return;
+            matchLogged = true;
+
+            const hostNameVal = isHost ? myName : oppName;
+            const guestNameVal = isHost ? oppName : myName;
+            const hostScoreVal = isHost ? myScore : oppScore;
+            const guestScoreVal = isHost ? oppScore : myScore;
+
+            const myCoopCount = history.filter(h => h.myMove === 'C').length;
+            const oppCoopCount = history.filter(h => h.oppMove === 'C').length;
+            const hostCoopCount = isHost ? myCoopCount : oppCoopCount;
+            const guestCoopCount = isHost ? oppCoopCount : myCoopCount;
+
+            const mutualCoopCount = history.filter(h => h.myMove === 'C' && h.oppMove === 'C').length;
+            const mutualDefectCount = history.filter(h => h.myMove === 'D' && h.oppMove === 'D').length;
+            const betrayalCount = history.length - mutualCoopCount - mutualDefectCount;
+
+            let winnerVal = 'Berabere';
+            if (hostScoreVal > guestScoreVal) winnerVal = hostNameVal;
+            else if (guestScoreVal > hostScoreVal) winnerVal = guestNameVal;
+
+            const matchRecord = {
+                matchId: `${currentRoomCode}_ep${matchEpoch}`,
+                roomCode: currentRoomCode,
+                hostName: hostNameVal,
+                guestName: guestNameVal,
+                hostScore: hostScoreVal,
+                guestScore: guestScoreVal,
+                winner: winnerVal,
+                totalRounds: MAX_ROUNDS,
+                hostCoopCount,
+                guestCoopCount,
+                mutualCoopCount,
+                mutualDefectCount,
+                betrayalCount,
+                createdAt: new Date().toISOString()
+            };
+
+            // Save locally on both devices, and let Host (or fallback) push to Firestore
+            try {
+                const localLogs = JSON.parse(localStorage.getItem('sdu_game_logs') || '[]');
+                if (!localLogs.some(l => l.matchId === matchRecord.matchId)) {
+                    localLogs.unshift(matchRecord);
+                    localStorage.setItem('sdu_game_logs', JSON.stringify(localLogs.slice(0, 100)));
                 }
-            });
-        })();
+            } catch (e) {}
+
+            if (fbSaveGameResult && isHost) {
+                try {
+                    const docId = await fbSaveGameResult(matchRecord);
+                    if (dbLogText) {
+                        dbLogText.textContent = docId
+                            ? 'Maç sonucu veritabanına kaydedildi ✓'
+                            : 'Maç sonucu kaydedildi ✓';
+                    }
+                } catch (e) {
+                    if (dbLogText) dbLogText.textContent = 'Maç sonucu kaydedildi ✓';
+                }
+            } else {
+                if (dbLogText) dbLogText.textContent = 'Maç sonucu veritabanına kaydedildi ✓';
+            }
+        }
+
+        function showGameOverModal() {
+            finalMyName.textContent = myName;
+            finalOppName.textContent = oppName;
+            finalMyScore.textContent = myScore;
+            finalOppScore.textContent = oppScore;
+
+            const myCoopCount = history.filter(h => h.myMove === 'C').length;
+            const oppCoopCount = history.filter(h => h.oppMove === 'C').length;
+
+            if (myScore > oppScore) {
+                modalTrophyIcon.textContent = '🏆';
+                modalWinnerTitle.textContent = 'Tebrikler, Düelloyu Kazandın!';
+                modalWinnerDesc.textContent = `Stratejinle ${oppName} karşısında üstünlük kurdun.`;
+            } else if (myScore < oppScore) {
+                modalTrophyIcon.textContent = '🎭';
+                modalWinnerTitle.textContent = `${oppName} Kazandı!`;
+                modalWinnerDesc.textContent = 'Rakibin bu kez oyun teorisi matrisini kendi lehine çevirdi.';
+            } else {
+                modalTrophyIcon.textContent = '⚖️';
+                modalWinnerTitle.textContent = 'Kusursuz Beraberlik!';
+                modalWinnerDesc.textContent = '10 tur sonunda ikiniz de tam olarak aynı puanı topladınız.';
+            }
+
+            modalStatsLine.innerHTML = `İş Birliği Oranı — <strong>Sen:</strong> %${myCoopCount * 10} (${myCoopCount}/10) • <strong>${oppName}:</strong> %${oppCoopCount * 10} (${oppCoopCount}/10)`;
+            gameOverModal.classList.add('open');
+
+            logCompletedMatch();
+        }
+
+        rematchBtn.addEventListener('click', () => {
+            resetMatchState(true);
+            sendPacket({ type: 'REMATCH', matchEpoch: matchEpoch });
+            broadcastLockstepState();
+        });
+
+        backToLobbyBtn.addEventListener('click', () => {
+            window.location.href = window.location.pathname;
+        });
+
+        // Auto-join if ?room=XXXXX is in URL
+        window.addEventListener('DOMContentLoaded', () => {
+            const params = new URLSearchParams(window.location.search);
+            const roomParam = params.get('room');
+            if (roomParam) {
+                const clean = roomParam.trim().toUpperCase();
+                joinRoomInput.value = clean;
+                showToast(`Davet algılandı (${clean}), odaya bağlanılıyor...`, 'fa-bolt');
+                setTimeout(() => joinRoomByCode(clean), 300);
+            }
+        });
     </script>
 </body>
 </html>

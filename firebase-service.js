@@ -559,3 +559,83 @@ export async function syncLegacyTestStats() {
         console.error("Migration of legacy test stats failed:", e);
     }
 }
+
+
+// ==========================
+// GAME THEORY (PRISONER'S DILEMMA) LOGGING
+// ==========================
+export async function saveGameResult(gameData) {
+    const entry = {
+        ...gameData,
+        createdAt: gameData.createdAt || new Date().toISOString()
+    };
+
+    // Always keep a local copy so no match is ever lost
+    try {
+        const localLogs = JSON.parse(localStorage.getItem('sdu_game_logs') || '[]');
+        if (!localLogs.some(l => l.matchId && l.matchId === entry.matchId)) {
+            localLogs.unshift(entry);
+            localStorage.setItem('sdu_game_logs', JSON.stringify(localLogs.slice(0, 100)));
+        }
+    } catch (e) {}
+
+    try {
+        const docRef = await addDoc(collection(db, "gameResults"), entry);
+
+        // Update aggregate Counters document in settings/gameStats
+        const statsRef = doc(db, "settings", "gameStats");
+        const totalCoop = (Number(entry.hostCoopCount) || 0) + (Number(entry.guestCoopCount) || 0);
+        const totalDefect = (Number(entry.totalRounds) || 10) * 2 - totalCoop;
+
+        await setDoc(statsRef, {
+            totalGames: increment(1),
+            totalCooperations: increment(totalCoop),
+            totalDefections: increment(Math.max(0, totalDefect)),
+            mutualCoops: increment(Number(entry.mutualCoopCount) || 0),
+            mutualDefects: increment(Number(entry.mutualDefectCount) || 0),
+            betrayals: increment(Number(entry.betrayalCount) || 0),
+            updatedAt: new Date().toISOString()
+        }, { merge: true });
+
+        return docRef.id;
+    } catch (e) {
+        console.warn("Firestore oyun logu kaydedilemedi (yerel önbelleğe alındı):", e);
+        return null;
+    }
+}
+
+export async function getGameResults() {
+    let fbResults = [];
+    try {
+        const q = query(collection(db, "gameResults"));
+        const snapshot = await getDocs(q);
+        snapshot.forEach(doc => fbResults.push({ id: doc.id, ...doc.data() }));
+    } catch (e) {
+        console.warn("Firestore oyun sonuçları okunamadı, yerel kayıtlar gösteriliyor:", e);
+    }
+
+    try {
+        const localLogs = JSON.parse(localStorage.getItem('sdu_game_logs') || '[]');
+        const existingIds = new Set(fbResults.map(r => r.matchId).filter(Boolean));
+        for (const log of localLogs) {
+            if (!log.matchId || !existingIds.has(log.matchId)) {
+                fbResults.push(log);
+            }
+        }
+    } catch (e) {}
+
+    return fbResults.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+}
+
+export async function getGameStats() {
+    try {
+        const docRef = doc(db, "settings", "gameStats");
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+            return docSnap.data();
+        }
+    } catch (e) {
+        console.warn("Oyun istatistikleri alınamadı:", e);
+    }
+    return { totalGames: 0, totalCooperations: 0, totalDefections: 0, mutualCoops: 0, mutualDefects: 0, betrayals: 0 };
+}

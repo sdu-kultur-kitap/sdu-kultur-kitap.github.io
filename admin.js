@@ -4,7 +4,7 @@
    Zero-cost static sync with LocalStorage & SessionStorage
    ========================================== */
 
-import { getMembers, deleteMember as fbDeleteMember, registerAdmin, loginAdmin, getAdmins, approveAdmin, deleteAdmin as fbDeleteAdmin, getApplications, updateApplicationStatus, deleteApplication as fbDeleteApplication, getSuggestions, updateSuggestionStatus, deleteSuggestion as fbDeleteSuggestion, getAutoAcceptSetting, setAutoAcceptSetting, getPublicData, setPublicData, verifyAdmin, autoMigrate, getTestResults, getTestStats, syncLegacyTestStats } from './firebase-service.js';
+import { getMembers, deleteMember as fbDeleteMember, registerAdmin, loginAdmin, getAdmins, approveAdmin, deleteAdmin as fbDeleteAdmin, getApplications, updateApplicationStatus, deleteApplication as fbDeleteApplication, getSuggestions, updateSuggestionStatus, deleteSuggestion as fbDeleteSuggestion, getAutoAcceptSetting, setAutoAcceptSetting, getPublicData, setPublicData, verifyAdmin, autoMigrate, getTestResults, getTestStats, syncLegacyTestStats, getGameResults } from './firebase-service.js';
 
 (function () {
     'use strict';
@@ -1671,6 +1671,32 @@ import { getMembers, deleteMember as fbDeleteMember, registerAdmin, loginAdmin, 
             
             if (results.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="8" class="text-center">Henüz test sonucu yok.</td></tr>';
+            }
+
+            // Render Game Theory Logs
+            const tbodyGame = document.getElementById('tbodyGameResults');
+            if (tbodyGame) {
+                const gameLogs = await getGameResults();
+                tbodyGame.innerHTML = '';
+                if (!gameLogs || gameLogs.length === 0) {
+                    tbodyGame.innerHTML = '<tr><td colspan="7" class="text-center">Henüz tamamlanan oyun teorisi maçı yok.</td></tr>';
+                } else {
+                    gameLogs.forEach(g => {
+                        const tr = document.createElement('tr');
+                        const d = new Date(g.createdAt || Date.now());
+                        const dateStr = `${d.toLocaleDateString('tr-TR')} ${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
+                        tr.innerHTML = `
+                            <td>${dateStr}</td>
+                            <td><code>${g.roomCode || '-'}</code></td>
+                            <td><strong>${g.hostName || 'Oyuncu 1'}</strong></td>
+                            <td><strong>${g.guestName || 'Oyuncu 2'}</strong></td>
+                            <td><span class="status-badge" style="background:#312e81;color:#fff">${g.hostScore ?? 0} - ${g.guestScore ?? 0}</span></td>
+                            <td><span class="status-badge" style="background:var(--primary-color);color:#fff">${g.winner || 'Berabere'}</span></td>
+                            <td>%${(g.hostCoopCount || 0) * 10} / %${(g.guestCoopCount || 0) * 10}</td>
+                        `;
+                        tbodyGame.appendChild(tr);
+                    });
+                }
             }
             
             const charCounts = stats.charCounts || {};
